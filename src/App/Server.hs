@@ -100,10 +100,10 @@ server3 dbfile = postMessage :<|> getMessages
       withConnection dbfile $ \conn ->
         query_ conn "SELECT msg FROM messages"
 
-app :: Config -> Application
-app config =
+app :: Config -> String -> Application
+app config dbname =
   serve combinedAPI $
-    server1 :<|> hoistServer (Proxy :: Proxy API2) (nt config) server2 :<|> server3 "mydb"
+    server1 :<|> hoistServer (Proxy :: Proxy API2) (nt config) server2 :<|> server3 dbname
 
-runServant :: Config -> IO ()
-runServant config = run (port config) (app config)
+runServant :: Config -> String -> IO ()
+runServant config dbname = run (port config) (app config dbname)

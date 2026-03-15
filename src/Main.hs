@@ -17,6 +17,8 @@ main :: IO ()
 main = do
   let config = Config {port = 8081, host = "localhost"}
   print config
+
   let dbname = "mydb"
   initDB dbname
-  runServant config
+
+  runServant config dbname
