@@ -1,0 +1,19 @@
+curl -v http://127.0.0.1:8081/age 2>&1 ; echo
+
+curl -v -H "Content-Type:application/json" -d "\"akira\"" http://127.0.0.1:8081/name 2>&1 ; echo
+curl -v -H "Content-Type:application/json" -d "\"akira\"" http://127.0.0.1:8081/name2 2>&1 ; echo
+
+curl -v  http://127.0.0.1:8081/errname 2>&1 ; echo
+
+curl -v  http://127.0.0.1:8081/message 2>&1 ; echo
+
+curl -v -H "Content-Type:application/json" -d "\"Hello\"" http://127.0.0.1:8081/message 2>&1 ; echo
+
+https://hoogle.haskell.org/
+
+
+SERVANT
+https://qiita.com/sand/items/ae649f14f1b598d636c3
+
+モナド
+https://qiita.com/sand/items/93d6ba75b0c4e39ce295
