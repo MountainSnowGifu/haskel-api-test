@@ -5,6 +5,7 @@ module App.API
   ( API1,
     API2,
     API3,
+    API4,
     API,
     userAPI,
     userAPI2,
@@ -34,7 +35,10 @@ type API3 =
   "message" :> ReqBody '[JSON] Message :> Post '[JSON] NoContent
     :<|> "message" :> Get '[JSON] [Message]
 
-type API = API1 :<|> API2 :<|> API3
+type API4 =
+  "sqlserver" :> Get '[PlainText] String :<|> "sqlserver" :> Post '[PlainText] String
+
+type API = API1 :<|> API2 :<|> API3 :<|> API4
 
 userAPI :: Proxy API1
 userAPI = Proxy
@@ -44,6 +48,9 @@ userAPI2 = Proxy
 
 userAPI3 :: Proxy API3
 userAPI3 = Proxy
+
+userAPI4 :: Proxy API4
+userAPI4 = Proxy
 
 combinedAPI :: Proxy API
 combinedAPI = Proxy
