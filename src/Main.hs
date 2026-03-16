@@ -18,7 +18,7 @@ main = do
   let config = Config {port = 8081, host = "localhost"}
   print config
 
-  let dbname = "mydb"
+  let dbname = "mydb.db"
   initDB dbname
 
   runServant config dbname
