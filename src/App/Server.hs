@@ -6,6 +6,7 @@ module App.Server
 where
 
 import App.API (combinedAPI)
+import App.Auth.Auth (loginHandler)
 import App.Auth.BasicAuth (User (..), checkBasicAuth, userDB)
 import App.Config (Config (..))
 import App.DB (MSSQLPool)
@@ -51,6 +52,7 @@ app config sqliteDbName sqlserverPool redisConn =
             :<|> (getSqlserver sqlserverPool :<|> postSqlserver sqlserverPool)
             :<|> redisGet redisConn
             :<|> (return . site)
+            :<|> loginHandler redisConn
 
 runServant :: Config -> String -> MSSQLPool -> Connection -> IO ()
 runServant config sqliteDbName sqlserverPool redisConn = run (port config) (app config sqliteDbName sqlserverPool redisConn)

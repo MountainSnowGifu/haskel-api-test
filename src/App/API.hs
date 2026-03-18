@@ -7,6 +7,7 @@ module App.API
   )
 where
 
+import App.Auth.Auth (LoginAPI)
 import App.Auth.BasicAuth (AuthAPI)
 import App.Greeting.API (GreetingAPI)
 import App.Marketing.API (MarketingAPI)
@@ -16,7 +17,7 @@ import App.RedisTest.API (RedisTestAPI)
 import App.SqlServer.API (SqlServerAPI)
 import Servant
 
-type API = GreetingAPI :<|> MarketingAPI :<|> PersonAPI :<|> MessageAPI :<|> SqlServerAPI :<|> RedisTestAPI :<|> AuthAPI
+type API = GreetingAPI :<|> MarketingAPI :<|> PersonAPI :<|> MessageAPI :<|> SqlServerAPI :<|> RedisTestAPI :<|> AuthAPI :<|> LoginAPI
 
 combinedAPI :: Proxy API
 combinedAPI = Proxy

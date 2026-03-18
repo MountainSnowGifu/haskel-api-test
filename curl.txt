@@ -15,6 +15,8 @@ curl -v http://127.0.0.1:8081/redisget 2>&1 ; echo
 
 curl -v http://john:shhhh@127.0.0.1:8081/redisget 2>&1 ; echo
 
+curl -X POST http://127.0.0.1:8081/login -H "Content-Type: application/json" -d '{"username": "john", "password": "shhhh"}' 2>&1 ; echo
+
 https://hoogle.haskell.org/
 
 

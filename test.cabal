@@ -38,6 +38,7 @@ executable test
                    , App.RedisTest.API
                    , App.RedisTest.Handler.RedisGet
                    , App.Auth.BasicAuth
+                   , App.Auth.Auth
   hs-source-dirs:    src
   default-language:  Haskell2010
   ghc-options:       -Wall -threaded
@@ -62,3 +63,4 @@ executable test
     , text
     , http-client
     , servant-client
+    , uuid
