@@ -64,3 +64,4 @@ executable test
     , http-client
     , servant-client
     , uuid
+    , effectful-core

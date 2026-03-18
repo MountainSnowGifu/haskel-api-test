@@ -5,13 +5,13 @@ module App.API.SqlServerDemo.Handler.Post
   )
 where
 
-import App.Core.Env (AppMSql, RegisterEnv (..))
+import App.Core.Env (AppMonadRegister, RegisterEnv (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (asks)
 import Database.MSSQLServer.Query
+import Effectful.Reader.Static (asks)
 
-postSqlserver :: AppMSql String
+postSqlserver :: AppMonadRegister String
 postSqlserver = do
   pool <- asks sqlPool
   liftIO $ withMSSQLConn pool $ \conn -> do

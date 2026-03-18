@@ -3,12 +3,12 @@ module App.API.Person.Handler.WithError
   )
 where
 
-import App.Core.Env (AppM)
+import App.Core.Env (AppMonad)
 import Control.Monad.Error.Class (throwError)
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import Servant (err500, errBody)
 
-handlerWithError :: AppM String
+handlerWithError :: AppMonad String
 handlerWithError =
   if True
     then throwError $ err500 {errBody = BSL.pack "Exception in module A.B.C:55.  Have a great day!"}
