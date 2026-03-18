@@ -27,3 +27,4 @@ cabal init — 新しいプロジェクトを初期化
 
 rm -rf ~/.cache/hie-bios
 
+git diff --staged > diff.txt

@@ -7,7 +7,6 @@ where
 
 import App.API (combinedAPI)
 import App.Auth.Auth (loginHandler)
-import App.Auth.BasicAuth (User (..), checkBasicAuth, userDB)
 import App.Config (Config (..))
 import App.DB (MSSQLPool)
 import App.Env (nt)
@@ -18,6 +17,7 @@ import App.Message.Handler.Get (getMessages)
 import App.Message.Handler.Post (postMessage)
 import App.Middleware.CsvLogger (csvLogger)
 import App.Middleware.CsvLogger2 (csvLogger2)
+import App.Middleware.TokenAuth (tokenAuth)
 import App.Person.API (PersonAPI)
 import App.Person.Handler.Age (handlerAge)
 import App.Person.Handler.Name (handlerName)
@@ -43,16 +43,18 @@ app :: Config -> String -> MSSQLPool -> Connection -> Application
 app config sqliteDbName sqlserverPool redisConn =
   csvLogger "access.csv" $
     csvLogger2 "access2.csv" $
-      cors (const $ Just corsPolicy) $
-        serveWithContext combinedAPI (checkBasicAuth userDB :. EmptyContext) $
-          (position :<|> hello)
-            :<|> marketing
-            :<|> hoistServer (Proxy :: Proxy PersonAPI) (nt config) (handlerAge :<|> handlerName :<|> handlerName2 :<|> handlerWithError)
-            :<|> (postMessage sqliteDbName :<|> getMessages sqliteDbName)
-            :<|> (getSqlserver sqlserverPool :<|> postSqlserver sqlserverPool)
-            :<|> redisGet redisConn
-            :<|> (return . site)
-            :<|> loginHandler redisConn
+      tokenAuth redisConn $
+        cors (const $ Just corsPolicy) $
+          serve
+            combinedAPI
+            ( (position :<|> hello)
+                :<|> marketing
+                :<|> hoistServer (Proxy :: Proxy PersonAPI) (nt config) (handlerAge :<|> handlerName :<|> handlerName2 :<|> handlerWithError)
+                :<|> (postMessage sqliteDbName :<|> getMessages sqliteDbName)
+                :<|> (getSqlserver sqlserverPool :<|> postSqlserver sqlserverPool)
+                :<|> redisGet redisConn
+                :<|> loginHandler redisConn
+            )
 
 runServant :: Config -> String -> MSSQLPool -> Connection -> IO ()
 runServant config sqliteDbName sqlserverPool redisConn = run (port config) (app config sqliteDbName sqlserverPool redisConn)

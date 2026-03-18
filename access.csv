@@ -17,3 +17,7 @@ timestamp,method,path,status_code,latency_ms
 2026-03-18T05:10:48,POST,/login,400,1
 2026-03-18T05:14:08,POST,/login,200,1
 2026-03-18T05:14:49,POST,/login,200,1
+2026-03-18T05:29:39,POST,/login,401,1
+2026-03-18T05:29:58,POST,/login,200,1
+2026-03-18T05:30:23,GET,/age,200,0
+2026-03-18T05:30:37,GET,/age,401,0

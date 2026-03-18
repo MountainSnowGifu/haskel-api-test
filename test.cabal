@@ -8,6 +8,7 @@ executable test
   other-modules:     App.Config
                    , App.Middleware.CsvLogger
                    , App.Middleware.CsvLogger2
+                   , App.Middleware.TokenAuth
                    , App.Env
                    , App.API
                    , App.Server
