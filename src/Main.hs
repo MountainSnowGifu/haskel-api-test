@@ -2,28 +2,39 @@ module Main where
 
 import App.Config (Config (..))
 import App.DB (createMSSQLPool)
+import App.DB.RedisPool (createRedisConn)
 import App.DB.SQLiteDB (initDB)
 import App.Server (runServant)
-import Database.MSSQLServer.Connection
+import qualified Database.MSSQLServer.Connection as MSSQL
+import qualified Database.Redis as Redis
 
 main :: IO ()
 main = do
-  let config = Config {port = 8081, host = "localhost"}
-  print config
+  let servantConfig = Config {port = 8081, host = "localhost"}
+  print servantConfig
 
-  let info =
-        defaultConnectInfo
-          { connectHost = "127.0.0.1",
-            connectPort = "1433",
-            connectDatabase = "master",
-            connectUser = "sa",
-            connectPassword = "MyPass@word1"
+  let sqliteDbName = "mydb.db"
+  initDB sqliteDbName
+
+  let sqlserverInfo =
+        MSSQL.defaultConnectInfo
+          { MSSQL.connectHost = "127.0.0.1",
+            MSSQL.connectPort = "1433",
+            MSSQL.connectDatabase = "master",
+            MSSQL.connectUser = "sa",
+            MSSQL.connectPassword = "MyPass@word1"
           }
 
   -- プールを生成 (最大 10 コネクション)
-  pool <- createMSSQLPool info 10
+  sqlserverPool <- createMSSQLPool sqlserverInfo 10
 
-  let dbname = "mydb.db"
-  initDB dbname
+  let redisInfo =
+        Redis.defaultConnectInfo
+          { Redis.connectHost = "localhost",
+            Redis.connectPort = Redis.PortNumber 6379,
+            Redis.connectAuth = Nothing
+          }
 
-  runServant config dbname pool
+  redisConn <- createRedisConn redisInfo
+
+  runServant servantConfig sqliteDbName sqlserverPool redisConn

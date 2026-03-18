@@ -11,6 +11,8 @@ curl -v -H "Content-Type:application/json" -d "\"Hello\"" http://127.0.0.1:8081/
 
 curl -v http://127.0.0.1:8081/sqlserver 2>&1 ; echo
 
+curl -v http://127.0.0.1:8081/redisget 2>&1 ; echo
+
 https://hoogle.haskell.org/
 
 
