@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds     #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 
 module App.RedisTest.API
@@ -6,6 +6,7 @@ module App.RedisTest.API
   )
 where
 
+import App.Auth.BasicAuth (User)
 import Servant
 
-type RedisTestAPI = "redisget" :> Get '[PlainText] String
+type RedisTestAPI = BasicAuth "Web Study API" User :> "redisget" :> Get '[PlainText] String
