@@ -1,0 +1,1135 @@
+diff --git a/curl.txt b/curl.txt
+index 00ee535..50e5f99 100644
+--- a/curl.txt
++++ b/curl.txt
+@@ -21,6 +21,18 @@ curl -v -H "Authorization: Bearer a841092b-e0d4-4ccd-bd74-505905ae14e7" http://1
+ 
+ 
+ 
++Core (Config, Env)
++  ↑
++Infrastructure (DB/*, Logger/*)
++  ↑
++Middleware / Auth
++  ↑
++Feature (Greeting, Person, Message, SqlServerDemo, Redis ...)
++  ↑
++Server (API, Router)
++  ↑
++Main
++Core は外部ライブラリのみに依存し、上位層が下位層を参照する一方向の依存構造になっています。
+ 
+ https://hoogle.haskell.org/
+ 
+diff --git a/diff.txt b/diff.txt
+index e69de29..d61f733 100644
+--- a/diff.txt
++++ b/diff.txt
+@@ -0,0 +1,270 @@
++diff --git a/access.csv b/access.csv
++index b344b5f..e751f93 100644
++--- a/access.csv
+++++ b/access.csv
++@@ -17,3 +17,7 @@ timestamp,method,path,status_code,latency_ms
++ 2026-03-18T05:10:48,POST,/login,400,1
++ 2026-03-18T05:14:08,POST,/login,200,1
++ 2026-03-18T05:14:49,POST,/login,200,1
+++2026-03-18T05:29:39,POST,/login,401,1
+++2026-03-18T05:29:58,POST,/login,200,1
+++2026-03-18T05:30:23,GET,/age,200,0
+++2026-03-18T05:30:37,GET,/age,401,0
++diff --git a/access2.csv b/access2.csv
++index 5d23502..11127c2 100644
++--- a/access2.csv
+++++ b/access2.csv
++@@ -16,3 +16,7 @@ timestamp,method,path,status_code,latency_ms
++ 2026-03-18T05:10:48,POST,/login,400,0
++ 2026-03-18T05:14:08,POST,/login,200,1
++ 2026-03-18T05:14:49,POST,/login,200,1
+++2026-03-18T05:29:39,POST,/login,401,0
+++2026-03-18T05:29:58,POST,/login,200,1
+++2026-03-18T05:30:23,GET,/age,200,0
+++2026-03-18T05:30:37,GET,/age,401,0
++diff --git a/command.xt b/command.xt
++index a72a9e9..0072626 100644
++--- a/command.xt
+++++ b/command.xt
++@@ -27,3 +27,4 @@ cabal init — 新しいプロジェクトを初期化
++ 
++ rm -rf ~/.cache/hie-bios
++ 
+++git diff --staged > diff.txt
++\ No newline at end of file
++diff --git a/curl.txt b/curl.txt
++index 2eafdd5..00ee535 100644
++--- a/curl.txt
+++++ b/curl.txt
++@@ -17,9 +17,13 @@ curl -v http://john:shhhh@127.0.0.1:8081/redisget 2>&1 ; echo
++ 
++ curl -X POST http://127.0.0.1:8081/login -H "Content-Type: application/json" -d '{"username": "john", "password": "shhhh"}' 2>&1 ; echo
++ 
++-https://hoogle.haskell.org/
+++curl -v -H "Authorization: Bearer a841092b-e0d4-4ccd-bd74-505905ae14e7" http://127.0.0.1:8081/age 2>&1 ; echo
+++
+++
++ 
++ 
+++https://hoogle.haskell.org/
+++
++ SERVANT
++ https://qiita.com/sand/items/ae649f14f1b598d636c3
++ 
++diff --git a/diff.txt b/diff.txt
++new file mode 100644
++index 0000000..e69de29
++diff --git a/src/App/API.hs b/src/App/API.hs
++index 8399768..beb6da7 100644
++--- a/src/App/API.hs
+++++ b/src/App/API.hs
++@@ -8,7 +8,6 @@ module App.API
++ where
++ 
++ import App.Auth.Auth (LoginAPI)
++-import App.Auth.BasicAuth (AuthAPI)
++ import App.Greeting.API (GreetingAPI)
++ import App.Marketing.API (MarketingAPI)
++ import App.Message.API (MessageAPI)
++@@ -17,7 +16,7 @@ import App.RedisTest.API (RedisTestAPI)
++ import App.SqlServer.API (SqlServerAPI)
++ import Servant
++ 
++-type API = GreetingAPI :<|> MarketingAPI :<|> PersonAPI :<|> MessageAPI :<|> SqlServerAPI :<|> RedisTestAPI :<|> AuthAPI :<|> LoginAPI
+++type API = GreetingAPI :<|> MarketingAPI :<|> PersonAPI :<|> MessageAPI :<|> SqlServerAPI :<|> RedisTestAPI :<|> LoginAPI
++ 
++ combinedAPI :: Proxy API
++ combinedAPI = Proxy
++diff --git a/src/App/Auth/BasicAuth.hs b/src/App/Auth/BasicAuth.hs
++index 32ced56..5157d52 100644
++--- a/src/App/Auth/BasicAuth.hs
+++++ b/src/App/Auth/BasicAuth.hs
++@@ -1,19 +1,14 @@
++ {-# LANGUAGE DataKinds #-}
++ {-# LANGUAGE OverloadedStrings #-}
++-{-# LANGUAGE TypeOperators #-}
++ 
++ module App.Auth.BasicAuth
++-  ( AuthAPI,
++-    User (..),
+++  ( User (..),
++     userDB,
++-    checkBasicAuth,
++   )
++ where
++ 
++ import qualified Data.Map as Map
++ import qualified Data.Text as T
++-import Data.Text.Encoding (decodeUtf8)
++-import Servant
++ 
++ type Username = T.Text
++ 
++@@ -42,39 +37,3 @@ userDB =
++     [ User "john" "shhhh" "john.com",
++       User "foo" "bar" "foobar.net"
++     ]
++-
++--- Basic 認証で保護された 'GET /mysite' エンドポイント
++-type AuthAPI = BasicAuth "Web Study API" User :> "mysite" :> Get '[JSON] Website
++-
++-{- 複数のエンドポイントをまとめて保護する場合:
++-type API = BasicAuth "Web Study API" User :>
++-    ( "foo" :> Get '[JSON] Foo
++- :<|> "bar" :> Get '[JSON] Bar
++-    )
++--}
++-
++--- api :: Proxy API
++--- api = Proxy
++-
++--- server :: Server API
++--- server usr = return (site usr)
++-
++--- UserDB を受け取り、Basic 認証の資格情報をデータベースと照合する関数を返す
++-checkBasicAuth :: UserDB -> BasicAuthCheck User
++-checkBasicAuth db = BasicAuthCheck $ \basicAuthData ->
++-  let username = decodeUtf8 (basicAuthUsername basicAuthData)
++-      password = decodeUtf8 (basicAuthPassword basicAuthData)
++-   in case Map.lookup username db of
++-        Nothing -> return NoSuchUser
++-        Just u ->
++-          if pass u == password
++-            then return (Authorized u)
++-            else return BadPassword
++-
++--- runApp :: UserDB -> IO ()
++--- runApp db = run 8080 (serveWithContext api ctx server)
++---   where
++---     ctx = checkBasicAuth db :. EmptyContext
++-
++--- runServant :: IO ()
++--- runServant = runApp userDB
++diff --git a/src/App/Middleware/TokenAuth.hs b/src/App/Middleware/TokenAuth.hs
++new file mode 100644
++index 0000000..8fc5530
++--- /dev/null
+++++ b/src/App/Middleware/TokenAuth.hs
++@@ -0,0 +1,61 @@
+++{-# LANGUAGE OverloadedStrings #-}
+++
+++module App.Middleware.TokenAuth
+++  ( tokenAuth,
+++  )
+++where
+++
+++import App.DB.RedisPool (withRedisConn)
+++import qualified Data.ByteString as BS
+++import qualified Data.ByteString.Char8 as BS8
+++import Database.Redis (Connection, get)
+++import Network.HTTP.Types (hAuthorization, status401)
+++import Network.Wai (Middleware, Request, Response, rawPathInfo, requestHeaders, responseLBS)
+++
+++-- | WAI ミドルウェア: Authorization ヘッダーの Bearer トークンを Redis で検証する
+++--
+++-- 型シグネチャ:
+++--   tokenAuth :: Connection -> Middleware
+++--   Middleware = Application -> Application
+++--   Application = Request -> (Response -> IO ResponseReceived) -> IO ResponseReceived
+++--
+++-- 検証フロー:
+++--   0. rawPathInfo が "/login" なら認証をスキップして次のミドルウェアへ
+++--   1. requestHeaders で "Authorization: Bearer <token>" を取り出す
+++--   2. Redis の get でトークンキーを検索 → Right (Just _) なら有効
+++--   3. 有効 → app req respond (次のミドルウェアへ委譲)
+++--   4. 無効 or ヘッダーなし → 401 Unauthorized を即返す
+++tokenAuth :: Connection -> Middleware
+++tokenAuth conn app req respond
+++  | rawPathInfo req == "/login" = app req respond
+++  | otherwise =
+++      case extractBearerToken req of
+++        Nothing -> respond unauthorized
+++        Just tok -> do
+++          result <- withRedisConn conn (get tok)
+++          case result of
+++            Right (Just _) -> app req respond
+++            _ -> respond unauthorized
+++
+++-- | Request から Bearer トークンのバイト列を取り出す
+++--
+++-- "Authorization: Bearer 44f9e43b-535d-4dc8-ad52-7fdf59aa4905"
+++--   → Just "44f9e43b-535d-4dc8-ad52-7fdf59aa4905"
+++-- ヘッダーなし / Bearer プレフィックスなし → Nothing
+++--
+++-- requestHeaders :: Request -> [(HeaderName, ByteString)]
+++-- hAuthorization :: HeaderName  (= CI ByteString)
+++extractBearerToken :: Request -> Maybe BS.ByteString
+++extractBearerToken req =
+++  case lookup hAuthorization (requestHeaders req) of
+++    Nothing -> Nothing
+++    Just val ->
+++      let prefix = "Bearer "
+++       in if BS8.isPrefixOf prefix val
+++            then Just (BS.drop (BS8.length prefix) val)
+++            else Nothing
+++
+++-- | 401 Unauthorized レスポンス (プレーンテキスト)
+++unauthorized :: Response
+++unauthorized =
+++  responseLBS status401 [("Content-Type", "text/plain")] "Unauthorized"
++diff --git a/src/App/Server.hs b/src/App/Server.hs
++index 416fd9b..a0dc75a 100644
++--- a/src/App/Server.hs
+++++ b/src/App/Server.hs
++@@ -7,7 +7,6 @@ where
++ 
++ import App.API (combinedAPI)
++ import App.Auth.Auth (loginHandler)
++-import App.Auth.BasicAuth (User (..), checkBasicAuth, userDB)
++ import App.Config (Config (..))
++ import App.DB (MSSQLPool)
++ import App.Env (nt)
++@@ -18,6 +17,7 @@ import App.Message.Handler.Get (getMessages)
++ import App.Message.Handler.Post (postMessage)
++ import App.Middleware.CsvLogger (csvLogger)
++ import App.Middleware.CsvLogger2 (csvLogger2)
+++import App.Middleware.TokenAuth (tokenAuth)
++ import App.Person.API (PersonAPI)
++ import App.Person.Handler.Age (handlerAge)
++ import App.Person.Handler.Name (handlerName)
++@@ -43,16 +43,18 @@ app :: Config -> String -> MSSQLPool -> Connection -> Application
++ app config sqliteDbName sqlserverPool redisConn =
++   csvLogger "access.csv" $
++     csvLogger2 "access2.csv" $
++-      cors (const $ Just corsPolicy) $
++-        serveWithContext combinedAPI (checkBasicAuth userDB :. EmptyContext) $
++-          (position :<|> hello)
++-            :<|> marketing
++-            :<|> hoistServer (Proxy :: Proxy PersonAPI) (nt config) (handlerAge :<|> handlerName :<|> handlerName2 :<|> handlerWithError)
++-            :<|> (postMessage sqliteDbName :<|> getMessages sqliteDbName)
++-            :<|> (getSqlserver sqlserverPool :<|> postSqlserver sqlserverPool)
++-            :<|> redisGet redisConn
++-            :<|> (return . site)
++-            :<|> loginHandler redisConn
+++      tokenAuth redisConn $
+++        cors (const $ Just corsPolicy) $
+++          serve
+++            combinedAPI
+++            ( (position :<|> hello)
+++                :<|> marketing
+++                :<|> hoistServer (Proxy :: Proxy PersonAPI) (nt config) (handlerAge :<|> handlerName :<|> handlerName2 :<|> handlerWithError)
+++                :<|> (postMessage sqliteDbName :<|> getMessages sqliteDbName)
+++                :<|> (getSqlserver sqlserverPool :<|> postSqlserver sqlserverPool)
+++                :<|> redisGet redisConn
+++                :<|> loginHandler redisConn
+++            )
++ 
++ runServant :: Config -> String -> MSSQLPool -> Connection -> IO ()
++ runServant config sqliteDbName sqlserverPool redisConn = run (port config) (app config sqliteDbName sqlserverPool redisConn)
++diff --git a/test.cabal b/test.cabal
++index 6966aa9..c9cd309 100644
++--- a/test.cabal
+++++ b/test.cabal
++@@ -8,6 +8,7 @@ executable test
++   other-modules:     App.Config
++                    , App.Middleware.CsvLogger
++                    , App.Middleware.CsvLogger2
+++                   , App.Middleware.TokenAuth
++                    , App.Env
++                    , App.API
++                    , App.Server
+diff --git a/src/App/API.hs b/src/App/API.hs
+deleted file mode 100644
+index beb6da7..0000000
+--- a/src/App/API.hs
++++ /dev/null
+@@ -1,22 +0,0 @@
+-{-# LANGUAGE DataKinds #-}
+-{-# LANGUAGE TypeOperators #-}
+-
+-module App.API
+-  ( API,
+-    combinedAPI,
+-  )
+-where
+-
+-import App.Auth.Auth (LoginAPI)
+-import App.Greeting.API (GreetingAPI)
+-import App.Marketing.API (MarketingAPI)
+-import App.Message.API (MessageAPI)
+-import App.Person.API (PersonAPI)
+-import App.RedisTest.API (RedisTestAPI)
+-import App.SqlServer.API (SqlServerAPI)
+-import Servant
+-
+-type API = GreetingAPI :<|> MarketingAPI :<|> PersonAPI :<|> MessageAPI :<|> SqlServerAPI :<|> RedisTestAPI :<|> LoginAPI
+-
+-combinedAPI :: Proxy API
+-combinedAPI = Proxy
+diff --git a/src/App/Greeting/API.hs b/src/App/API/Greeting/API.hs
+similarity index 76%
+rename from src/App/Greeting/API.hs
+rename to src/App/API/Greeting/API.hs
+index ae36be4..06bb200 100644
+--- a/src/App/Greeting/API.hs
++++ b/src/App/API/Greeting/API.hs
+@@ -1,12 +1,12 @@
+ {-# LANGUAGE DataKinds #-}
+ {-# LANGUAGE TypeOperators #-}
+ 
+-module App.Greeting.API
++module App.API.Greeting.API
+   ( GreetingAPI,
+   )
+ where
+ 
+-import App.Greeting.Types (HelloMessage, Position)
++import App.API.Greeting.Types (HelloMessage, Position)
+ import Servant
+ 
+ type GreetingAPI =
+diff --git a/src/App/Greeting/Handler/Hello.hs b/src/App/API/Greeting/Handler/Hello.hs
+similarity index 70%
+rename from src/App/Greeting/Handler/Hello.hs
+rename to src/App/API/Greeting/Handler/Hello.hs
+index 0a99f3a..f380e97 100644
+--- a/src/App/Greeting/Handler/Hello.hs
++++ b/src/App/API/Greeting/Handler/Hello.hs
+@@ -1,9 +1,9 @@
+-module App.Greeting.Handler.Hello
++module App.API.Greeting.Handler.Hello
+   ( hello,
+   )
+ where
+ 
+-import App.Greeting.Types (HelloMessage (..))
++import App.API.Greeting.Types (HelloMessage (..))
+ import Servant (Handler)
+ 
+ hello :: Maybe String -> Handler HelloMessage
+diff --git a/src/App/Greeting/Handler/Position.hs b/src/App/API/Greeting/Handler/Position.hs
+similarity index 60%
+rename from src/App/Greeting/Handler/Position.hs
+rename to src/App/API/Greeting/Handler/Position.hs
+index 1368033..51eae47 100644
+--- a/src/App/Greeting/Handler/Position.hs
++++ b/src/App/API/Greeting/Handler/Position.hs
+@@ -1,9 +1,9 @@
+-module App.Greeting.Handler.Position
++module App.API.Greeting.Handler.Position
+   ( position,
+   )
+ where
+ 
+-import App.Greeting.Types (Position (..))
++import App.API.Greeting.Types (Position (..))
+ import Servant (Handler)
+ 
+ position :: Int -> Int -> Handler Position
+diff --git a/src/App/Greeting/Types.hs b/src/App/API/Greeting/Types.hs
+similarity index 92%
+rename from src/App/Greeting/Types.hs
+rename to src/App/API/Greeting/Types.hs
+index 92cde84..6b698f9 100644
+--- a/src/App/Greeting/Types.hs
++++ b/src/App/API/Greeting/Types.hs
+@@ -1,6 +1,6 @@
+ {-# LANGUAGE DeriveGeneric #-}
+ 
+-module App.Greeting.Types
++module App.API.Greeting.Types
+   ( Position (..),
+     HelloMessage (..),
+   )
+diff --git a/src/App/Marketing/API.hs b/src/App/API/Marketing/API.hs
+similarity index 70%
+rename from src/App/Marketing/API.hs
+rename to src/App/API/Marketing/API.hs
+index 4246c8a..829526f 100644
+--- a/src/App/Marketing/API.hs
++++ b/src/App/API/Marketing/API.hs
+@@ -1,12 +1,12 @@
+ {-# LANGUAGE DataKinds #-}
+ {-# LANGUAGE TypeOperators #-}
+ 
+-module App.Marketing.API
++module App.API.Marketing.API
+   ( MarketingAPI,
+   )
+ where
+ 
+-import App.Marketing.Types (ClientInfo, Email)
++import App.API.Marketing.Types (ClientInfo, Email)
+ import Servant
+ 
+ type MarketingAPI =
+diff --git a/src/App/Marketing/Handler.hs b/src/App/API/Marketing/Handler.hs
+similarity index 87%
+rename from src/App/Marketing/Handler.hs
+rename to src/App/API/Marketing/Handler.hs
+index 8458251..208bcf5 100644
+--- a/src/App/Marketing/Handler.hs
++++ b/src/App/API/Marketing/Handler.hs
+@@ -1,9 +1,9 @@
+-module App.Marketing.Handler
++module App.API.Marketing.Handler
+   ( marketing,
+   )
+ where
+ 
+-import App.Marketing.Types (ClientInfo (..), Email (..))
++import App.API.Marketing.Types (ClientInfo (..), Email (..))
+ import Data.List (intercalate)
+ import Servant (Handler)
+ 
+diff --git a/src/App/Marketing/Types.hs b/src/App/API/Marketing/Types.hs
+similarity index 94%
+rename from src/App/Marketing/Types.hs
+rename to src/App/API/Marketing/Types.hs
+index e37b522..b4b8e44 100644
+--- a/src/App/Marketing/Types.hs
++++ b/src/App/API/Marketing/Types.hs
+@@ -1,6 +1,6 @@
+ {-# LANGUAGE DeriveGeneric #-}
+ 
+-module App.Marketing.Types
++module App.API.Marketing.Types
+   ( ClientInfo (..),
+     Email (..),
+   )
+diff --git a/src/App/Message/API.hs b/src/App/API/Message/API.hs
+similarity index 90%
+rename from src/App/Message/API.hs
+rename to src/App/API/Message/API.hs
+index 0a1b5ac..28e610b 100644
+--- a/src/App/Message/API.hs
++++ b/src/App/API/Message/API.hs
+@@ -1,7 +1,7 @@
+ {-# LANGUAGE DataKinds #-}
+ {-# LANGUAGE TypeOperators #-}
+ 
+-module App.Message.API
++module App.API.Message.API
+   ( MessageAPI,
+     Message,
+   )
+diff --git a/src/App/Message/Handler/Get.hs b/src/App/API/Message/Handler/Get.hs
+similarity index 84%
+rename from src/App/Message/Handler/Get.hs
+rename to src/App/API/Message/Handler/Get.hs
+index e4fe11d..f553437 100644
+--- a/src/App/Message/Handler/Get.hs
++++ b/src/App/API/Message/Handler/Get.hs
+@@ -1,11 +1,11 @@
+ {-# LANGUAGE OverloadedStrings #-}
+ 
+-module App.Message.Handler.Get
++module App.API.Message.Handler.Get
+   ( getMessages,
+   )
+ where
+ 
+-import App.Message.API (Message)
++import App.API.Message.API (Message)
+ import Control.Monad.IO.Class (liftIO)
+ import Database.SQLite.Simple (query_, withConnection)
+ import Database.SQLite.Simple.Types (Only (..))
+diff --git a/src/App/Message/Handler/Post.hs b/src/App/API/Message/Handler/Post.hs
+similarity index 86%
+rename from src/App/Message/Handler/Post.hs
+rename to src/App/API/Message/Handler/Post.hs
+index 905c57a..e022827 100644
+--- a/src/App/Message/Handler/Post.hs
++++ b/src/App/API/Message/Handler/Post.hs
+@@ -1,11 +1,11 @@
+ {-# LANGUAGE OverloadedStrings #-}
+ 
+-module App.Message.Handler.Post
++module App.API.Message.Handler.Post
+   ( postMessage,
+   )
+ where
+ 
+-import App.Message.API (Message)
++import App.API.Message.API (Message)
+ import Control.Monad.IO.Class (liftIO)
+ import Database.SQLite.Simple (execute, withConnection)
+ import Database.SQLite.Simple.Types (Only (..))
+diff --git a/src/App/Person/API.hs b/src/App/API/Person/API.hs
+similarity index 83%
+rename from src/App/Person/API.hs
+rename to src/App/API/Person/API.hs
+index a66bb00..3f544a2 100644
+--- a/src/App/Person/API.hs
++++ b/src/App/API/Person/API.hs
+@@ -1,12 +1,12 @@
+ {-# LANGUAGE DataKinds #-}
+ {-# LANGUAGE TypeOperators #-}
+ 
+-module App.Person.API
++module App.API.Person.API
+   ( PersonAPI,
+   )
+ where
+ 
+-import App.Person.Types (NameWrapper)
++import App.API.Person.Types (NameWrapper)
+ import Servant
+ 
+ type PersonAPI =
+diff --git a/src/App/Person/Handler/Age.hs b/src/App/API/Person/Handler/Age.hs
+similarity index 63%
+rename from src/App/Person/Handler/Age.hs
+rename to src/App/API/Person/Handler/Age.hs
+index 5f1e6ee..bb6cb40 100644
+--- a/src/App/Person/Handler/Age.hs
++++ b/src/App/API/Person/Handler/Age.hs
+@@ -1,10 +1,10 @@
+-module App.Person.Handler.Age
++module App.API.Person.Handler.Age
+   ( handlerAge,
+   )
+ where
+ 
+-import App.Config (Config (..))
+-import App.Env (AppM)
++import App.Core.Config (Config (..))
++import App.Core.Env (AppM)
+ import Control.Monad.Reader (ask)
+ 
+ handlerAge :: AppM String
+diff --git a/src/App/Person/Handler/Name.hs b/src/App/API/Person/Handler/Name.hs
+similarity index 55%
+rename from src/App/Person/Handler/Name.hs
+rename to src/App/API/Person/Handler/Name.hs
+index 997b1ce..9caea42 100644
+--- a/src/App/Person/Handler/Name.hs
++++ b/src/App/API/Person/Handler/Name.hs
+@@ -1,10 +1,10 @@
+-module App.Person.Handler.Name
++module App.API.Person.Handler.Name
+   ( handlerName,
+   )
+ where
+ 
+-import App.Env (AppM)
+-import App.Person.Types (NameWrapper (..))
++import App.API.Person.Types (NameWrapper (..))
++import App.Core.Env (AppM)
+ 
+ handlerName :: NameWrapper -> AppM String
+ handlerName (NameWrapper nameIn) = return ("name: " ++ nameIn)
+diff --git a/src/App/Person/Handler/Name2.hs b/src/App/API/Person/Handler/Name2.hs
+similarity index 65%
+rename from src/App/Person/Handler/Name2.hs
+rename to src/App/API/Person/Handler/Name2.hs
+index 2bfe46b..c917b43 100644
+--- a/src/App/Person/Handler/Name2.hs
++++ b/src/App/API/Person/Handler/Name2.hs
+@@ -1,10 +1,10 @@
+-module App.Person.Handler.Name2
++module App.API.Person.Handler.Name2
+   ( handlerName2,
+   )
+ where
+ 
+-import App.Env (AppM)
+-import App.Person.Types (NameWrapper (..))
++import App.API.Person.Types (NameWrapper (..))
++import App.Core.Env (AppM)
+ import Control.Monad.IO.Class (liftIO)
+ 
+ handlerName2 :: NameWrapper -> AppM String
+diff --git a/src/App/Person/Handler/WithError.hs b/src/App/API/Person/Handler/WithError.hs
+similarity index 83%
+rename from src/App/Person/Handler/WithError.hs
+rename to src/App/API/Person/Handler/WithError.hs
+index b89199b..6f086d0 100644
+--- a/src/App/Person/Handler/WithError.hs
++++ b/src/App/API/Person/Handler/WithError.hs
+@@ -1,9 +1,9 @@
+-module App.Person.Handler.WithError
++module App.API.Person.Handler.WithError
+   ( handlerWithError,
+   )
+ where
+ 
+-import App.Env (AppM)
++import App.Core.Env (AppM)
+ import Control.Monad.Error.Class (throwError)
+ import qualified Data.ByteString.Lazy.Char8 as BSL
+ import Servant (err500, errBody)
+diff --git a/src/App/Person/Types.hs b/src/App/API/Person/Types.hs
+similarity index 87%
+rename from src/App/Person/Types.hs
+rename to src/App/API/Person/Types.hs
+index 760c991..2f5e1fa 100644
+--- a/src/App/Person/Types.hs
++++ b/src/App/API/Person/Types.hs
+@@ -1,4 +1,4 @@
+-module App.Person.Types
++module App.API.Person.Types
+   ( NameWrapper (..),
+   )
+ where
+diff --git a/src/App/API/Redis/API.hs b/src/App/API/Redis/API.hs
+new file mode 100644
+index 0000000..e97d45e
+--- /dev/null
++++ b/src/App/API/Redis/API.hs
+@@ -0,0 +1,11 @@
++{-# LANGUAGE DataKinds #-}
++{-# LANGUAGE TypeOperators #-}
++
++module App.API.Redis.API
++  ( RedisAPI,
++  )
++where
++
++import Servant
++
++type RedisAPI = "redisget" :> Get '[PlainText] String
+diff --git a/src/App/RedisTest/Handler/RedisGet.hs b/src/App/API/Redis/Handler/Get.hs
+similarity index 85%
+rename from src/App/RedisTest/Handler/RedisGet.hs
+rename to src/App/API/Redis/Handler/Get.hs
+index 1c70df2..f0adcae 100644
+--- a/src/App/RedisTest/Handler/RedisGet.hs
++++ b/src/App/API/Redis/Handler/Get.hs
+@@ -1,11 +1,11 @@
+ {-# LANGUAGE OverloadedStrings #-}
+ 
+-module App.RedisTest.Handler.RedisGet
++module App.API.Redis.Handler.Get
+   ( redisGet,
+   )
+ where
+ 
+-import App.DB.RedisPool (withRedisConn)
++import App.Infrastructure.DB.Redis (withRedisConn)
+ import Control.Monad.IO.Class (liftIO)
+ import qualified Data.ByteString.Lazy.Char8 as BL
+ import Database.Redis (Connection, get)
+diff --git a/src/App/SqlServer/API.hs b/src/App/API/SqlServerDemo/API.hs
+similarity index 86%
+rename from src/App/SqlServer/API.hs
+rename to src/App/API/SqlServerDemo/API.hs
+index 9bdb48d..09d64fc 100644
+--- a/src/App/SqlServer/API.hs
++++ b/src/App/API/SqlServerDemo/API.hs
+@@ -1,7 +1,7 @@
+ {-# LANGUAGE DataKinds #-}
+ {-# LANGUAGE TypeOperators #-}
+ 
+-module App.SqlServer.API
++module App.API.SqlServerDemo.API
+   ( SqlServerAPI,
+   )
+ where
+diff --git a/src/App/SqlServer/Handler/Get.hs b/src/App/API/SqlServerDemo/Handler/Get.hs
+similarity index 72%
+rename from src/App/SqlServer/Handler/Get.hs
+rename to src/App/API/SqlServerDemo/Handler/Get.hs
+index c8c2cbb..1ecad8e 100644
+--- a/src/App/SqlServer/Handler/Get.hs
++++ b/src/App/API/SqlServerDemo/Handler/Get.hs
+@@ -1,11 +1,12 @@
+ {-# LANGUAGE OverloadedStrings #-}
+ 
+-module App.SqlServer.Handler.Get
++module App.API.SqlServerDemo.Handler.Get
+   ( getSqlserver,
+   )
+ where
+ 
+-import App.DB (MSSQLPool, withMSSQLConn)
++import App.Infrastructure.DB.SqlServer (withMSSQLConn)
++import App.Infrastructure.DB.Types (MSSQLPool)
+ import Control.Monad.IO.Class (liftIO)
+ import Database.MSSQLServer.Query
+ import Servant (Handler)
+diff --git a/src/App/SqlServer/Handler/Post.hs b/src/App/API/SqlServerDemo/Handler/Post.hs
+similarity index 72%
+rename from src/App/SqlServer/Handler/Post.hs
+rename to src/App/API/SqlServerDemo/Handler/Post.hs
+index 61bd4db..ba9c3be 100644
+--- a/src/App/SqlServer/Handler/Post.hs
++++ b/src/App/API/SqlServerDemo/Handler/Post.hs
+@@ -1,11 +1,12 @@
+ {-# LANGUAGE OverloadedStrings #-}
+ 
+-module App.SqlServer.Handler.Post
++module App.API.SqlServerDemo.Handler.Post
+   ( postSqlserver,
+   )
+ where
+ 
+-import App.DB (MSSQLPool, withMSSQLConn)
++import App.Infrastructure.DB.SqlServer (withMSSQLConn)
++import App.Infrastructure.DB.Types (MSSQLPool)
+ import Control.Monad.IO.Class (liftIO)
+ import Database.MSSQLServer.Query
+ import Servant (Handler)
+diff --git a/src/App/Auth/Auth.hs b/src/App/Auth/Handler.hs
+similarity index 94%
+rename from src/App/Auth/Auth.hs
+rename to src/App/Auth/Handler.hs
+index 352cd0b..2ea69c3 100644
+--- a/src/App/Auth/Auth.hs
++++ b/src/App/Auth/Handler.hs
+@@ -3,14 +3,14 @@
+ {-# LANGUAGE OverloadedStrings #-}
+ {-# LANGUAGE TypeOperators #-}
+ 
+-module App.Auth.Auth
++module App.Auth.Handler
+   ( LoginAPI,
+     loginHandler,
+   )
+ where
+ 
+-import App.Auth.BasicAuth (User (..), userDB)
+-import App.DB.RedisPool (withRedisConn)
++import App.Auth.UserStore (User (..), userDB)
++import App.Infrastructure.DB.Redis (withRedisConn)
+ import Control.Monad.IO.Class (liftIO)
+ import Data.Aeson (FromJSON, ToJSON)
+ import qualified Data.Map as Map
+diff --git a/src/App/Auth/BasicAuth.hs b/src/App/Auth/UserStore.hs
+similarity index 96%
+rename from src/App/Auth/BasicAuth.hs
+rename to src/App/Auth/UserStore.hs
+index 5157d52..0588dc0 100644
+--- a/src/App/Auth/BasicAuth.hs
++++ b/src/App/Auth/UserStore.hs
+@@ -1,7 +1,7 @@
+ {-# LANGUAGE DataKinds #-}
+ {-# LANGUAGE OverloadedStrings #-}
+ 
+-module App.Auth.BasicAuth
++module App.Auth.UserStore
+   ( User (..),
+     userDB,
+   )
+diff --git a/src/App/Config.hs b/src/App/Core/Config.hs
+similarity index 80%
+rename from src/App/Config.hs
+rename to src/App/Core/Config.hs
+index 1e2cee6..0faf276 100644
+--- a/src/App/Config.hs
++++ b/src/App/Core/Config.hs
+@@ -1,4 +1,4 @@
+-module App.Config
++module App.Core.Config
+   ( Config (..),
+   )
+ where
+diff --git a/src/App/Env.hs b/src/App/Core/Env.hs
+similarity index 86%
+rename from src/App/Env.hs
+rename to src/App/Core/Env.hs
+index 0c62b20..0123479 100644
+--- a/src/App/Env.hs
++++ b/src/App/Core/Env.hs
+@@ -1,10 +1,10 @@
+-module App.Env
++module App.Core.Env
+   ( AppM,
+     nt,
+   )
+ where
+ 
+-import App.Config (Config)
++import App.Core.Config (Config)
+ import Control.Monad.Reader (ReaderT, runReaderT)
+ import Servant (Handler)
+ 
+diff --git a/src/App/DB.hs b/src/App/DB.hs
+deleted file mode 100644
+index 2c527d7..0000000
+--- a/src/App/DB.hs
++++ /dev/null
+@@ -1,9 +0,0 @@
+-module App.DB
+-  ( MSSQLPool,
+-    createMSSQLPool,
+-    withMSSQLConn,
+-  )
+-where
+-
+-import App.DB.SqlserverPool (createMSSQLPool, withMSSQLConn)
+-import App.DB.Types (MSSQLPool)
+diff --git a/src/App/DB/RedisPool.hs b/src/App/Infrastructure/DB/Redis.hs
+similarity index 97%
+rename from src/App/DB/RedisPool.hs
+rename to src/App/Infrastructure/DB/Redis.hs
+index 15cf8b2..315d2da 100644
+--- a/src/App/DB/RedisPool.hs
++++ b/src/App/Infrastructure/DB/Redis.hs
+@@ -1,4 +1,4 @@
+-module App.DB.RedisPool
++module App.Infrastructure.DB.Redis
+   ( createRedisConn,
+     withRedisConn,
+   )
+diff --git a/src/App/DB/SQLiteDB.hs b/src/App/Infrastructure/DB/SQLite.hs
+similarity index 90%
+rename from src/App/DB/SQLiteDB.hs
+rename to src/App/Infrastructure/DB/SQLite.hs
+index 3f421ce..27ce48b 100644
+--- a/src/App/DB/SQLiteDB.hs
++++ b/src/App/Infrastructure/DB/SQLite.hs
+@@ -1,6 +1,6 @@
+ {-# LANGUAGE OverloadedStrings #-}
+ 
+-module App.DB.SQLiteDB
++module App.Infrastructure.DB.SQLite
+   ( initDB,
+   )
+ where
+diff --git a/src/App/DB/SqlserverPool.hs b/src/App/Infrastructure/DB/SqlServer.hs
+similarity index 92%
+rename from src/App/DB/SqlserverPool.hs
+rename to src/App/Infrastructure/DB/SqlServer.hs
+index b6a48f8..147c095 100644
+--- a/src/App/DB/SqlserverPool.hs
++++ b/src/App/Infrastructure/DB/SqlServer.hs
+@@ -1,10 +1,10 @@
+-module App.DB.SqlserverPool
++module App.Infrastructure.DB.SqlServer
+   ( createMSSQLPool,
+     withMSSQLConn,
+   )
+ where
+ 
+-import App.DB.Types (MSSQLPool)
++import App.Infrastructure.DB.Types (MSSQLPool)
+ import Data.Pool (defaultPoolConfig, newPool, withResource)
+ import Database.MSSQLServer.Connection
+ 
+diff --git a/src/App/DB/Types.hs b/src/App/Infrastructure/DB/Types.hs
+similarity index 90%
+rename from src/App/DB/Types.hs
+rename to src/App/Infrastructure/DB/Types.hs
+index a48ec4b..f1d3a3b 100644
+--- a/src/App/DB/Types.hs
++++ b/src/App/Infrastructure/DB/Types.hs
+@@ -1,4 +1,4 @@
+-module App.DB.Types
++module App.Infrastructure.DB.Types
+   ( MSSQLPool,
+   )
+ where
+diff --git a/src/App/Middleware/CsvLogger.hs b/src/App/Infrastructure/Logger/CsvLogger.hs
+similarity index 97%
+rename from src/App/Middleware/CsvLogger.hs
+rename to src/App/Infrastructure/Logger/CsvLogger.hs
+index fd073c7..4de4e04 100644
+--- a/src/App/Middleware/CsvLogger.hs
++++ b/src/App/Infrastructure/Logger/CsvLogger.hs
+@@ -1,6 +1,6 @@
+ {-# LANGUAGE OverloadedStrings #-}
+ 
+-module App.Middleware.CsvLogger
++module App.Infrastructure.Logger.CsvLogger
+   ( csvLogger,
+   )
+ where
+diff --git a/src/App/Middleware/CsvLogger2.hs b/src/App/Infrastructure/Logger/CsvLogger2.hs
+similarity index 97%
+rename from src/App/Middleware/CsvLogger2.hs
+rename to src/App/Infrastructure/Logger/CsvLogger2.hs
+index de3ed3c..ce0fee2 100644
+--- a/src/App/Middleware/CsvLogger2.hs
++++ b/src/App/Infrastructure/Logger/CsvLogger2.hs
+@@ -1,6 +1,6 @@
+ {-# LANGUAGE OverloadedStrings #-}
+ 
+-module App.Middleware.CsvLogger2
++module App.Infrastructure.Logger.CsvLogger2
+   ( csvLogger2,
+   )
+ where
+diff --git a/src/App/Middleware/TokenAuth.hs b/src/App/Middleware/TokenAuth.hs
+index 8fc5530..7861fdd 100644
+--- a/src/App/Middleware/TokenAuth.hs
++++ b/src/App/Middleware/TokenAuth.hs
+@@ -5,7 +5,7 @@ module App.Middleware.TokenAuth
+   )
+ where
+ 
+-import App.DB.RedisPool (withRedisConn)
++import App.Infrastructure.DB.Redis (withRedisConn)
+ import qualified Data.ByteString as BS
+ import qualified Data.ByteString.Char8 as BS8
+ import Database.Redis (Connection, get)
+diff --git a/src/App/RedisTest/API.hs b/src/App/RedisTest/API.hs
+deleted file mode 100644
+index 50b51bc..0000000
+--- a/src/App/RedisTest/API.hs
++++ /dev/null
+@@ -1,11 +0,0 @@
+-{-# LANGUAGE DataKinds #-}
+-{-# LANGUAGE TypeOperators #-}
+-
+-module App.RedisTest.API
+-  ( RedisTestAPI,
+-  )
+-where
+-
+-import Servant
+-
+-type RedisTestAPI = "redisget" :> Get '[PlainText] String
+\ No newline at end of file
+diff --git a/src/App/Server/API.hs b/src/App/Server/API.hs
+new file mode 100644
+index 0000000..b5a97c4
+--- /dev/null
++++ b/src/App/Server/API.hs
+@@ -0,0 +1,22 @@
++{-# LANGUAGE DataKinds #-}
++{-# LANGUAGE TypeOperators #-}
++
++module App.Server.API
++  ( API,
++    combinedAPI,
++  )
++where
++
++import App.Auth.Handler (LoginAPI)
++import App.API.Greeting.API (GreetingAPI)
++import App.API.Marketing.API (MarketingAPI)
++import App.API.Message.API (MessageAPI)
++import App.API.Person.API (PersonAPI)
++import App.API.Redis.API (RedisAPI)
++import App.API.SqlServerDemo.API (SqlServerAPI)
++import Servant
++
++type API = GreetingAPI :<|> MarketingAPI :<|> PersonAPI :<|> MessageAPI :<|> SqlServerAPI :<|> RedisAPI :<|> LoginAPI
++
++combinedAPI :: Proxy API
++combinedAPI = Proxy
+diff --git a/src/App/Server.hs b/src/App/Server/Router.hs
+similarity index 56%
+rename from src/App/Server.hs
+rename to src/App/Server/Router.hs
+index a0dc75a..aeb738f 100644
+--- a/src/App/Server.hs
++++ b/src/App/Server/Router.hs
+@@ -1,31 +1,31 @@
+ {-# LANGUAGE OverloadedStrings #-}
+ 
+-module App.Server
++module App.Server.Router
+   ( runServant,
+   )
+ where
+ 
+-import App.API (combinedAPI)
+-import App.Auth.Auth (loginHandler)
+-import App.Config (Config (..))
+-import App.DB (MSSQLPool)
+-import App.Env (nt)
+-import App.Greeting.Handler.Hello (hello)
+-import App.Greeting.Handler.Position (position)
+-import App.Marketing.Handler (marketing)
+-import App.Message.Handler.Get (getMessages)
+-import App.Message.Handler.Post (postMessage)
+-import App.Middleware.CsvLogger (csvLogger)
+-import App.Middleware.CsvLogger2 (csvLogger2)
++import App.API.Greeting.Handler.Hello (hello)
++import App.API.Greeting.Handler.Position (position)
++import App.API.Marketing.Handler (marketing)
++import App.API.Message.Handler.Get (getMessages)
++import App.API.Message.Handler.Post (postMessage)
++import App.API.Person.API (PersonAPI)
++import App.API.Person.Handler.Age (handlerAge)
++import App.API.Person.Handler.Name (handlerName)
++import App.API.Person.Handler.Name2 (handlerName2)
++import App.API.Person.Handler.WithError (handlerWithError)
++import App.API.Redis.Handler.Get (redisGet)
++import App.API.SqlServerDemo.Handler.Get (getSqlserver)
++import App.API.SqlServerDemo.Handler.Post (postSqlserver)
++import App.Auth.Handler (loginHandler)
++import App.Core.Config (Config (..))
++import App.Core.Env (nt)
++import App.Infrastructure.DB.Types (MSSQLPool)
++import App.Infrastructure.Logger.CsvLogger (csvLogger)
++import App.Infrastructure.Logger.CsvLogger2 (csvLogger2)
+ import App.Middleware.TokenAuth (tokenAuth)
+-import App.Person.API (PersonAPI)
+-import App.Person.Handler.Age (handlerAge)
+-import App.Person.Handler.Name (handlerName)
+-import App.Person.Handler.Name2 (handlerName2)
+-import App.Person.Handler.WithError (handlerWithError)
+-import App.RedisTest.Handler.RedisGet (redisGet)
+-import App.SqlServer.Handler.Get (getSqlserver)
+-import App.SqlServer.Handler.Post (postSqlserver)
++import App.Server.API (combinedAPI)
+ import Database.Redis (Connection)
+ import Network.Wai.Handler.Warp (run)
+ import Network.Wai.Middleware.Cors
+@@ -57,4 +57,4 @@ app config sqliteDbName sqlserverPool redisConn =
+             )
+ 
+ runServant :: Config -> String -> MSSQLPool -> Connection -> IO ()
+-runServant config sqliteDbName sqlserverPool redisConn = run (port config) (app config sqliteDbName sqlserverPool redisConn)
++runServant config sqliteDbName sqlserverPool redisConn = run (port config) (app config sqliteDbName sqlserverPool redisConn)
+\ No newline at end of file
+diff --git a/src/Main.hs b/src/Main.hs
+index f2d70e8..1046f1e 100644
+--- a/src/Main.hs
++++ b/src/Main.hs
+@@ -1,10 +1,10 @@
+ module Main where
+ 
+-import App.Config (Config (..))
+-import App.DB (createMSSQLPool)
+-import App.DB.RedisPool (createRedisConn)
+-import App.DB.SQLiteDB (initDB)
+-import App.Server (runServant)
++import App.Core.Config (Config (..))
++import App.Infrastructure.DB.Redis (createRedisConn)
++import App.Infrastructure.DB.SQLite (initDB)
++import App.Infrastructure.DB.SqlServer (createMSSQLPool)
++import App.Server.Router (runServant)
+ import qualified Database.MSSQLServer.Connection as MSSQL
+ import qualified Database.Redis as Redis
+ 
+diff --git a/test.cabal b/test.cabal
+index c9cd309..c65e506 100644
+--- a/test.cabal
++++ b/test.cabal
+@@ -5,41 +5,40 @@ build-type:          Simple
+ 
+ executable test
+   main-is:           Main.hs
+-  other-modules:     App.Config
+-                   , App.Middleware.CsvLogger
+-                   , App.Middleware.CsvLogger2
++  other-modules:     App.Core.Config
++                   , App.Core.Env
++                   , App.Infrastructure.DB.Types
++                   , App.Infrastructure.DB.SQLite
++                   , App.Infrastructure.DB.SqlServer
++                   , App.Infrastructure.DB.Redis
++                   , App.Infrastructure.Logger.CsvLogger
++                   , App.Infrastructure.Logger.CsvLogger2
+                    , App.Middleware.TokenAuth
+-                   , App.Env
+-                   , App.API
+-                   , App.Server
+-                   , App.DB
+-                   , App.DB.Types
+-                   , App.DB.SqlserverPool
+-                   , App.DB.SQLiteDB
+-                   , App.Greeting.API
+-                   , App.Greeting.Types
+-                   , App.Greeting.Handler.Position
+-                   , App.Greeting.Handler.Hello
+-                   , App.Marketing.API
+-                   , App.Marketing.Types
+-                   , App.Marketing.Handler
+-                   , App.Person.API
+-                   , App.Person.Types
+-                   , App.Person.Handler.Age
+-                   , App.Person.Handler.Name
+-                   , App.Person.Handler.Name2
+-                   , App.Person.Handler.WithError
+-                   , App.Message.API
+-                   , App.Message.Handler.Post
+-                   , App.Message.Handler.Get
+-                   , App.SqlServer.API
+-                   , App.SqlServer.Handler.Get
+-                   , App.SqlServer.Handler.Post
+-                   , App.DB.RedisPool
+-                   , App.RedisTest.API
+-                   , App.RedisTest.Handler.RedisGet
+-                   , App.Auth.BasicAuth
+-                   , App.Auth.Auth
++                   , App.Auth.UserStore
++                   , App.Auth.Handler
++                   , App.Server.API
++                   , App.Server.Router
++                   , App.API.Greeting.API
++                   , App.API.Greeting.Types
++                   , App.API.Greeting.Handler.Position
++                   , App.API.Greeting.Handler.Hello
++                   , App.API.Marketing.API
++                   , App.API.Marketing.Types
++                   , App.API.Marketing.Handler
++                   , App.API.Person.API
++                   , App.API.Person.Types
++                   , App.API.Person.Handler.Age
++                   , App.API.Person.Handler.Name
++                   , App.API.Person.Handler.Name2
++                   , App.API.Person.Handler.WithError
++                   , App.API.Message.API
++                   , App.API.Message.Handler.Post
++                   , App.API.Message.Handler.Get
++                   , App.API.SqlServerDemo.API
++                   , App.API.SqlServerDemo.Handler.Get
++                   , App.API.SqlServerDemo.Handler.Post
++                   , App.API.Redis.API
++                   , App.API.Redis.Handler.Get
+   hs-source-dirs:    src
+   default-language:  Haskell2010
+   ghc-options:       -Wall -threaded

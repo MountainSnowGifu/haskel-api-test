@@ -5,7 +5,7 @@ module App.Middleware.TokenAuth
   )
 where
 
-import App.DB.RedisPool (withRedisConn)
+import App.Infrastructure.DB.Redis (withRedisConn)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import Database.Redis (Connection, get)

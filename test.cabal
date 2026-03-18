@@ -5,41 +5,40 @@ build-type:          Simple
 
 executable test
   main-is:           Main.hs
-  other-modules:     App.Config
-                   , App.Middleware.CsvLogger
-                   , App.Middleware.CsvLogger2
+  other-modules:     App.Core.Config
+                   , App.Core.Env
+                   , App.Infrastructure.DB.Types
+                   , App.Infrastructure.DB.SQLite
+                   , App.Infrastructure.DB.SqlServer
+                   , App.Infrastructure.DB.Redis
+                   , App.Infrastructure.Logger.CsvLogger
+                   , App.Infrastructure.Logger.CsvLogger2
                    , App.Middleware.TokenAuth
-                   , App.Env
-                   , App.API
-                   , App.Server
-                   , App.DB
-                   , App.DB.Types
-                   , App.DB.SqlserverPool
-                   , App.DB.SQLiteDB
-                   , App.Greeting.API
-                   , App.Greeting.Types
-                   , App.Greeting.Handler.Position
-                   , App.Greeting.Handler.Hello
-                   , App.Marketing.API
-                   , App.Marketing.Types
-                   , App.Marketing.Handler
-                   , App.Person.API
-                   , App.Person.Types
-                   , App.Person.Handler.Age
-                   , App.Person.Handler.Name
-                   , App.Person.Handler.Name2
-                   , App.Person.Handler.WithError
-                   , App.Message.API
-                   , App.Message.Handler.Post
-                   , App.Message.Handler.Get
-                   , App.SqlServer.API
-                   , App.SqlServer.Handler.Get
-                   , App.SqlServer.Handler.Post
-                   , App.DB.RedisPool
-                   , App.RedisTest.API
-                   , App.RedisTest.Handler.RedisGet
-                   , App.Auth.BasicAuth
-                   , App.Auth.Auth
+                   , App.Auth.UserStore
+                   , App.Auth.Handler
+                   , App.Server.API
+                   , App.Server.Router
+                   , App.API.Greeting.API
+                   , App.API.Greeting.Types
+                   , App.API.Greeting.Handler.Position
+                   , App.API.Greeting.Handler.Hello
+                   , App.API.Marketing.API
+                   , App.API.Marketing.Types
+                   , App.API.Marketing.Handler
+                   , App.API.Person.API
+                   , App.API.Person.Types
+                   , App.API.Person.Handler.Age
+                   , App.API.Person.Handler.Name
+                   , App.API.Person.Handler.Name2
+                   , App.API.Person.Handler.WithError
+                   , App.API.Message.API
+                   , App.API.Message.Handler.Post
+                   , App.API.Message.Handler.Get
+                   , App.API.SqlServerDemo.API
+                   , App.API.SqlServerDemo.Handler.Get
+                   , App.API.SqlServerDemo.Handler.Post
+                   , App.API.Redis.API
+                   , App.API.Redis.Handler.Get
   hs-source-dirs:    src
   default-language:  Haskell2010
   ghc-options:       -Wall -threaded

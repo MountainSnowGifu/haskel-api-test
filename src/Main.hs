@@ -1,10 +1,10 @@
 module Main where
 
-import App.Config (Config (..))
-import App.DB (createMSSQLPool)
-import App.DB.RedisPool (createRedisConn)
-import App.DB.SQLiteDB (initDB)
-import App.Server (runServant)
+import App.Core.Config (Config (..))
+import App.Infrastructure.DB.Redis (createRedisConn)
+import App.Infrastructure.DB.SQLite (initDB)
+import App.Infrastructure.DB.SqlServer (createMSSQLPool)
+import App.Server.Router (runServant)
 import qualified Database.MSSQLServer.Connection as MSSQL
 import qualified Database.Redis as Redis
 

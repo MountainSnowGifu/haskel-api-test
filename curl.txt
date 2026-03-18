@@ -21,6 +21,18 @@ curl -v -H "Authorization: Bearer a841092b-e0d4-4ccd-bd74-505905ae14e7" http://1
 
 
 
+Core (Config, Env)
+  ↑
+Infrastructure (DB/*, Logger/*)
+  ↑
+Middleware / Auth
+  ↑
+Feature (Greeting, Person, Message, SqlServerDemo, Redis ...)
+  ↑
+Server (API, Router)
+  ↑
+Main
+Core は外部ライブラリのみに依存し、上位層が下位層を参照する一方向の依存構造になっています。
 
 https://hoogle.haskell.org/
 
