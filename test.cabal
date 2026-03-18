@@ -5,15 +5,33 @@ build-type:          Simple
 
 executable test
   main-is:           Main.hs
-  other-modules:     App.Types
+  other-modules:     App.Config
+                   , App.Env
                    , App.API
-                   , App.Config
                    , App.Server
-                   , App.Server1
-                   , App.Server2
-                   , App.Server3
-                   , App.Server4
                    , App.DB
+                   , App.DB.Types
+                   , App.DB.SqlserverPool
+                   , App.DB.SQLiteDB
+                   , App.Greeting.API
+                   , App.Greeting.Types
+                   , App.Greeting.Handler.Position
+                   , App.Greeting.Handler.Hello
+                   , App.Marketing.API
+                   , App.Marketing.Types
+                   , App.Marketing.Handler
+                   , App.Person.API
+                   , App.Person.Types
+                   , App.Person.Handler.Age
+                   , App.Person.Handler.Name
+                   , App.Person.Handler.Name2
+                   , App.Person.Handler.WithError
+                   , App.Message.API
+                   , App.Message.Handler.Post
+                   , App.Message.Handler.Get
+                   , App.SqlServer.API
+                   , App.SqlServer.Handler.Get
+                   , App.SqlServer.Handler.Post
   hs-source-dirs:    src
   default-language:  Haskell2010
   ghc-options:       -Wall -threaded

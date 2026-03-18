@@ -1,20 +1,10 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Main where
 
 import App.Config (Config (..))
-import App.DB (createMSSQLPool, withMSSQLConn)
-import App.Server
+import App.DB (createMSSQLPool)
+import App.DB.SQLiteDB (initDB)
+import App.Server (runServant)
 import Database.MSSQLServer.Connection
-import Database.MSSQLServer.Query
-import Database.SQLite.Simple (execute_, withConnection)
-import Database.SQLite.Simple.Types hiding (Only)
-
-initDB :: FilePath -> IO ()
-initDB dbfile = withConnection dbfile $ \conn ->
-  execute_
-    conn
-    (Query "CREATE TABLE IF NOT EXISTS messages (msg text not null)")
 
 main :: IO ()
 main = do
@@ -32,12 +22,6 @@ main = do
 
   -- プールを生成 (最大 10 コネクション)
   pool <- createMSSQLPool info 10
-
-  -- プールからコネクションを借りてクエリを実行
-  -- withMSSQLConn は bracket で囲まれているので例外時も返却される
-  withMSSQLConn pool $ \conn -> do
-    [Only i] <- sql conn "SELECT 2 + 2" :: IO [Only Int]
-    print i
 
   let dbname = "mydb.db"
   initDB dbname
