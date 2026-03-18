@@ -5,14 +5,15 @@ module App.API.SqlServerDemo.Handler.Get
   )
 where
 
+import App.Core.Env (AppMSql, RegisterEnv (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
-import App.Infrastructure.DB.Types (MSSQLPool)
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Reader (asks)
 import Database.MSSQLServer.Query
-import Servant (Handler)
 
-getSqlserver :: MSSQLPool -> Handler String
-getSqlserver pool =
+getSqlserver :: AppMSql String
+getSqlserver = do
+  pool <- asks sqlPool
   liftIO $ withMSSQLConn pool $ \conn -> do
     [Only i] <- sql conn "SELECT 2 + 2" :: IO [Only Int]
     print i
