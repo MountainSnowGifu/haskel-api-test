@@ -7,13 +7,13 @@ module App.Server.API
   )
 where
 
-import App.API.Greeting.API (GreetingAPI)
-import App.API.Marketing.API (MarketingAPI)
-import App.API.Message.API (MessageAPI)
-import App.API.Person.API (PersonAPI)
-import App.API.Redis.API (RedisAPI)
-import App.API.SqlServerDemo.API (SqlServerAPI)
-import App.Auth.Handler (LoginAPI)
+import App.Presentation.Auth.API (LoginAPI)
+import App.Presentation.Greeting.API (GreetingAPI)
+import App.Presentation.Marketing.API (MarketingAPI)
+import App.Presentation.Message.API (MessageAPI)
+import App.Presentation.Person.API (PersonAPI)
+import App.Presentation.Redis.API (RedisAPI)
+import App.Presentation.SqlServerDemo.API (SqlServerAPI)
 import Servant
 
 type API = GreetingAPI :<|> MarketingAPI :<|> PersonAPI :<|> MessageAPI :<|> SqlServerAPI :<|> RedisAPI :<|> LoginAPI

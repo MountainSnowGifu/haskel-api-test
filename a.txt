@@ -1,0 +1,48 @@
+DDD レイヤー構成案
+
+App/
+├── Domain/               ← ビジネスルール（外部依存なし）
+│   ├── Auth/
+│   │   ├── Entity.hs     -- User エンティティ
+│   │   └── Repository.hs -- UserRepository 型クラス（インターフェース）
+│   └── Message/
+│       ├── Entity.hs     -- Message エンティティ
+│       └── Repository.hs -- MessageRepository 型クラス
+│
+├── Application/          ← ユースケース（Domain を orchestrate）
+│   ├── Auth/
+│   │   └── UseCase.hs    -- login, generateToken
+│   └── Message/
+│       └── UseCase.hs    -- getMessages, postMessage
+│
+├── Infrastructure/       ← Repository の実装（DB ライブラリ依存）
+│   ├── DB/               -- 接続管理（現状維持）
+│   ├── Repository/
+│   │   ├── MessageSQLite.hs
+│   │   └── UserInMemory.hs
+│   └── Logger/
+│
+├── Presentation/         ← HTTP 層（Servant 型 + Handler）
+│   ├── Auth/
+│   │   ├── API.hs        -- LoginAPI 型
+│   │   └── Handler.hs    -- loginHandler（Application を呼ぶだけ）
+│   └── Message/
+│       ├── API.hs
+│       └── Handler.hs
+│
+├── Core/
+├── Middleware/
+└── Server/
+
+リファクタリング
+
+アーキテクチャのポイント:
+
+依存の方向が一方向に保たれています：
+
+
+Presentation → Application → Domain ← Infrastructure
+Domain は外部ライブラリに依存しない（Effectful の型クラスだけ）
+Application は Domain のエフェクトを制約として受け取るだけ
+Infrastructure が Domain のエフェクトを解釈（interpret）
+Presentation の Handler でエフェクトスタックを組み立てて runEff で IO に変換

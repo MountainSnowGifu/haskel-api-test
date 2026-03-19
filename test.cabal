@@ -14,31 +14,44 @@ executable test
                    , App.Infrastructure.Logger.CsvLogger
                    , App.Infrastructure.Logger.CsvLogger2
                    , App.Middleware.TokenAuth
-                   , App.Auth.UserStore
-                   , App.Auth.Handler
+                   , App.Domain.Auth.Entity
+                   , App.Domain.Auth.Repository
+                   , App.Application.Auth.UseCase
+                   , App.Infrastructure.Repository.UserInMemory
+                   , App.Infrastructure.Repository.TokenRedis
+                   , App.Domain.Message.Entity
+                   , App.Domain.Message.Repository
+                   , App.Application.Message.UseCase
+                   , App.Infrastructure.Repository.MessageSQLite
+                   , App.Presentation.Auth.API
+                   , App.Presentation.Auth.Handler
+                   , App.Domain.Greeting.Entity
+                   , App.Application.Greeting.UseCase
+                   , App.Presentation.Greeting.API
+                   , App.Presentation.Greeting.Handler
+                   , App.Domain.Marketing.Entity
+                   , App.Application.Marketing.UseCase
+                   , App.Presentation.Marketing.API
+                   , App.Presentation.Marketing.Handler
+                   , App.Domain.Person.Entity
+                   , App.Application.Person.UseCase
+                   , App.Presentation.Message.API
+                   , App.Presentation.Message.Handler
+                   , App.Presentation.Person.API
+                   , App.Presentation.Person.Handler
+                   , App.Domain.Redis.Repository
+                   , App.Application.Redis.UseCase
+                   , App.Infrastructure.Repository.RedisValue
+                   , App.Presentation.Redis.API
+                   , App.Presentation.Redis.Handler
+                   , App.Domain.SqlServerDemo.Entity
+                   , App.Domain.SqlServerDemo.Repository
+                   , App.Application.SqlServerDemo.UseCase
+                   , App.Infrastructure.Repository.SqlServerMSSQL
+                   , App.Presentation.SqlServerDemo.API
+                   , App.Presentation.SqlServerDemo.Handler
                    , App.Server.API
                    , App.Server.Router
-                   , App.API.Greeting.API
-                   , App.API.Greeting.Types
-                   , App.API.Greeting.Handler.Position
-                   , App.API.Greeting.Handler.Hello
-                   , App.API.Marketing.API
-                   , App.API.Marketing.Types
-                   , App.API.Marketing.Handler
-                   , App.API.Person.API
-                   , App.API.Person.Types
-                   , App.API.Person.Handler.Age
-                   , App.API.Person.Handler.Name
-                   , App.API.Person.Handler.Name2
-                   , App.API.Person.Handler.WithError
-                   , App.API.Message.API
-                   , App.API.Message.Handler.Post
-                   , App.API.Message.Handler.Get
-                   , App.API.SqlServerDemo.API
-                   , App.API.SqlServerDemo.Handler.Get
-                   , App.API.SqlServerDemo.Handler.Post
-                   , App.API.Redis.API
-                   , App.API.Redis.Handler.Get
   hs-source-dirs:    src
   default-language:  Haskell2010
   ghc-options:       -Wall -threaded
