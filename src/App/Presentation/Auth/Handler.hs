@@ -26,8 +26,8 @@ import Servant
 --     そして AuthError を HTTP エラーにマッピング
 loginHandler :: Connection -> LoginRequest -> Handler TokenResponse
 loginHandler conn req = do
-  let uname = Username (loginUsername req)
-      pwd = Password (loginPassword req)
+  let uname = Username (username req)
+      pwd = Password (password req)
   result <-
     liftIO $
       runEff $

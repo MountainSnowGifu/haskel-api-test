@@ -19,8 +19,8 @@ import Servant
 --   Domain の Username/Password とは別の型。
 --   Presentation 層が HTTP の関心事（JSON フォーマット等）を担う。
 data LoginRequest = LoginRequest
-  { loginUsername :: T.Text,
-    loginPassword :: T.Text
+  { username :: T.Text,
+    password :: T.Text
   }
   deriving (Show, Generic)
 

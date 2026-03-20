@@ -50,6 +50,12 @@ executable test
                    , App.Infrastructure.Repository.SqlServerMSSQL
                    , App.Presentation.SqlServerDemo.API
                    , App.Presentation.SqlServerDemo.Handler
+                   , App.Domain.Task.Entity
+                   , App.Domain.Task.Repository
+                   , App.Application.Task.UseCase
+                   , App.Infrastructure.Repository.TaskSQLServer
+                   , App.Presentation.Task.API
+                   , App.Presentation.Task.Handler
                    , App.Server.API
                    , App.Server.Router
   hs-source-dirs:    src

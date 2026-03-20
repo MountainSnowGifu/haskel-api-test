@@ -26,6 +26,7 @@ newtype Token = Token {unToken :: T.Text}
 --   認証ドメインの責務外なので含めない
 data User = User
   { userUsername :: Username,
-    userPassword :: Password
+    userPassword :: Password,
+    userUserId :: Int
   }
   deriving (Show, Eq)

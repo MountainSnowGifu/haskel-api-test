@@ -17,7 +17,13 @@ curl -v http://john:shhhh@127.0.0.1:8081/redisget 2>&1 ; echo
 
 curl -X POST http://127.0.0.1:8081/login -H "Content-Type: application/json" -d '{"username": "john", "password": "shhhh"}' 2>&1 ; echo
 
-curl -v -H "Authorization: Bearer a841092b-e0d4-4ccd-bd74-505905ae14e7" http://127.0.0.1:8081/age 2>&1 ; echo
+curl -v -H "Authorization: Bearer f1c00793-d3db-4c60-bf83-218d4db905ec" http://127.0.0.1:8081/age 2>&1 ; echo
+
+curl -v -H "Authorization: Bearer f1c00793-d3db-4c60-bf83-218d4db905ec" http://127.0.0.1:8081/task 2>&1 ; echo
+
+curl -v http://127.0.0.1:8081/task 2>&1 ; echo
+
+curl -v -H "Authorization: Bearer f141bb1a-5e64-40e0-89a4-e58fcbdcc9bd" http://127.0.0.1:8081/task-all 2>&1 ; echo
 
 
 

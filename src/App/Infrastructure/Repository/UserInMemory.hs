@@ -23,8 +23,8 @@ import Effectful.Dispatch.Dynamic (interpret)
 --   本番では DB を参照するインタープリタ（runUserRepoPostgres 等）に差し替えられる
 users :: [User]
 users =
-  [ User (Username "john") (Password "shhhh"),
-    User (Username "foo") (Password "bar")
+  [ User (Username "john") (Password "shhhh") 1,
+    User (Username "foo") (Password "bar") 2
   ]
 
 userMap :: Map.Map T.Text User
