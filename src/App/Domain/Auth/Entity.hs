@@ -2,6 +2,7 @@ module App.Domain.Auth.Entity
   ( Username (..),
     Password (..),
     Token (..),
+    UserId (..),
     User (..),
   )
 where
@@ -20,6 +21,10 @@ newtype Password = Password {unPassword :: T.Text}
 newtype Token = Token {unToken :: T.Text}
   deriving (Show, Eq)
 
+-- | ユーザー ID（Int と区別できる独立した型）
+newtype UserId = UserId {unUserId :: Int}
+  deriving (Show, Eq, Ord)
+
 -- | 認証ユーザーのドメインエンティティ
 --
 --   サイト情報（旧 UserStore の site フィールド）は
@@ -27,6 +32,6 @@ newtype Token = Token {unToken :: T.Text}
 data User = User
   { userUsername :: Username,
     userPassword :: Password,
-    userUserId :: Int
+    userUserId :: UserId
   }
   deriving (Show, Eq)

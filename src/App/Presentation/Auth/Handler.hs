@@ -7,8 +7,9 @@ where
 
 import App.Application.Auth.UseCase (AuthError (..), login)
 import App.Domain.Auth.Entity (Password (..), Token (..), Username (..))
+import App.Infrastructure.DB.Types (MSSQLPool)
 import App.Infrastructure.Repository.TokenRedis (runTokenRedis)
-import App.Infrastructure.Repository.UserInMemory (runUserRepoInMemory)
+import App.Infrastructure.Repository.UserSQLServer (runUserRepoSqlServer)
 import App.Presentation.Auth.API (LoginRequest (..), TokenResponse (..))
 import Control.Monad.IO.Class (liftIO)
 import Database.Redis (Connection)
@@ -17,22 +18,18 @@ import Servant
 
 -- | ログインハンドラ
 --
---   型の流れ:
---     Eff '[UserRepo, TokenStore, IOE] (Either AuthError Token)
---       → (runUserRepoInMemory) → Eff '[TokenStore, IOE] (Either AuthError Token)
---       → (runTokenRedis conn)  → Eff '[IOE] (Either AuthError Token)
---       → (runEff)              → IO (Either AuthError Token)
---       → (liftIO)              → Handler (Either AuthError Token)
---     そして AuthError を HTTP エラーにマッピング
-loginHandler :: Connection -> LoginRequest -> Handler TokenResponse
-loginHandler conn req = do
+--   フロー:
+--     1. login UseCase が UserRepo (SQL Server) で username を検索
+--     2. パスワード照合 → トークン発行 → Redis に userId を保存
+loginHandler :: MSSQLPool -> Connection -> LoginRequest -> Handler TokenResponse
+loginHandler pool redisConn req = do
   let uname = Username (username req)
       pwd = Password (password req)
   result <-
     liftIO $
       runEff $
-        runUserRepoInMemory $
-          runTokenRedis conn $
+        runUserRepoSqlServer pool $
+          runTokenRedis redisConn $
             login uname pwd
   case result of
     Left UserNotFound -> throwError err401 {errBody = "User not found"}

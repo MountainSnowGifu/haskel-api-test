@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
 module App.Infrastructure.Repository.TokenRedis
@@ -10,9 +9,10 @@ module App.Infrastructure.Repository.TokenRedis
   )
 where
 
-import App.Domain.Auth.Entity (Token (..), Username (..))
+import App.Domain.Auth.Entity (Token (..), UserId (..), User (..))
 import App.Domain.Auth.Repository (TokenStore (..))
 import App.Infrastructure.DB.Redis (withRedisConn)
+import qualified Data.ByteString.Char8 as BS8
 import Data.Text.Encoding (encodeUtf8)
 import Database.Redis (Connection, expire, set)
 import Effectful
@@ -28,8 +28,8 @@ runTokenRedis ::
   Eff (TokenStore : es) a ->
   Eff es a
 runTokenRedis conn = interpret $ \_ -> \case
-  StoreToken (Token tok) (Username uname) ttl ->
+  StoreToken (Token tok) (User _ _ (UserId uid)) ttl ->
     liftIO $ withRedisConn conn $ do
-      _ <- set (encodeUtf8 tok) (encodeUtf8 uname)
+      _ <- set (encodeUtf8 tok) (BS8.pack (show uid))
       _ <- expire (encodeUtf8 tok) ttl
       return ()

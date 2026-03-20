@@ -18,6 +18,7 @@ executable test
                    , App.Domain.Auth.Repository
                    , App.Application.Auth.UseCase
                    , App.Infrastructure.Repository.UserInMemory
+                   , App.Infrastructure.Repository.UserSQLServer
                    , App.Infrastructure.Repository.TokenRedis
                    , App.Domain.Message.Entity
                    , App.Domain.Message.Repository

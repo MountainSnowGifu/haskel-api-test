@@ -21,3 +21,6 @@ timestamp,method,path,status_code,latency_ms
 2026-03-20T02:40:42,GET,/age,200,0
 2026-03-20T02:41:47,GET,/task,200,8
 2026-03-20T02:42:30,GET,/task,401,0
+2026-03-20T03:10:40,GET,/task,401,1
+2026-03-20T03:11:00,GET,/age,200,0
+2026-03-20T03:37:55,POST,/login,200,12

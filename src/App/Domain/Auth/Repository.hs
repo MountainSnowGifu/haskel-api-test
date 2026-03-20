@@ -6,37 +6,38 @@
 
 module App.Domain.Auth.Repository
   ( UserRepo (..),
+    findByUserId,
     findByUsername,
     TokenStore (..),
     storeToken,
   )
 where
 
-import App.Domain.Auth.Entity (Token, User, Username)
+import App.Domain.Auth.Entity (Token, User, UserId, Username)
 import Effectful
 import Effectful.Dispatch.Dynamic (send)
 
 -- | ユーザー検索エフェクト
 --
---   FindByUsername :: Username -> UserRepo m (Maybe User)
---     Username を渡すと Maybe User が返る操作を宣言する
---     「どう取得するか」はインタープリタ（Infrastructure）が決める
+--   FindByUserId  : トークン認証時、Redis から取得した UserId で User を引く
+--   FindByUsername: ログイン時、username でユーザーを検索する
 data UserRepo :: Effect where
+  FindByUserId :: UserId -> UserRepo m (Maybe User)
   FindByUsername :: Username -> UserRepo m (Maybe User)
 
 type instance DispatchOf UserRepo = Dynamic
+
+findByUserId :: (UserRepo :> es) => UserId -> Eff es (Maybe User)
+findByUserId = send . FindByUserId
 
 findByUsername :: (UserRepo :> es) => Username -> Eff es (Maybe User)
 findByUsername = send . FindByUsername
 
 -- | トークン保存エフェクト
---
---   StoreToken :: Token -> Username -> Integer -> TokenStore m ()
---     Integer は TTL（秒）。Application 層がセッション有効期限を決める。
 data TokenStore :: Effect where
-  StoreToken :: Token -> Username -> Integer -> TokenStore m ()
+  StoreToken :: Token -> User -> Integer -> TokenStore m ()
 
 type instance DispatchOf TokenStore = Dynamic
 
-storeToken :: (TokenStore :> es) => Token -> Username -> Integer -> Eff es ()
-storeToken tok uname ttl = send (StoreToken tok uname ttl)
+storeToken :: (TokenStore :> es) => Token -> User -> Integer -> Eff es ()
+storeToken tok user ttl = send (StoreToken tok user ttl)

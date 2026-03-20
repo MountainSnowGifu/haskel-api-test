@@ -42,7 +42,7 @@ app servantConfig sqliteDbName sqlserverPool redisConn =
         serveWithContext
           combinedAPI
           (mkTokenAuthHandler redisConn :. EmptyContext)
-          ( loginHandler redisConn
+          ( loginHandler sqlserverPool redisConn
               :<|> marketing
               :<|> hoistServer (Proxy :: Proxy PersonAPI) (nt servantConfig) (handlerAge :<|> handlerName :<|> handlerName2 :<|> handlerWithError)
               :<|> (postMessageHandler sqliteDbName :<|> getMessagesHandler sqliteDbName)

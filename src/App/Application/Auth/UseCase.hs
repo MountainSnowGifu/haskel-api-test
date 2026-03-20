@@ -13,49 +13,37 @@ import Data.UUID (toText)
 import Data.UUID.V4 (nextRandom)
 import Effectful
 
--- | 認証ドメインのエラー型
---
---   Presentation 層でこれを HTTP エラーにマッピングする
 data AuthError = UserNotFound | InvalidPassword
   deriving (Show, Eq)
 
--- | セッション有効期限（秒）
---
---   これは「1時間でセッションが切れる」というビジネスルールなので
---   Application 層に置く
 tokenTTL :: Integer
 tokenTTL = 3600
 
--- | UUID v4 トークンを生成する IO アクション
 generateToken :: IO Token
 generateToken = Token . toText <$> nextRandom
 
 -- | ログインユースケース
 --
---   型: (UserRepo :> es, TokenStore :> es, IOE :> es)
---        => Username -> Password -> Eff es (Either AuthError Token)
+--   型: (UserRepo :> es, TokenStore :> es, IOE :> es) => Username -> Password -> Eff es (Either AuthError Token)
 --
 --   フロー:
---     1. UserRepo でユーザーを検索 → Nothing なら UserNotFound
+--     1. UserRepo で username を検索 → 見つからなければ UserNotFound
 --     2. パスワードを照合 → 不一致なら InvalidPassword
 --     3. トークン生成（IO）→ TokenStore で保存
 --     4. Right Token を返す
---
---   ポイント: HTTP も Redis の詳細も知らない。
---   「UserRepo と TokenStore が使える環境」であれば動く。
 login ::
   (UserRepo :> es, TokenStore :> es, IOE :> es) =>
   Username ->
   Password ->
   Eff es (Either AuthError Token)
-login username password = do
-  mUser <- findByUsername username
+login uname inputPwd = do
+  mUser <- findByUsername uname
   case mUser of
     Nothing -> return $ Left UserNotFound
     Just user ->
-      if userPassword user == password
+      if userPassword user == inputPwd
         then do
           tok <- liftIO generateToken
-          storeToken tok username tokenTTL
+          storeToken tok user tokenTTL
           return $ Right tok
         else return $ Left InvalidPassword
