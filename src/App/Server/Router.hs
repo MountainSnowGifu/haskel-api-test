@@ -20,7 +20,7 @@ import App.Presentation.Person.Handler (handlerAge, handlerName, handlerName2, h
 import App.Presentation.Redis.Handler (redisGet)
 import App.Presentation.SqlServerDemo.Handler (getSqlserverHandler, postSqlserverHandler)
 import App.Presentation.Task.Handler (deleteTaskHandler, getTaskAllHandler, getTaskHandler, patchTaskHandler, postTaskHandler, putTaskHandler)
-import App.Server.API (combinedAPI)
+import App.Server.API (RoomState, combinedAPI, newRoomState, wsHandler)
 import Database.Redis (Connection)
 import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Cors
@@ -34,8 +34,8 @@ corsPolicy =
       corsRequestHeaders = ["Content-Type", "Authorization"]
     }
 
-app :: Config -> SqliteDb -> MSSQLPool -> Connection -> Application
-app servantConfig sqliteDbName sqlserverPool redisConn =
+app :: Config -> SqliteDb -> MSSQLPool -> Connection -> RoomState -> Application
+app servantConfig sqliteDbName sqlserverPool redisConn rooms =
   csvLogger "access.csv" $
     csvLogger2 "access2.csv" $
       cors (const $ Just corsPolicy) $
@@ -50,7 +50,10 @@ app servantConfig sqliteDbName sqlserverPool redisConn =
               :<|> redisGet redisConn
               :<|> (position :<|> hello)
               :<|> (getTaskHandler sqlserverPool :<|> getTaskAllHandler sqlserverPool :<|> postTaskHandler sqlserverPool :<|> putTaskHandler sqlserverPool :<|> patchTaskHandler sqlserverPool :<|> deleteTaskHandler sqlserverPool)
+              :<|> wsHandler rooms
           )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()
-runServant servantConfig sqliteDbName sqlserverPool redisConn = run (port servantConfig) (app servantConfig sqliteDbName sqlserverPool redisConn)
+runServant servantConfig sqliteDbName sqlserverPool redisConn = do
+  rooms <- newRoomState
+  run (port servantConfig) (app servantConfig sqliteDbName sqlserverPool redisConn rooms)

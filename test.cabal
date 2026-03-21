@@ -88,3 +88,6 @@ executable test
     , servant-client
     , uuid
     , effectful-core
+    , servant-websockets
+    , websockets
+    , stm
