@@ -19,12 +19,55 @@ curl -X POST http://127.0.0.1:8081/login -H "Content-Type: application/json" -d 
 
 curl -v -H "Authorization: Bearer f1c00793-d3db-4c60-bf83-218d4db905ec" http://127.0.0.1:8081/age 2>&1 ; echo
 
-curl -v -H "Authorization: Bearer f1c00793-d3db-4c60-bf83-218d4db905ec" http://127.0.0.1:8081/task 2>&1 ; echo
+curl -v -H "Authorization: Bearer 2a538e25-d335-4fb6-9405-9988a3dc6998" http://127.0.0.1:8081/task 2>&1 ; echo
+
+curl -v -H "Authorization: Bearer 9c21d220-8178-4264-a1d2-af34202c0c16" http://127.0.0.1:8081/task/1 2>&1 ; echo
 
 curl -v http://127.0.0.1:8081/task 2>&1 ; echo
 
-curl -v -H "Authorization: Bearer f141bb1a-5e64-40e0-89a4-e58fcbdcc9bd" http://127.0.0.1:8081/task-all 2>&1 ; echo
+curl -v -H "Authorization: Bearer 2a538e25-d335-4fb6-9405-9988a3dc6998" http://127.0.0.1:8081/task-all 2>&1 ; echo
 
+curl -v \
+  -H "Authorization: Bearer 9c21d220-8178-4264-a1d2-af34202c0c16" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "taskId": 0,
+    "taskUserId": 1,
+    "taskTitle": "買い物に行く",
+    "taskDescription": "牛乳とパンを買う",
+    "taskStatus": "Todo",
+    "taskPriority": "Medium",
+    "taskDueDate": "2026-03-25",
+    "taskCreatedAt": "2026-03-21T10:00:00Z",
+    "taskUpdatedAt": "2026-03-21T10:00:00Z"
+  }' \
+  http://127.0.0.1:8081/task 2>&1 ; echo
+
+curl -v \
+  -X PUT \
+  -H "Authorization: Bearer 9c21d220-8178-4264-a1d2-af34202c0c16" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "taskTitle": "買い物に行く（更新）",
+    "taskDescription": "牛乳とパンと卵を買う",
+    "taskStatus": "InProgress",
+    "taskPriority": "High",
+    "taskDueDate": "2026-03-26"
+  }' \
+  http://127.0.0.1:8081/task/1 2>&1 ; echo
+
+curl -X POST http://localhost:8081/task \
+  -H "Authorization: Bearer 9c21d220-8178-4264-a1d2-af34202c0c16" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "taskTitle": "買い物",
+    "taskDescription": "牛乳を買う",
+    "taskStatus": "Todo",
+    "taskPriority": "Medium",
+    "taskDueDate": "2026-03-22",
+    "taskCreatedAt": "2026-03-21T12:00:00",
+    "taskUpdatedAt": "2026-03-21T12:00:00"
+  }'
 
 
 Core (Config, Env)

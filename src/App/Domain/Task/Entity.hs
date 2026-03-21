@@ -37,19 +37,3 @@ data Task = Task
     taskUpdatedAt :: Text
   }
   deriving (Show, Eq, Generic)
-
-instance FromJSON Task
-
-instance ToJSON Task
-
--- {
---   "id": 101,
---   "userId": 1,
---   "title": "買い物に行く",
---   "description": "牛乳とパンを買う",
---   "status": "todo",
---   "priority": "medium",
---   "dueDate": "2026-03-20",
---   "createdAt": "2026-03-19T10:30:00Z",
---   "updatedAt": "2026-03-19T10:30:00Z"
--- }

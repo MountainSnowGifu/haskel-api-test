@@ -19,7 +19,7 @@ import App.Presentation.Person.API (PersonAPI)
 import App.Presentation.Person.Handler (handlerAge, handlerName, handlerName2, handlerWithError)
 import App.Presentation.Redis.Handler (redisGet)
 import App.Presentation.SqlServerDemo.Handler (getSqlserverHandler, postSqlserverHandler)
-import App.Presentation.Task.Handler (getTaskAllHandler, getTaskHandler, postTaskHandler)
+import App.Presentation.Task.Handler (deleteTaskHandler, getTaskAllHandler, getTaskHandler, patchTaskHandler, postTaskHandler, putTaskHandler)
 import App.Server.API (combinedAPI)
 import Database.Redis (Connection)
 import Network.Wai.Handler.Warp (run)
@@ -30,7 +30,7 @@ corsPolicy :: CorsResourcePolicy
 corsPolicy =
   simpleCorsResourcePolicy
     { corsOrigins = Nothing,
-      corsMethods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      corsMethods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       corsRequestHeaders = ["Content-Type", "Authorization"]
     }
 
@@ -49,7 +49,7 @@ app servantConfig sqliteDbName sqlserverPool redisConn =
               :<|> (getSqlserverHandler sqlserverPool :<|> postSqlserverHandler sqlserverPool)
               :<|> redisGet redisConn
               :<|> (position :<|> hello)
-              :<|> (getTaskHandler sqlserverPool :<|> getTaskAllHandler sqlserverPool :<|> postTaskHandler sqlserverPool)
+              :<|> (getTaskHandler sqlserverPool :<|> getTaskAllHandler sqlserverPool :<|> postTaskHandler sqlserverPool :<|> putTaskHandler sqlserverPool :<|> patchTaskHandler sqlserverPool :<|> deleteTaskHandler sqlserverPool)
           )
 
 runServant :: Config -> String -> MSSQLPool -> Connection -> IO ()

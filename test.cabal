@@ -53,8 +53,11 @@ executable test
                    , App.Presentation.SqlServerDemo.Handler
                    , App.Domain.Task.Entity
                    , App.Domain.Task.Repository
+                   , App.Application.Task.Command
                    , App.Application.Task.UseCase
                    , App.Infrastructure.Repository.TaskSQLServer
+                   , App.Presentation.Task.Request
+                   , App.Presentation.Task.Response
                    , App.Presentation.Task.API
                    , App.Presentation.Task.Handler
                    , App.Server.API

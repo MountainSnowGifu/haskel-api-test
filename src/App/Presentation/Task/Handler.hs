@@ -1,38 +1,62 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module App.Presentation.Task.Handler
   ( getTaskHandler,
     postTaskHandler,
     getTaskAllHandler,
+    putTaskHandler,
+    patchTaskHandler,
+    deleteTaskHandler,
   )
 where
 
-import App.Application.Task.UseCase (getTaskAllResult, getTaskResult, postTaskResult)
+import App.Application.Task.UseCase (deleteTaskResult, getTaskAllResult, getTaskResult, patchTaskResult, postTaskResult, putTaskResult)
 import App.Domain.Auth.Entity (User)
-import App.Domain.Task.Entity (Task)
 import App.Infrastructure.DB.Types (MSSQLPool)
 import App.Infrastructure.Repository.TaskSQLServer (runTaskRepo)
+import App.Presentation.Task.Request (PatchTaskRequest, PostTaskRequest, UpdateTaskRequest, toCreateTaskCommand, toPatchTaskCommand, toUpdateTaskCommand)
+import App.Presentation.Task.Response (DeleteTaskResponse (..), PatchTaskResponse (..), TaskResponse, toTaskResponse)
 import Control.Monad.IO.Class (liftIO)
 import Effectful (runEff)
-import Servant (Handler)
+import Servant (Handler, err404, throwError)
 
--- | GET /task ハンドラ
---
---   AuthProtect "token-auth" により Servant が User を解決して渡す。
---   型の流れ:
---     AuthHandler Request User → User
---       → getTaskHandler pool user
---       → Eff '[TaskRepo, IOE] Task
---       → (runTaskRepo) → Eff '[IOE] Task
---       → (runEff)      → IO Task
---       → (liftIO)      → Handler Task
-getTaskHandler :: MSSQLPool -> User -> Handler Task
-getTaskHandler pool _user =
-  liftIO $ runEff (runTaskRepo pool getTaskResult)
+-- | GET /task/:id ハンドラ
+getTaskHandler :: MSSQLPool -> User -> Int -> Handler TaskResponse
+getTaskHandler pool user tid = do
+  result <- liftIO $ runEff (runTaskRepo pool user (getTaskResult tid))
+  maybe (throwError err404) (return . toTaskResponse) result
 
-getTaskAllHandler :: MSSQLPool -> User -> Handler [Task]
-getTaskAllHandler pool _user =
-  liftIO $ runEff (runTaskRepo pool getTaskAllResult)
+-- | GET /task-all ハンドラ
+getTaskAllHandler :: MSSQLPool -> User -> Handler [TaskResponse]
+getTaskAllHandler pool user = do
+  tasks <- liftIO $ runEff (runTaskRepo pool user getTaskAllResult)
+  return (map toTaskResponse tasks)
 
 -- | POST /task ハンドラ
-postTaskHandler :: MSSQLPool -> User -> Task -> Handler Task
-postTaskHandler pool _user _body =
-  liftIO $ runEff (runTaskRepo pool postTaskResult)
+postTaskHandler :: MSSQLPool -> User -> PostTaskRequest -> Handler TaskResponse
+postTaskHandler pool user body = do
+  task <- liftIO $ runEff (runTaskRepo pool user (postTaskResult (toCreateTaskCommand body)))
+  return (toTaskResponse task)
+
+-- | PUT /task/:id ハンドラ
+putTaskHandler :: MSSQLPool -> User -> Int -> UpdateTaskRequest -> Handler TaskResponse
+putTaskHandler pool user tid body = do
+  result <- liftIO $ runEff (runTaskRepo pool user (putTaskResult tid (toUpdateTaskCommand body)))
+  maybe (throwError err404) (return . toTaskResponse) result
+
+-- | PATCH /task/:id ハンドラ
+patchTaskHandler :: MSSQLPool -> User -> Int -> PatchTaskRequest -> Handler PatchTaskResponse
+patchTaskHandler pool user tid body = do
+  result <- liftIO $ runEff (runTaskRepo pool user (patchTaskResult tid (toPatchTaskCommand body)))
+  case result of
+    Nothing -> throwError err404
+    Just (rowId, status, updatedAt) ->
+      return $ PatchTaskResponse "Task updated successfully" rowId status updatedAt
+
+-- | DELETE /task/:id ハンドラ
+deleteTaskHandler :: MSSQLPool -> User -> Int -> Handler DeleteTaskResponse
+deleteTaskHandler pool user tid = do
+  result <- liftIO $ runEff (runTaskRepo pool user (deleteTaskResult tid))
+  case result of
+    Nothing -> throwError err404
+    Just () -> return $ DeleteTaskResponse "Task deleted successfully"

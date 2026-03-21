@@ -17,7 +17,7 @@ data AuthError = UserNotFound | InvalidPassword
   deriving (Show, Eq)
 
 tokenTTL :: Integer
-tokenTTL = 3600
+tokenTTL = 36000
 
 generateToken :: IO Token
 generateToken = Token . toText <$> nextRandom

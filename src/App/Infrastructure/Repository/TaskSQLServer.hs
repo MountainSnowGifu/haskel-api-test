@@ -10,12 +10,15 @@ module App.Infrastructure.Repository.TaskSQLServer
   )
 where
 
+import App.Domain.Auth.Entity (User (..), UserId (..))
+import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand (..), UpdateTaskCommand (..))
 import App.Domain.Task.Entity (Task (..), TaskPriority (..), TaskStatus (..))
 import App.Domain.Task.Repository (TaskRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, listToMaybe)
 import Data.Text (Text)
+import qualified Data.Text as T
 import Database.MSSQLServer.Query (sql)
 import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
@@ -35,42 +38,46 @@ parsePriority _ = Medium
 --   型シグネチャ:
 --     IOE :> es              -- IO を実行できるエフェクトが必要
 --     => MSSQLPool           -- コネクションプール
+--     -> User                -- 認証済みユーザー
 --     -> Eff (TaskRepo : es) a   -- TaskRepo を含むスタック
 --     -> Eff es a                -- TaskRepo を除いたスタック
 runTaskRepo ::
   (IOE :> es) =>
   MSSQLPool ->
+  User ->
   Eff (TaskRepo : es) a ->
   Eff es a
-runTaskRepo pool = interpret $ \_ -> \case
-  GetTask ->
+runTaskRepo pool user = interpret $ \_ -> \case
+  GetTask tid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
-        sql conn "SELECT TOP 1 id, userId, title, description, status, priority, dueDate, createdAt, updatedAt FROM testdb.dbo.TASKS" ::
+        sql conn ("SELECT id, userId, title, description, status, priority, dueDate, createdAt, updatedAt FROM testdb.dbo.TASKS_NEW WHERE id = " <> T.pack (show tid)) ::
           IO [(Int, Int, Text, Maybe Text, Text, Text, Maybe Text, Text, Text)]
-      let (tid, uid, title, desc, status, priority, dueDate, createdAt, updatedAt) = head rows
       return $
-        Task
-          tid
-          uid
-          title
-          (fromMaybe "" desc)
-          (parseStatus status)
-          (parsePriority priority)
-          (fromMaybe "" dueDate)
-          createdAt
-          updatedAt
+        listToMaybe rows >>= \(rowId, uid, title, desc, status, priority, dueDate, createdAt, updatedAt) ->
+          Just $
+            Task
+              rowId
+              uid
+              title
+              (fromMaybe "" desc)
+              (parseStatus status)
+              (parsePriority priority)
+              (fromMaybe "" dueDate)
+              createdAt
+              updatedAt
   GetTaskAll ->
     liftIO $ withMSSQLConn pool $ \conn -> do
+      let uid = unUserId (userUserId user)
       rows <-
-        sql conn "SELECT id, userId, title, description, status, priority, dueDate, createdAt, updatedAt FROM testdb.dbo.TASKS" ::
+        sql conn ("SELECT id, userId, title, description, status, priority, dueDate, createdAt, updatedAt FROM testdb.dbo.TASKS_NEW WHERE userId = " <> T.pack (show uid)) ::
           IO [(Int, Int, Text, Maybe Text, Text, Text, Maybe Text, Text, Text)]
       return $
         map
-          ( \(tid, uid, title, desc, status, priority, dueDate, createdAt, updatedAt) ->
+          ( \(tid, taskUid, title, desc, status, priority, dueDate, createdAt, updatedAt) ->
               Task
                 tid
-                uid
+                taskUid
                 title
                 (fromMaybe "" desc)
                 (parseStatus status)
@@ -80,6 +87,104 @@ runTaskRepo pool = interpret $ \_ -> \case
                 updatedAt
           )
           rows
-  PostTask ->
-    liftIO $ withMSSQLConn pool $ \_ -> do
-      return $ Task 0 1 "新しいタスク" "説明" Todo Medium "2026-03-20" "2026-03-19T00:00:00Z" "2026-03-19T00:00:00Z"
+  PostTask (CreateTaskCommand tTitle tDesc tStatus tPriority tDueDate tCreatedAt tUpdatedAt) ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      let uid = unUserId (userUserId user)
+          esc = T.replace "'" "''"
+          status = T.pack (show tStatus)
+          priority = T.pack (show tPriority)
+          insertSql =
+            "INSERT INTO testdb.dbo.TASKS_NEW (userId, title, description, status, priority, dueDate, createdAt, updatedAt) "
+              <> "OUTPUT INSERTED.id, INSERTED.userId, INSERTED.title, INSERTED.description, INSERTED.status, INSERTED.priority, INSERTED.dueDate, INSERTED.createdAt, INSERTED.updatedAt "
+              <> "VALUES ("
+              <> T.pack (show uid)
+              <> ", N'"
+              <> esc tTitle
+              <> "', N'"
+              <> esc tDesc
+              <> "', '"
+              <> status
+              <> "', '"
+              <> priority
+              <> "', '"
+              <> esc tDueDate
+              <> "', '"
+              <> esc tCreatedAt
+              <> "', '"
+              <> esc tUpdatedAt
+              <> "')"
+      rows <-
+        sql conn insertSql ::
+          IO [(Int, Int, Text, Maybe Text, Text, Text, Maybe Text, Text, Text)]
+      let (rowId, rUid, title, desc, sts, pri, dueDate, createdAt, updatedAt) = head rows
+      return $
+        Task
+          rowId
+          rUid
+          title
+          (fromMaybe "" desc)
+          (parseStatus sts)
+          (parsePriority pri)
+          (fromMaybe "" dueDate)
+          createdAt
+          updatedAt
+  PutTask tid (UpdateTaskCommand uTitle uDesc uStatus uPriority uDueDate) ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      let esc = T.replace "'" "''"
+          status = T.pack (show uStatus)
+          priority = T.pack (show uPriority)
+          updateSql =
+            "UPDATE testdb.dbo.TASKS_NEW "
+              <> "SET title = N'"
+              <> esc uTitle
+              <> "', description = N'"
+              <> esc uDesc
+              <> "', status = '"
+              <> status
+              <> "', priority = '"
+              <> priority
+              <> "', dueDate = '"
+              <> esc uDueDate
+              <> "', updatedAt = GETDATE() "
+              <> "OUTPUT INSERTED.id, INSERTED.userId, INSERTED.title, INSERTED.description, INSERTED.status, INSERTED.priority, INSERTED.dueDate, INSERTED.createdAt, INSERTED.updatedAt "
+              <> "WHERE id = "
+              <> T.pack (show tid)
+      rows <-
+        sql conn updateSql ::
+          IO [(Int, Int, Text, Maybe Text, Text, Text, Maybe Text, Text, Text)]
+      return $
+        listToMaybe rows >>= \(rowId, rUid, title, desc, sts, pri, dueDate, createdAt, updatedAt) ->
+          Just $
+            Task
+              rowId
+              rUid
+              title
+              (fromMaybe "" desc)
+              (parseStatus sts)
+              (parsePriority pri)
+              (fromMaybe "" dueDate)
+              createdAt
+              updatedAt
+  PatchTask tid (PatchTaskCommand pStatus) ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      let statusText = T.pack (show pStatus)
+          patchSql =
+            "UPDATE testdb.dbo.TASKS_NEW "
+              <> "SET status = '"
+              <> statusText
+              <> "', updatedAt = GETDATE() "
+              <> "OUTPUT INSERTED.id, INSERTED.status, INSERTED.updatedAt "
+              <> "WHERE id = "
+              <> T.pack (show tid)
+      rows <-
+        sql conn patchSql ::
+          IO [(Int, Text, Text)]
+      return $
+        listToMaybe rows >>= \(rowId, sts, updatedAt) ->
+          Just (rowId, parseStatus sts, updatedAt)
+  DeleteTask tid ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      rows <-
+        sql conn ("DELETE FROM testdb.dbo.TASKS_NEW OUTPUT DELETED.id, DELETED.userId WHERE id = " <> T.pack (show tid)) ::
+          IO [(Int, Int)]
+      return $ listToMaybe rows >> Just ()

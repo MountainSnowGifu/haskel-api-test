@@ -5,25 +5,32 @@ module App.Application.Task.UseCase
   ( getTaskResult,
     postTaskResult,
     getTaskAllResult,
+    putTaskResult,
+    patchTaskResult,
+    deleteTaskResult,
   )
 where
 
-import App.Domain.Task.Entity (Task)
-import App.Domain.Task.Repository (TaskRepo, getTask, getTaskAll, postTask)
+import App.Application.Task.Command (CreateTaskCommand, PatchTaskCommand, UpdateTaskCommand)
+import App.Domain.Task.Entity (Task, TaskStatus)
+import App.Domain.Task.Repository (TaskRepo, deleteTask, getTask, getTaskAll, patchTask, postTask, putTask)
+import Data.Text (Text)
 import Effectful
 
--- | GET 用ユースケース
---
---   型: (TaskRepo :> es) => Eff es Task
---
---   DB の種類（MSSQL/PostgreSQL 等）を知らない。
---   「TaskRepo エフェクトが使える環境」であれば動く。
-getTaskResult :: (TaskRepo :> es) => Eff es Task
+getTaskResult :: (TaskRepo :> es) => Int -> Eff es (Maybe Task)
 getTaskResult = getTask
 
 getTaskAllResult :: (TaskRepo :> es) => Eff es [Task]
 getTaskAllResult = getTaskAll
 
--- | POST 用ユースケース
-postTaskResult :: (TaskRepo :> es) => Eff es Task
+postTaskResult :: (TaskRepo :> es) => CreateTaskCommand -> Eff es Task
 postTaskResult = postTask
+
+putTaskResult :: (TaskRepo :> es) => Int -> UpdateTaskCommand -> Eff es (Maybe Task)
+putTaskResult = putTask
+
+patchTaskResult :: (TaskRepo :> es) => Int -> PatchTaskCommand -> Eff es (Maybe (Int, TaskStatus, Text))
+patchTaskResult = patchTask
+
+deleteTaskResult :: (TaskRepo :> es) => Int -> Eff es (Maybe ())
+deleteTaskResult = deleteTask
