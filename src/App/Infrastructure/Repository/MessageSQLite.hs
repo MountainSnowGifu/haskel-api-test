@@ -12,6 +12,7 @@ where
 
 import App.Domain.Message.Entity (Message (..))
 import App.Domain.Message.Repository (MessageRepo (..))
+import App.Infrastructure.DB.Types (SqliteDb (..))
 import Database.SQLite.Simple (execute, query_, withConnection)
 import Database.SQLite.Simple.Types (Only (..))
 import Effectful
@@ -28,10 +29,10 @@ import Effectful.Dispatch.Dynamic (interpret)
 --   interpret の引数 (env, op) の op が各コンストラクタにマッチする
 runMessageRepoSQLite ::
   (IOE :> es) =>
-  FilePath ->
+  SqliteDb ->
   Eff (MessageRepo : es) a ->
   Eff es a
-runMessageRepoSQLite dbfile = interpret $ \_ -> \case
+runMessageRepoSQLite (SqliteDb dbfile) = interpret $ \_ -> \case
   FindAll ->
     liftIO $
       withConnection dbfile $ \conn ->

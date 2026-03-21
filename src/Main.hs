@@ -4,6 +4,7 @@ import App.Core.Config (Config (..))
 import App.Infrastructure.DB.Redis (createRedisConn)
 import App.Infrastructure.DB.SQLite (initDB)
 import App.Infrastructure.DB.SqlServer (createMSSQLPool)
+import App.Infrastructure.DB.Types (SqliteDb (..))
 import App.Server.Router (runServant)
 import qualified Database.MSSQLServer.Connection as MSSQL
 import qualified Database.Redis as Redis
@@ -13,7 +14,7 @@ main = do
   let servantConfig = Config {port = 8081, host = "localhost"}
   print servantConfig
 
-  let sqliteDbName = "mydb.db"
+  let sqliteDbName = SqliteDb "mydb.db"
   initDB sqliteDbName
 
   let sqlserverInfo =

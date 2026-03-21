@@ -6,6 +6,7 @@ where
 
 import App.Application.Message.UseCase (getMessages, postMessage)
 import App.Domain.Message.Entity (Message)
+import App.Infrastructure.DB.Types (SqliteDb)
 import App.Infrastructure.Repository.MessageSQLite (runMessageRepoSQLite)
 import Control.Monad.IO.Class (liftIO)
 import Effectful (runEff)
@@ -18,12 +19,12 @@ import Servant (Handler, NoContent (..))
 --       → (runMessageRepoSQLite) → Eff '[IOE] ()
 --       → (runEff)               → IO ()
 --       → (liftIO)               → Handler ()
-postMessageHandler :: FilePath -> Message -> Handler NoContent
+postMessageHandler :: SqliteDb -> Message -> Handler NoContent
 postMessageHandler dbfile msg = do
   liftIO $ runEff $ runMessageRepoSQLite dbfile $ postMessage msg
   return NoContent
 
 -- | GET /message ハンドラ
-getMessagesHandler :: FilePath -> Handler [Message]
+getMessagesHandler :: SqliteDb -> Handler [Message]
 getMessagesHandler dbfile =
   liftIO $ runEff $ runMessageRepoSQLite dbfile getMessages

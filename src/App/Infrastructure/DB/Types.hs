@@ -1,10 +1,14 @@
 module App.Infrastructure.DB.Types
   ( MSSQLPool,
+    SqliteDb (..),
   )
 where
 
 import Data.Pool (Pool)
 import Database.MSSQLServer.Connection (Connection)
+
+-- | SQLite データベースファイルのパスを表す newtype
+newtype SqliteDb = SqliteDb FilePath
 
 -- | コネクションプールの型エイリアス
 --

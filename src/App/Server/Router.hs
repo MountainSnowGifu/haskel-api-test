@@ -7,7 +7,7 @@ where
 
 import App.Core.Config (Config (..))
 import App.Core.Env (nt)
-import App.Infrastructure.DB.Types (MSSQLPool)
+import App.Infrastructure.DB.Types (MSSQLPool, SqliteDb)
 import App.Infrastructure.Logger.CsvLogger (csvLogger)
 import App.Infrastructure.Logger.CsvLogger2 (csvLogger2)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
@@ -34,7 +34,7 @@ corsPolicy =
       corsRequestHeaders = ["Content-Type", "Authorization"]
     }
 
-app :: Config -> String -> MSSQLPool -> Connection -> Application
+app :: Config -> SqliteDb -> MSSQLPool -> Connection -> Application
 app servantConfig sqliteDbName sqlserverPool redisConn =
   csvLogger "access.csv" $
     csvLogger2 "access2.csv" $
@@ -52,5 +52,5 @@ app servantConfig sqliteDbName sqlserverPool redisConn =
               :<|> (getTaskHandler sqlserverPool :<|> getTaskAllHandler sqlserverPool :<|> postTaskHandler sqlserverPool :<|> putTaskHandler sqlserverPool :<|> patchTaskHandler sqlserverPool :<|> deleteTaskHandler sqlserverPool)
           )
 
-runServant :: Config -> String -> MSSQLPool -> Connection -> IO ()
+runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()
 runServant servantConfig sqliteDbName sqlserverPool redisConn = run (port servantConfig) (app servantConfig sqliteDbName sqlserverPool redisConn)

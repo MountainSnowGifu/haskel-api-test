@@ -10,8 +10,8 @@ module App.Infrastructure.Repository.TaskSQLServer
   )
 where
 
-import App.Domain.Auth.Entity (User (..), UserId (..))
 import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand (..), UpdateTaskCommand (..))
+import App.Domain.Auth.Entity (User (..), UserId (..))
 import App.Domain.Task.Entity (Task (..), TaskPriority (..), TaskStatus (..))
 import App.Domain.Task.Repository (TaskRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
@@ -19,7 +19,7 @@ import App.Infrastructure.DB.Types (MSSQLPool)
 import Data.Maybe (fromMaybe, listToMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
-import Database.MSSQLServer.Query (sql)
+import Database.MSSQLServer.Query (Only (..), sql, withTransaction)
 import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
 
@@ -113,21 +113,25 @@ runTaskRepo pool user = interpret $ \_ -> \case
               <> "', '"
               <> esc tUpdatedAt
               <> "')"
-      rows <-
-        sql conn insertSql ::
-          IO [(Int, Int, Text, Maybe Text, Text, Text, Maybe Text, Text, Text)]
-      let (rowId, rUid, title, desc, sts, pri, dueDate, createdAt, updatedAt) = head rows
-      return $
-        Task
-          rowId
-          rUid
-          title
-          (fromMaybe "" desc)
-          (parseStatus sts)
-          (parsePriority pri)
-          (fromMaybe "" dueDate)
-          createdAt
-          updatedAt
+      withTransaction conn $ do
+        rows <-
+          sql conn insertSql ::
+            IO [(Int, Int, Text, Maybe Text, Text, Text, Maybe Text, Text, Text)]
+        let (rowId, rUid, title, desc, sts, pri, dueDate, createdAt, updatedAt) = head rows
+        _ <-
+          sql conn ("INSERT INTO testdb.dbo.LOGS (logid) OUTPUT INSERTED.logid VALUES (" <> T.pack (show rowId) <> ")") ::
+            IO [Only Int]
+        return $
+          Task
+            rowId
+            rUid
+            title
+            (fromMaybe "" desc)
+            (parseStatus sts)
+            (parsePriority pri)
+            (fromMaybe "" dueDate)
+            createdAt
+            updatedAt
   PutTask tid (UpdateTaskCommand uTitle uDesc uStatus uPriority uDueDate) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let esc = T.replace "'" "''"
