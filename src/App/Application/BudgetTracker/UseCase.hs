@@ -1,17 +1,21 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
 module App.Application.BudgetTracker.UseCase
   ( RecordValidationError (..),
     createRecord,
     fetchAllRecords,
+    fetchSummary,
+    removeRecord,
   )
 where
 
 import App.Application.BudgetTracker.Command (CreateRecordCommand (..))
-import App.Domain.BudgetTracker.Entity (Record)
-import App.Domain.BudgetTracker.Repository (RecordRepo, getRecordsAll, postRecord)
+import App.Domain.BudgetTracker.Entity (Record, Summary (..), summarize)
+import App.Domain.BudgetTracker.Repository (RecordRepo, deleteRecord, getRecordsAll, getRecordsByMonth, postRecord)
+import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, formatTime, getCurrentTime)
 import Effectful
@@ -37,3 +41,11 @@ createRecord cmd = case validateCreate cmd of
   Right valid -> do
     now <- liftIO $ T.pack . formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" <$> getCurrentTime
     Right <$> postRecord valid {cmdCreatedAt = now, cmdUpdatedAt = now}
+
+removeRecord :: (RecordRepo :> es) => Int -> Eff es (Maybe ())
+removeRecord = deleteRecord
+
+fetchSummary :: (RecordRepo :> es) => Text -> Eff es Summary
+fetchSummary month = do
+  records <- getRecordsByMonth month
+  return $ summarize month records

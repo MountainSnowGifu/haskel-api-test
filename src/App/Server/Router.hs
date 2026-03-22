@@ -11,7 +11,7 @@ import App.Infrastructure.Logger.CsvLogger (csvLogger)
 import App.Infrastructure.Repository.ChatSTM (MessageStore, RoomState, newMessageStore, newRoomState)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler)
-import App.Presentation.BudgetTracker.Handler (getRecordsAllHandler, postRecordHandler)
+import App.Presentation.BudgetTracker.Handler (deleteRecordHandler, getRecordsAllHandler, getSummaryHandler, postRecordHandler)
 import App.Presentation.Chat.Handler (ConnStore, newConnStore, wsHandler)
 import App.Presentation.Task.Handler (deleteTaskHandler, getTaskAllHandler, getTaskHandler, patchTaskHandler, postTaskHandler, putTaskHandler)
 import App.Server.API (combinedAPI)
@@ -38,7 +38,7 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
         ( loginHandler sqlserverPool redisConn
             :<|> (getTaskHandler sqlserverPool :<|> getTaskAllHandler sqlserverPool :<|> postTaskHandler sqlserverPool :<|> putTaskHandler sqlserverPool :<|> patchTaskHandler sqlserverPool :<|> deleteTaskHandler sqlserverPool)
             :<|> wsHandler rooms store connStore
-            :<|> (getRecordsAllHandler sqliteDb :<|> postRecordHandler sqliteDb)
+            :<|> (getRecordsAllHandler sqliteDb :<|> postRecordHandler sqliteDb :<|> deleteRecordHandler sqliteDb :<|> getSummaryHandler sqliteDb)
         )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()

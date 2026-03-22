@@ -30,9 +30,9 @@ data TaskValidationError = TitleEmpty | TitleTooLong
 
 validateCreate :: CreateTaskCommand -> Either TaskValidationError CreateTaskCommand
 validateCreate cmd
-  | T.null (cmdTitle cmd)         = Left TitleEmpty
+  | T.null (cmdTitle cmd) = Left TitleEmpty
   | T.length (cmdTitle cmd) > 100 = Left TitleTooLong
-  | otherwise                     = Right cmd
+  | otherwise = Right cmd
 
 -- ---------------------------------------------------------------------------
 -- ユースケース
@@ -44,7 +44,7 @@ createTask ::
   CreateTaskCommand ->
   Eff es (Either TaskValidationError Task)
 createTask cmd = case validateCreate cmd of
-  Left e      -> return (Left e)
+  Left e -> return (Left e)
   Right valid -> do
     now <- liftIO $ T.pack . formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" <$> getCurrentTime
     Right <$> postTask valid {cmdCreatedAt = now, cmdUpdatedAt = now}
