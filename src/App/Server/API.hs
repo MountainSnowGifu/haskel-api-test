@@ -11,12 +11,6 @@ where
 import App.Domain.Auth.Entity (User)
 import App.Presentation.Auth.API (LoginAPI)
 import App.Presentation.Chat.API (ChatAPI)
-import App.Presentation.Greeting.API (GreetingAPI)
-import App.Presentation.Marketing.API (MarketingAPI)
-import App.Presentation.Message.API (MessageAPI)
-import App.Presentation.Person.API (PersonAPI)
-import App.Presentation.Redis.API (RedisAPI)
-import App.Presentation.SqlServerDemo.API (SqlServerAPI)
 import App.Presentation.Task.API (TaskAPI)
 import Servant
 import Servant.Server.Experimental.Auth (AuthServerData)
@@ -27,7 +21,7 @@ import Servant.Server.Experimental.Auth (AuthServerData)
 -- Context から探してハンドラに渡すことができる。
 type instance AuthServerData (AuthProtect "token-auth") = User
 
-type API = LoginAPI :<|> MarketingAPI :<|> PersonAPI :<|> MessageAPI :<|> SqlServerAPI :<|> RedisAPI :<|> GreetingAPI :<|> TaskAPI :<|> ChatAPI
+type API = LoginAPI :<|> TaskAPI :<|> ChatAPI
 
 combinedAPI :: Proxy API
 combinedAPI = Proxy
