@@ -14,7 +14,7 @@ main = do
   let servantConfig = Config {port = 8081, host = "localhost"}
   print servantConfig
 
-  let sqliteDbName = SqliteDb "mydb.db"
+  let sqliteDbName = SqliteDb "BT.db"
   initDB sqliteDbName
 
   let sqlserverInfo =

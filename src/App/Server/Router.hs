@@ -11,6 +11,7 @@ import App.Infrastructure.Logger.CsvLogger (csvLogger)
 import App.Infrastructure.Repository.ChatSTM (MessageStore, RoomState, newMessageStore, newRoomState)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler)
+import App.Presentation.BudgetTracker.Handler (getRecordsAllHandler)
 import App.Presentation.Chat.Handler (ConnStore, newConnStore, wsHandler)
 import App.Presentation.Task.Handler (deleteTaskHandler, getTaskAllHandler, getTaskHandler, patchTaskHandler, postTaskHandler, putTaskHandler)
 import App.Server.API (combinedAPI)
@@ -28,7 +29,7 @@ corsPolicy =
     }
 
 app :: SqliteDb -> MSSQLPool -> Connection -> RoomState -> MessageStore -> ConnStore -> Application
-app _ sqlserverPool redisConn rooms store connStore =
+app sqliteDb sqlserverPool redisConn rooms store connStore =
   csvLogger "access.csv" $
     cors (const $ Just corsPolicy) $
       serveWithContext
@@ -37,11 +38,12 @@ app _ sqlserverPool redisConn rooms store connStore =
         ( loginHandler sqlserverPool redisConn
             :<|> (getTaskHandler sqlserverPool :<|> getTaskAllHandler sqlserverPool :<|> postTaskHandler sqlserverPool :<|> putTaskHandler sqlserverPool :<|> patchTaskHandler sqlserverPool :<|> deleteTaskHandler sqlserverPool)
             :<|> wsHandler rooms store connStore
+            :<|> getRecordsAllHandler sqliteDb
         )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()
-runServant servantConfig sqliteDbName sqlserverPool redisConn = do
+runServant servantConfig sqliteDb sqlserverPool redisConn = do
   rooms <- newRoomState
   store <- newMessageStore
   connStore <- newConnStore
-  run (port servantConfig) (app sqliteDbName sqlserverPool redisConn rooms store connStore)
+  run (port servantConfig) (app sqliteDb sqlserverPool redisConn rooms store connStore)

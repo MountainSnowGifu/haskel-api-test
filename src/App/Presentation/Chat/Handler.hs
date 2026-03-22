@@ -10,13 +10,13 @@ where
 
 import App.Application.Chat.Command (MessageSendCommand (..))
 import App.Application.Chat.UseCase (ValidationError (..), disconnectClient, initConnection, storeMessage, validateMessageSend)
-import App.Domain.Chat.Entity (ChatMessage (..), ConnectedClient (..), ErrorCode (..), errorCodeText)
+import App.Domain.Chat.Entity (ConnectedClient (..), ErrorCode (..), errorCodeText)
 import App.Infrastructure.Repository.ChatSTM (MessageStore, RoomState, runChatRepo)
 import App.Presentation.Chat.Request (ConnectionInitRequest, MessageSendRequest, toConnectionInitCommand, toMessageSendCommand)
 import App.Presentation.Chat.Response (toBroadcastResponse, toConnectionAckResponse)
 import Control.Concurrent.STM (TVar, atomically, modifyTVar, newTVarIO, readTVarIO)
 import Control.Exception (finally)
-import Control.Monad (forever, forM_)
+import Control.Monad (forM_, forever)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, Result (..), Value (..), decode, encode, fromJSON, object, (.=))
 import Data.Aeson.KeyMap qualified as KM

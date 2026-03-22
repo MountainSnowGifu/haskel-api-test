@@ -37,9 +37,9 @@ postTaskHandler :: MSSQLPool -> User -> PostTaskRequest -> Handler TaskResponse
 postTaskHandler pool user body = do
   result <- liftIO $ runEff (runTaskRepo pool user (createTask (toCreateTaskCommand body)))
   case result of
-    Left TitleEmpty   -> throwError err400
+    Left TitleEmpty -> throwError err400
     Left TitleTooLong -> throwError err400
-    Right task        -> return (toTaskResponse task)
+    Right task -> return (toTaskResponse task)
 
 -- | PUT /task/:id ハンドラ
 putTaskHandler :: MSSQLPool -> User -> Int -> UpdateTaskRequest -> Handler TaskResponse
@@ -52,7 +52,7 @@ patchTaskHandler :: MSSQLPool -> User -> Int -> PatchTaskRequest -> Handler Patc
 patchTaskHandler pool user tid body = do
   result <- liftIO $ runEff (runTaskRepo pool user (updateTaskStatus tid (toPatchTaskCommand body)))
   case result of
-    Nothing                        -> throwError err404
+    Nothing -> throwError err404
     Just (rowId, status, updatedAt) ->
       return $ PatchTaskResponse "Task updated successfully" rowId status updatedAt
 

@@ -12,6 +12,8 @@ curl -s -X POST http://localhost:8081/task \
     "taskDueDate": "2026-04-01"
   }'
 
+curl -H "Authorization: Bearer 873b7d9c-4845-46fc-8486-98bb8b1f4f54" http://localhost:8081/api/records 2>&1 ;echo
+
 https://hoogle.haskell.org/
 
 SERVANT

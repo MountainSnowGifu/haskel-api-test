@@ -13,4 +13,13 @@ initDB :: SqliteDb -> IO ()
 initDB (SqliteDb dbfile) = withConnection dbfile $ \conn ->
   execute_
     conn
-    (Query "CREATE TABLE IF NOT EXISTS messages (msg text not null)")
+    ( Query
+        "CREATE TABLE IF NOT EXISTS records \
+        \(id INTEGER PRIMARY KEY, \
+        \user_id INTEGER NOT NULL, \
+        \type TEXT NOT NULL , \
+        \category TEXT NOT NULL, \
+        \amount INTEGER NOT NULL, \
+        \date TEXT NOT NULL, \
+        \memo TEXT NOT NULL)"
+    )
