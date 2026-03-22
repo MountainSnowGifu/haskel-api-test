@@ -6,10 +6,9 @@ module App.Server.Router
 where
 
 import App.Core.Config (Config (..))
-import App.Infrastructure.Repository.ChatSTM (MessageStore, RoomState, newMessageStore, newRoomState)
 import App.Infrastructure.DB.Types (MSSQLPool, SqliteDb)
 import App.Infrastructure.Logger.CsvLogger (csvLogger)
-import App.Infrastructure.Logger.CsvLogger2 (csvLogger2)
+import App.Infrastructure.Repository.ChatSTM (MessageStore, RoomState, newMessageStore, newRoomState)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler)
 import App.Presentation.Chat.Handler (ConnStore, newConnStore, wsHandler)
@@ -28,22 +27,21 @@ corsPolicy =
       corsRequestHeaders = ["Content-Type", "Authorization"]
     }
 
-app :: Config -> SqliteDb -> MSSQLPool -> Connection -> RoomState -> MessageStore -> ConnStore -> Application
-app _ _ sqlserverPool redisConn rooms store connStore =
+app :: SqliteDb -> MSSQLPool -> Connection -> RoomState -> MessageStore -> ConnStore -> Application
+app _ sqlserverPool redisConn rooms store connStore =
   csvLogger "access.csv" $
-    csvLogger2 "access2.csv" $
-      cors (const $ Just corsPolicy) $
-        serveWithContext
-          combinedAPI
-          (mkTokenAuthHandler redisConn :. EmptyContext)
-          ( loginHandler sqlserverPool redisConn
-              :<|> (getTaskHandler sqlserverPool :<|> getTaskAllHandler sqlserverPool :<|> postTaskHandler sqlserverPool :<|> putTaskHandler sqlserverPool :<|> patchTaskHandler sqlserverPool :<|> deleteTaskHandler sqlserverPool)
-              :<|> wsHandler rooms store connStore
-          )
+    cors (const $ Just corsPolicy) $
+      serveWithContext
+        combinedAPI
+        (mkTokenAuthHandler redisConn :. EmptyContext)
+        ( loginHandler sqlserverPool redisConn
+            :<|> (getTaskHandler sqlserverPool :<|> getTaskAllHandler sqlserverPool :<|> postTaskHandler sqlserverPool :<|> putTaskHandler sqlserverPool :<|> patchTaskHandler sqlserverPool :<|> deleteTaskHandler sqlserverPool)
+            :<|> wsHandler rooms store connStore
+        )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()
 runServant servantConfig sqliteDbName sqlserverPool redisConn = do
   rooms <- newRoomState
   store <- newMessageStore
   connStore <- newConnStore
-  run (port servantConfig) (app servantConfig sqliteDbName sqlserverPool redisConn rooms store connStore)
+  run (port servantConfig) (app sqliteDbName sqlserverPool redisConn rooms store connStore)
