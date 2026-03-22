@@ -7,11 +7,13 @@ where
 
 import App.Core.Config (Config (..))
 import App.Core.Env (nt)
+import App.Domain.Chat.Entity (MessageStore, RoomState, newMessageStore, newRoomState)
 import App.Infrastructure.DB.Types (MSSQLPool, SqliteDb)
 import App.Infrastructure.Logger.CsvLogger (csvLogger)
 import App.Infrastructure.Logger.CsvLogger2 (csvLogger2)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler)
+import App.Presentation.Chat.Handler (wsHandler)
 import App.Presentation.Greeting.Handler (hello, position)
 import App.Presentation.Marketing.Handler (marketing)
 import App.Presentation.Message.Handler (getMessagesHandler, postMessageHandler)
@@ -20,7 +22,7 @@ import App.Presentation.Person.Handler (handlerAge, handlerName, handlerName2, h
 import App.Presentation.Redis.Handler (redisGet)
 import App.Presentation.SqlServerDemo.Handler (getSqlserverHandler, postSqlserverHandler)
 import App.Presentation.Task.Handler (deleteTaskHandler, getTaskAllHandler, getTaskHandler, patchTaskHandler, postTaskHandler, putTaskHandler)
-import App.Server.API (RoomState, combinedAPI, newRoomState, wsHandler)
+import App.Server.API (combinedAPI)
 import Database.Redis (Connection)
 import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Cors
@@ -34,8 +36,8 @@ corsPolicy =
       corsRequestHeaders = ["Content-Type", "Authorization"]
     }
 
-app :: Config -> SqliteDb -> MSSQLPool -> Connection -> RoomState -> Application
-app servantConfig sqliteDbName sqlserverPool redisConn rooms =
+app :: Config -> SqliteDb -> MSSQLPool -> Connection -> RoomState -> MessageStore -> Application
+app servantConfig sqliteDbName sqlserverPool redisConn rooms store =
   csvLogger "access.csv" $
     csvLogger2 "access2.csv" $
       cors (const $ Just corsPolicy) $
@@ -50,10 +52,11 @@ app servantConfig sqliteDbName sqlserverPool redisConn rooms =
               :<|> redisGet redisConn
               :<|> (position :<|> hello)
               :<|> (getTaskHandler sqlserverPool :<|> getTaskAllHandler sqlserverPool :<|> postTaskHandler sqlserverPool :<|> putTaskHandler sqlserverPool :<|> patchTaskHandler sqlserverPool :<|> deleteTaskHandler sqlserverPool)
-              :<|> wsHandler rooms
+              :<|> wsHandler rooms store
           )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()
 runServant servantConfig sqliteDbName sqlserverPool redisConn = do
   rooms <- newRoomState
-  run (port servantConfig) (app servantConfig sqliteDbName sqlserverPool redisConn rooms)
+  store <- newMessageStore
+  run (port servantConfig) (app servantConfig sqliteDbName sqlserverPool redisConn rooms store)

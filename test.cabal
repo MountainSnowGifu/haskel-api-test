@@ -51,6 +51,10 @@ executable test
                    , App.Infrastructure.Repository.SqlServerMSSQL
                    , App.Presentation.SqlServerDemo.API
                    , App.Presentation.SqlServerDemo.Handler
+                   , App.Domain.Chat.Entity
+                   , App.Application.Chat.UseCase
+                   , App.Presentation.Chat.API
+                   , App.Presentation.Chat.Handler
                    , App.Domain.Task.Entity
                    , App.Domain.Task.Repository
                    , App.Application.Task.Command
