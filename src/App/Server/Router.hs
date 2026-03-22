@@ -6,13 +6,13 @@ module App.Server.Router
 where
 
 import App.Core.Config (Config (..))
-import App.Domain.Chat.Entity (MessageStore, RoomState, newMessageStore, newRoomState)
+import App.Infrastructure.Repository.ChatSTM (MessageStore, RoomState, newMessageStore, newRoomState)
 import App.Infrastructure.DB.Types (MSSQLPool, SqliteDb)
 import App.Infrastructure.Logger.CsvLogger (csvLogger)
 import App.Infrastructure.Logger.CsvLogger2 (csvLogger2)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler)
-import App.Presentation.Chat.Handler (wsHandler)
+import App.Presentation.Chat.Handler (ConnStore, newConnStore, wsHandler)
 import App.Presentation.Task.Handler (deleteTaskHandler, getTaskAllHandler, getTaskHandler, patchTaskHandler, postTaskHandler, putTaskHandler)
 import App.Server.API (combinedAPI)
 import Database.Redis (Connection)
@@ -28,8 +28,8 @@ corsPolicy =
       corsRequestHeaders = ["Content-Type", "Authorization"]
     }
 
-app :: Config -> SqliteDb -> MSSQLPool -> Connection -> RoomState -> MessageStore -> Application
-app _ _ sqlserverPool redisConn rooms store =
+app :: Config -> SqliteDb -> MSSQLPool -> Connection -> RoomState -> MessageStore -> ConnStore -> Application
+app _ _ sqlserverPool redisConn rooms store connStore =
   csvLogger "access.csv" $
     csvLogger2 "access2.csv" $
       cors (const $ Just corsPolicy) $
@@ -38,11 +38,12 @@ app _ _ sqlserverPool redisConn rooms store =
           (mkTokenAuthHandler redisConn :. EmptyContext)
           ( loginHandler sqlserverPool redisConn
               :<|> (getTaskHandler sqlserverPool :<|> getTaskAllHandler sqlserverPool :<|> postTaskHandler sqlserverPool :<|> putTaskHandler sqlserverPool :<|> patchTaskHandler sqlserverPool :<|> deleteTaskHandler sqlserverPool)
-              :<|> wsHandler rooms store
+              :<|> wsHandler rooms store connStore
           )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()
 runServant servantConfig sqliteDbName sqlserverPool redisConn = do
   rooms <- newRoomState
   store <- newMessageStore
-  run (port servantConfig) (app servantConfig sqliteDbName sqlserverPool redisConn rooms store)
+  connStore <- newConnStore
+  run (port servantConfig) (app servantConfig sqliteDbName sqlserverPool redisConn rooms store connStore)

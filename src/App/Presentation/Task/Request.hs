@@ -15,6 +15,7 @@ import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand (.
 import App.Domain.Task.Entity (TaskPriority, TaskStatus)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
+import qualified Data.Text as T
 import GHC.Generics (Generic)
 
 data UpdateTaskRequest = UpdateTaskRequest
@@ -39,9 +40,7 @@ data PostTaskRequest = PostTaskRequest
     taskDescription :: Text,
     taskStatus :: TaskStatus,
     taskPriority :: TaskPriority,
-    taskDueDate :: Text,
-    taskCreatedAt :: Text,
-    taskUpdatedAt :: Text
+    taskDueDate :: Text
   }
   deriving (Show, Eq, Generic)
 
@@ -50,8 +49,8 @@ instance FromJSON PostTaskRequest
 instance ToJSON PostTaskRequest
 
 toCreateTaskCommand :: PostTaskRequest -> CreateTaskCommand
-toCreateTaskCommand (PostTaskRequest t d s p dd ca ua) =
-  CreateTaskCommand t d s p dd ca ua
+toCreateTaskCommand (PostTaskRequest t d s p dd) =
+  CreateTaskCommand t d s p dd T.empty T.empty
 
 newtype PatchTaskRequest = PatchTaskRequest
   { status :: TaskStatus

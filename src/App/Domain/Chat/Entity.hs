@@ -1,38 +1,26 @@
-{-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module App.Domain.Chat.Entity
   ( ConnectedClient (..),
-    RoomState,
-    newRoomState,
     ChatMessage (..),
-    MessageStore,
-    newMessageStore,
     ErrorCode (..),
     errorCodeText,
   )
 where
 
-import Control.Concurrent.STM (TVar, newTVarIO)
-import Data.Map.Strict (Map)
-import Data.Map.Strict qualified as Map
+import Data.Aeson (ToJSON)
 import Data.Text (Text)
-import Network.WebSockets qualified as WS
+import GHC.Generics (Generic)
 
 -- | ルームに接続中のクライアント情報
 data ConnectedClient = ConnectedClient
-  { clientConn :: WS.Connection,
-    clientUserId :: Text,
+  { clientUserId :: Text,
     clientUserName :: Text,
     clientRoomId :: Text,
     clientConnId :: Text
   }
-
--- | roomId → 接続クライアント一覧
-type RoomState = TVar (Map Text [ConnectedClient])
-
-newRoomState :: IO RoomState
-newRoomState = newTVarIO Map.empty
+  deriving (Generic)
 
 -- ---------------------------------------------------------------------------
 -- メッセージ永続化
@@ -47,12 +35,9 @@ data ChatMessage = ChatMessage
     chatMsgText :: Text,
     chatMsgSentAt :: Text
   }
+  deriving (Generic)
 
--- | roomId → メッセージ履歴（送信順）
-type MessageStore = TVar (Map Text [ChatMessage])
-
-newMessageStore :: IO MessageStore
-newMessageStore = newTVarIO Map.empty
+instance ToJSON ChatMessage
 
 -- ---------------------------------------------------------------------------
 -- エラーコード

@@ -23,7 +23,12 @@ executable test
                    , App.Presentation.Auth.API
                    , App.Presentation.Auth.Handler
                    , App.Domain.Chat.Entity
+                   , App.Domain.Chat.Repository
+                   , App.Application.Chat.Command
                    , App.Application.Chat.UseCase
+                   , App.Infrastructure.Repository.ChatSTM
+                   , App.Presentation.Chat.Request
+                   , App.Presentation.Chat.Response
                    , App.Presentation.Chat.API
                    , App.Presentation.Chat.Handler
                    , App.Domain.Task.Entity

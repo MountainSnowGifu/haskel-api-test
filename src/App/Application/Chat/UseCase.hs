@@ -1,192 +1,84 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators #-}
 
 module App.Application.Chat.UseCase
-  ( ConnectionInitData (..),
-    MessageSendData (..),
-    ValidationError (..),
+  ( ValidationError (..),
     validateMessageSend,
-    sendError,
-    handleEvent,
-    handleConnectionInit,
-    handleMessageSend,
-    broadcastMessage,
-    removeClient,
+    initConnection,
+    storeMessage,
+    disconnectClient,
   )
 where
 
-import App.Domain.Chat.Entity (ChatMessage (..), ConnectedClient (..), ErrorCode (..), MessageStore, RoomState, errorCodeText)
-import Control.Concurrent.STM (atomically, modifyTVar, readTVar)
-import Control.Monad (forM_)
-import Data.Aeson (FromJSON, Result (..), Value (..), encode, fromJSON, object, (.=))
-import Data.Aeson.KeyMap qualified as KM
-import Data.IORef (IORef, readIORef, writeIORef)
+import App.Application.Chat.Command (ConnectionInitCommand (..), MessageSendCommand (..))
+import App.Domain.Chat.Entity (ChatMessage (..), ConnectedClient (..))
+import App.Domain.Chat.Repository (ChatRepo, addClient, getClients, removeClient, saveMessage)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, formatTime, getCurrentTime)
 import Data.UUID qualified as UUID
 import Data.UUID.V4 (nextRandom)
-import GHC.Generics (Generic)
-import Data.Map.Strict qualified as Map
-import Network.WebSockets qualified as WS
+import Effectful
 
 -- ---------------------------------------------------------------------------
--- データ型
--- ---------------------------------------------------------------------------
-
--- | connection.init のデータ部
-data ConnectionInitData = ConnectionInitData
-  { userId :: Text,
-    userName :: Text,
-    roomId :: Text
-  }
-  deriving (Generic)
-
-instance FromJSON ConnectionInitData
-
--- | message.send のデータ部
-newtype MessageSendData = MessageSendData
-  { text :: Text
-  }
-  deriving (Generic)
-
-instance FromJSON MessageSendData
-
--- ---------------------------------------------------------------------------
--- バリデーション
+-- バリデーション（純粋：Effect 不要）
 -- ---------------------------------------------------------------------------
 
 data ValidationError = EmptyText | TextTooLong
 
-validateMessageSend :: MessageSendData -> Either ValidationError MessageSendData
-validateMessageSend d
-  | T.null (text d) = Left EmptyText
-  | T.length (text d) > 1000 = Left TextTooLong
-  | otherwise = Right d
+validateMessageSend :: MessageSendCommand -> Either ValidationError MessageSendCommand
+validateMessageSend cmd
+  | T.null (cmdText cmd) = Left EmptyText
+  | T.length (cmdText cmd) > 1000 = Left TextTooLong
+  | otherwise = Right cmd
 
 -- ---------------------------------------------------------------------------
--- エラー送信
+-- ユースケース
 -- ---------------------------------------------------------------------------
 
-sendError :: WS.Connection -> ErrorCode -> Text -> IO ()
-sendError conn code msg =
-  WS.sendTextData conn $
-    encode $
-      object
-        [ "event" .= ("error" :: Text),
-          "data"
-            .= object
-              [ "code" .= errorCodeText code,
-                "message" .= msg
-              ]
-        ]
-
--- ---------------------------------------------------------------------------
--- イベントハンドラ
--- ---------------------------------------------------------------------------
-
-handleEvent :: RoomState -> MessageStore -> WS.Connection -> IORef (Maybe ConnectedClient) -> KM.KeyMap Value -> IO ()
-handleEvent rooms store conn clientRef km = case KM.lookup "event" km of
-  Just (String "ping") ->
-    WS.sendTextData conn $
-      encode $
-        object
-          [ "event" .= ("pong" :: Text),
-            "data" .= object []
-          ]
-  Just (String "connection.init") ->
-    case KM.lookup "data" km of
-      Just dataVal -> case fromJSON dataVal of
-        Success initData -> handleConnectionInit rooms conn clientRef initData
-        Error _ -> return ()
-      Nothing -> return ()
-  Just (String "message.send") ->
-    case KM.lookup "data" km of
-      Just dataVal -> case fromJSON dataVal of
-        Success msgData -> handleMessageSend rooms store conn clientRef msgData
-        Error _ -> return ()
-      Nothing -> return ()
-  _ -> return ()
-
-handleConnectionInit :: RoomState -> WS.Connection -> IORef (Maybe ConnectedClient) -> ConnectionInitData -> IO ()
-handleConnectionInit rooms conn clientRef initData = do
-  connId <- UUID.toText <$> nextRandom
+-- | 接続を初期化し RoomState に登録する。
+-- WS への ack 送信・IORef への書き込みは呼び出し元（Handler）が行う。
+initConnection ::
+  (ChatRepo :> es, IOE :> es) =>
+  ConnectionInitCommand ->
+  Eff es ConnectedClient
+initConnection cmd = do
+  connId <- liftIO $ UUID.toText <$> nextRandom
   let client =
         ConnectedClient
-          { clientConn = conn,
-            clientUserId = userId initData,
-            clientUserName = userName initData,
-            clientRoomId = roomId initData,
+          { clientUserId = cmdUserId cmd,
+            clientUserName = cmdUserName cmd,
+            clientRoomId = cmdRoomId cmd,
             clientConnId = connId
           }
-  atomically $ modifyTVar rooms $ Map.insertWith (++) (roomId initData) [client]
-  writeIORef clientRef (Just client)
-  WS.sendTextData conn $
-    encode $
-      object
-        [ "event" .= ("connection.ack" :: Text),
-          "data"
-            .= object
-              [ "userId" .= userId initData,
-                "userName" .= userName initData,
-                "roomId" .= roomId initData,
-                "connectionId" .= connId
-              ]
-        ]
+  addClient client
+  return client
 
-handleMessageSend :: RoomState -> MessageStore -> WS.Connection -> IORef (Maybe ConnectedClient) -> MessageSendData -> IO ()
-handleMessageSend rooms store conn clientRef msgData =
-  case validateMessageSend msgData of
-    Left EmptyText -> sendError conn MessageInvalid "text は必須です"
-    Left TextTooLong -> sendError conn MessageInvalid "text は1000文字以内です"
-    Right d -> do
-      mClient <- readIORef clientRef
-      case mClient of
-        Nothing -> return ()
-        Just sender -> broadcastMessage rooms store sender (text d)
+-- | メッセージを保存し、ブロードキャスト対象クライアントを返す。
+-- WS への実際の送信は呼び出し元（Handler）が行う。
+storeMessage ::
+  (ChatRepo :> es, IOE :> es) =>
+  ConnectedClient ->
+  Text ->
+  Eff es (ChatMessage, [ConnectedClient])
+storeMessage sender msgText = do
+  msgId  <- liftIO $ UUID.toText <$> nextRandom
+  sentAt <- liftIO $ T.pack . formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" <$> getCurrentTime
+  let msg =
+        ChatMessage
+          { chatMsgId       = msgId,
+            chatMsgRoomId   = clientRoomId sender,
+            chatMsgUserId   = clientUserId sender,
+            chatMsgUserName = clientUserName sender,
+            chatMsgText     = msgText,
+            chatMsgSentAt   = sentAt
+          }
+  saveMessage msg
+  clients <- getClients (clientRoomId sender)
+  return (msg, clients)
 
-broadcastMessage :: RoomState -> MessageStore -> ConnectedClient -> Text -> IO ()
-broadcastMessage rooms store sender msgText = do
-  msgId <- UUID.toText <$> nextRandom
-  sentAt <- T.pack . formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" <$> getCurrentTime
-  let msg = ChatMessage
-        { chatMsgId       = msgId,
-          chatMsgRoomId   = clientRoomId sender,
-          chatMsgUserId   = clientUserId sender,
-          chatMsgUserName = clientUserName sender,
-          chatMsgText     = msgText,
-          chatMsgSentAt   = sentAt
-        }
-  atomically $ modifyTVar store $ Map.insertWith (++) (clientRoomId sender) [msg]
-  clients <- atomically $ Map.findWithDefault [] (clientRoomId sender) <$> readTVar rooms
-  let payload =
-        encode $
-          object
-            [ "event" .= ("message.broadcast" :: Text),
-              "data"
-                .= object
-                  [ "messageId" .= msgId,
-                    "roomId" .= clientRoomId sender,
-                    "sender"
-                      .= object
-                        [ "userId" .= clientUserId sender,
-                          "userName" .= clientUserName sender
-                        ],
-                    "text" .= msgText,
-                    "sentAt" .= sentAt
-                  ]
-            ]
-  forM_ clients $ \c -> WS.sendTextData (clientConn c) payload
-
-removeClient :: RoomState -> IORef (Maybe ConnectedClient) -> IO ()
-removeClient rooms clientRef = do
-  mClient <- readIORef clientRef
-  case mClient of
-    Nothing -> return ()
-    Just client ->
-      atomically $
-        modifyTVar rooms $
-          Map.adjust
-            (filter (\c -> clientConnId c /= clientConnId client))
-            (clientRoomId client)
+-- | クライアントを RoomState から除去する。
+-- 呼び出し前に Handler が IORef を読んで ConnectedClient を取り出す。
+disconnectClient :: (ChatRepo :> es) => ConnectedClient -> Eff es ()
+disconnectClient = removeClient
