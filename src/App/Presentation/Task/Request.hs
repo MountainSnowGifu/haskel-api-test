@@ -32,8 +32,14 @@ instance FromJSON UpdateTaskRequest
 instance ToJSON UpdateTaskRequest
 
 toUpdateTaskCommand :: UpdateTaskRequest -> UpdateTaskCommand
-toUpdateTaskCommand (UpdateTaskRequest t d s p dd) =
-  UpdateTaskCommand t d s p dd
+toUpdateTaskCommand UpdateTaskRequest {taskTitle = t, taskDescription = d, taskStatus = s, taskPriority = p, taskDueDate = dd} =
+  UpdateTaskCommand
+    { cmdTitle = t,
+      cmdDescription = d,
+      cmdStatus = s,
+      cmdPriority = p,
+      cmdDueDate = dd
+    }
 
 data PostTaskRequest = PostTaskRequest
   { taskTitle :: Text,
@@ -49,8 +55,16 @@ instance FromJSON PostTaskRequest
 instance ToJSON PostTaskRequest
 
 toCreateTaskCommand :: PostTaskRequest -> CreateTaskCommand
-toCreateTaskCommand (PostTaskRequest t d s p dd) =
-  CreateTaskCommand t d s p dd T.empty T.empty
+toCreateTaskCommand PostTaskRequest {taskTitle = t, taskDescription = d, taskStatus = s, taskPriority = p, taskDueDate = dd} =
+  CreateTaskCommand
+    { cmdTitle = t,
+      cmdDescription = d,
+      cmdStatus = s,
+      cmdPriority = p,
+      cmdDueDate = dd,
+      cmdCreatedAt = T.empty,
+      cmdUpdatedAt = T.empty
+    }
 
 newtype PatchTaskRequest = PatchTaskRequest
   { status :: TaskStatus

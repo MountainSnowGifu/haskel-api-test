@@ -14,6 +14,7 @@ data RecordResponse = RecordResponse
   { recordId :: Int,
     recordUserId :: Int,
     recordType :: String,
+    recordCategory :: String,
     recordAmount :: Int,
     recordDate :: String,
     recordMemo :: String
@@ -23,4 +24,5 @@ data RecordResponse = RecordResponse
 instance ToJSON RecordResponse
 
 toRecordResponse :: Record -> RecordResponse
-toRecordResponse (Record rid ruid rtype ramount rdate rmemo) = RecordResponse rid ruid rtype ramount rdate rmemo
+toRecordResponse (Record rid ruid rtype rcategory ramount rdate rmemo) =
+  RecordResponse rid ruid rtype rcategory ramount rdate rmemo

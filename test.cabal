@@ -40,6 +40,7 @@ executable test
                    , App.Presentation.Task.API
                    , App.Presentation.Task.Handler
                    , App.Infrastructure.Repository.RecordSQLite
+                   , App.Presentation.BudgetTracker.Request
                    , App.Presentation.BudgetTracker.API
                    , App.Presentation.BudgetTracker.Response
                    , App.Presentation.BudgetTracker.Handler
@@ -47,6 +48,7 @@ executable test
                    , App.Server.Router
                    , App.Domain.BudgetTracker.Entity
                    , App.Domain.BudgetTracker.Repository
+                   , App.Application.BudgetTracker.Command
                    , App.Application.BudgetTracker.UseCase
 
   hs-source-dirs:    src
