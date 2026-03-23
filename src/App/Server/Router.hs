@@ -13,6 +13,7 @@ import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler)
 import App.Presentation.BudgetTracker.Handler (deleteRecordHandler, getRecordsAllHandler, getSummaryHandler, postRecordHandler)
 import App.Presentation.Chat.Handler (ConnStore, newConnStore, wsHandler)
+import App.Presentation.HabitTracker.Handler (getHabitsAllHandler)
 import App.Presentation.Task.Handler (deleteTaskHandler, getTaskAllHandler, getTaskHandler, patchTaskHandler, postTaskHandler, putTaskHandler)
 import App.Server.API (combinedAPI)
 import Database.Redis (Connection)
@@ -39,6 +40,7 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
             :<|> (getTaskHandler sqlserverPool :<|> getTaskAllHandler sqlserverPool :<|> postTaskHandler sqlserverPool :<|> putTaskHandler sqlserverPool :<|> patchTaskHandler sqlserverPool :<|> deleteTaskHandler sqlserverPool)
             :<|> wsHandler rooms store connStore
             :<|> (getRecordsAllHandler sqliteDb :<|> postRecordHandler sqliteDb :<|> deleteRecordHandler sqliteDb :<|> getSummaryHandler sqliteDb)
+            :<|> getHabitsAllHandler sqlserverPool
         )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()

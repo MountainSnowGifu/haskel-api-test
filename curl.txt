@@ -25,6 +25,11 @@ curl -s -X POST http://localhost:8081/api/records \
     "recordMemo": "ランチ"
   }' 2>&1 ;echo
 
+curl -X GET "http://localhost:8081/api/summary?month=2026-03" -H "Authorization: Bearer 963a0187-f9d1-4fb8-bbda-74f3d0ab8320" 2>&1 ;echo
+
+
+curl -X GET http://localhost:8081/api/habits -H "Authorization: Bearer 7dbf8a29-088b-4147-8583-3944cec1d5d7" 2>&1 ; echo
+
 https://hoogle.haskell.org/
 
 SERVANT

@@ -12,6 +12,7 @@ import App.Domain.Auth.Entity (User)
 import App.Presentation.Auth.API (LoginAPI)
 import App.Presentation.BudgetTracker.API (BudgetTrackerAPI)
 import App.Presentation.Chat.API (ChatAPI)
+import App.Presentation.HabitTracker.API (HabitTrackerAPI)
 import App.Presentation.Task.API (TaskAPI)
 import Servant
 import Servant.Server.Experimental.Auth (AuthServerData)
@@ -22,7 +23,7 @@ import Servant.Server.Experimental.Auth (AuthServerData)
 -- Context から探してハンドラに渡すことができる。
 type instance AuthServerData (AuthProtect "token-auth") = User
 
-type API = LoginAPI :<|> TaskAPI :<|> ChatAPI :<|> BudgetTrackerAPI
+type API = LoginAPI :<|> TaskAPI :<|> ChatAPI :<|> BudgetTrackerAPI :<|> HabitTrackerAPI
 
 combinedAPI :: Proxy API
 combinedAPI = Proxy

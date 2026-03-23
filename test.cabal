@@ -50,6 +50,14 @@ executable test
                    , App.Domain.BudgetTracker.Repository
                    , App.Application.BudgetTracker.Command
                    , App.Application.BudgetTracker.UseCase
+                   , App.Domain.HabitTracker.Entity
+                   , App.Domain.HabitTracker.Repository
+                   , App.Application.HabitTracker.UseCase
+                   , App.Infrastructure.Repository.HabitSQLServer
+                   , App.Presentation.HabitTracker.Request
+                   , App.Presentation.HabitTracker.Response
+                   , App.Presentation.HabitTracker.API
+                   , App.Presentation.HabitTracker.Handler
 
   hs-source-dirs:    src
   default-language:  Haskell2010
