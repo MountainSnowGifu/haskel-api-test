@@ -4,26 +4,25 @@ module App.Domain.Task.Entity
   ( Task (..),
     TaskStatus (..),
     TaskPriority (..),
+    PatchedTask (..),
   )
 where
 
-import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
 data TaskStatus = Todo | InProgress | Done
   deriving (Show, Eq, Generic)
 
-instance FromJSON TaskStatus
-
-instance ToJSON TaskStatus
-
 data TaskPriority = Low | Medium | High
   deriving (Show, Eq, Generic)
 
-instance FromJSON TaskPriority
-
-instance ToJSON TaskPriority
+data PatchedTask = PatchedTask
+  { patchedId     :: Int,
+    patchedStatus :: TaskStatus,
+    patchedAt     :: Text
+  }
+  deriving (Show, Eq, Generic)
 
 data Task = Task
   { taskId :: Int,

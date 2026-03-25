@@ -30,7 +30,6 @@ postRecordHandler :: SqliteDb -> User -> PostRecordRequest -> Handler RecordResp
 postRecordHandler db user body = do
   result <- liftIO $ runEff (runRecordRepo db user (createRecord (toCreateRecordCommand body)))
   case result of
-    Left TypeEmpty -> throwError err400
     Left CategoryEmpty -> throwError err400
     Left AmountInvalid -> throwError err400
     Right record -> return (toRecordResponse record)

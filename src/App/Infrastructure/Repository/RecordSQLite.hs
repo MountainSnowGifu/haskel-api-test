@@ -10,15 +10,22 @@ module App.Infrastructure.Repository.RecordSQLite
   )
 where
 
-import App.Application.BudgetTracker.Command (CreateRecordCommand (..))
 import App.Domain.Auth.Entity (User (..), UserId (..))
-import App.Domain.BudgetTracker.Entity (Record (..))
+import App.Domain.BudgetTracker.Entity (NewRecord (..), Record (..), RecordType (..))
 import App.Domain.BudgetTracker.Repository (RecordRepo (..))
 import App.Infrastructure.DB.Types (SqliteDb (..))
 import Data.Text (Text)
 import Database.SQLite.Simple (Only (..), execute, lastInsertRowId, query, withConnection)
 import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
+
+toRecordType :: Text -> RecordType
+toRecordType "income" = Income
+toRecordType _        = Expense
+
+fromRecordType :: RecordType -> Text
+fromRecordType Income  = "income"
+fromRecordType Expense = "expense"
 
 -- | RecordRepo エフェクトを SQLite で解釈するインタープリタ
 --
@@ -38,28 +45,26 @@ runRecordRepo (SqliteDb dbfile) user = interpret $ \_ -> \case
   GetRecordsAll ->
     liftIO $ withConnection dbfile $ \conn -> do
       let uid = unUserId (userUserId user)
-      -- print uid
-      -- print (Only uid)
       rows <- query conn "SELECT id, user_id, type, category, amount, date, memo FROM records WHERE user_id = ?" (Only uid) :: IO [(Int, Int, Text, Text, Int, Text, Text)]
       print rows
-      return $ map (\(i, u, t, c, a, d, m) -> Record {recordId = i, recordUserId = u, recordType = t, recordCategory = c, recordAmount = a, recordDate = d, recordMemo = m}) rows
-  PostRecord cmd ->
+      return $ map (\(i, u, t, c, a, d, m) -> Record {recordId = i, recordUserId = u, recordType = toRecordType t, recordCategory = c, recordAmount = a, recordDate = d, recordMemo = m}) rows
+  PostRecord nr ->
     liftIO $ withConnection dbfile $ \conn -> do
       let uid = unUserId (userUserId user)
       execute
         conn
         "INSERT INTO records (user_id, type, category, amount, date, memo) VALUES (?,?,?,?,?,?)"
-        (uid, cmdType cmd, cmdCategory cmd, cmdAmount cmd, cmdDate cmd, cmdMemo cmd)
+        (uid, fromRecordType (newRecordType nr), newRecordCategory nr, newRecordAmount nr, newRecordDate nr, newRecordMemo nr)
       rowId <- fromIntegral <$> lastInsertRowId conn
       return
         Record
-          { recordId = rowId,
-            recordUserId = uid,
-            recordType = cmdType cmd,
-            recordCategory = cmdCategory cmd,
-            recordAmount = cmdAmount cmd,
-            recordDate = cmdDate cmd,
-            recordMemo = cmdMemo cmd
+          { recordId       = rowId,
+            recordUserId   = uid,
+            recordType     = newRecordType nr,
+            recordCategory = newRecordCategory nr,
+            recordAmount   = newRecordAmount nr,
+            recordDate     = newRecordDate nr,
+            recordMemo     = newRecordMemo nr
           }
   DeleteRecord rid ->
     liftIO $ withConnection dbfile $ \conn -> do
@@ -69,4 +74,4 @@ runRecordRepo (SqliteDb dbfile) user = interpret $ \_ -> \case
     liftIO $ withConnection dbfile $ \conn -> do
       let uid = unUserId (userUserId user)
       rows <- query conn "SELECT id, user_id, type, category, amount, date, memo FROM records WHERE user_id = ? AND strftime('%Y-%m', date) = ?" (uid, month) :: IO [(Int, Int, Text, Text, Int, Text, Text)]
-      return $ map (\(i, u, t, c, a, d, m) -> Record {recordId = i, recordUserId = u, recordType = t, recordCategory = c, recordAmount = a, recordDate = d, recordMemo = m}) rows
+      return $ map (\(i, u, t, c, a, d, m) -> Record {recordId = i, recordUserId = u, recordType = toRecordType t, recordCategory = c, recordAmount = a, recordDate = d, recordMemo = m}) rows

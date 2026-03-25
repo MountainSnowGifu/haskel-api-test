@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
 module App.Application.BudgetTracker.UseCase
@@ -13,34 +12,40 @@ module App.Application.BudgetTracker.UseCase
 where
 
 import App.Application.BudgetTracker.Command (CreateRecordCommand (..))
-import App.Domain.BudgetTracker.Entity (Record, Summary (..), summarize)
+import App.Domain.BudgetTracker.Entity (NewRecord (..), Record, Summary (..), summarize)
 import App.Domain.BudgetTracker.Repository (RecordRepo, deleteRecord, getRecordsAll, getRecordsByMonth, postRecord)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Time (defaultTimeLocale, formatTime, getCurrentTime)
 import Effectful
 
-data RecordValidationError = TypeEmpty | CategoryEmpty | AmountInvalid
+data RecordValidationError = CategoryEmpty | AmountInvalid
+
+toNewRecord :: CreateRecordCommand -> NewRecord
+toNewRecord cmd =
+  NewRecord
+    { newRecordType     = cmdType cmd,
+      newRecordCategory = cmdCategory cmd,
+      newRecordAmount   = cmdAmount cmd,
+      newRecordDate     = cmdDate cmd,
+      newRecordMemo     = cmdMemo cmd
+    }
 
 validateCreate :: CreateRecordCommand -> Either RecordValidationError CreateRecordCommand
 validateCreate cmd
-  | T.null (cmdType cmd) = Left TypeEmpty
   | T.null (cmdCategory cmd) = Left CategoryEmpty
-  | cmdAmount cmd <= 0 = Left AmountInvalid
-  | otherwise = Right cmd
+  | cmdAmount cmd <= 0       = Left AmountInvalid
+  | otherwise                = Right cmd
 
 fetchAllRecords :: (RecordRepo :> es) => Eff es [Record]
 fetchAllRecords = getRecordsAll
 
 createRecord ::
-  (RecordRepo :> es, IOE :> es) =>
+  (RecordRepo :> es) =>
   CreateRecordCommand ->
   Eff es (Either RecordValidationError Record)
 createRecord cmd = case validateCreate cmd of
-  Left e -> return (Left e)
-  Right valid -> do
-    now <- liftIO $ T.pack . formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" <$> getCurrentTime
-    Right <$> postRecord valid {cmdCreatedAt = now, cmdUpdatedAt = now}
+  Left e      -> return (Left e)
+  Right valid -> Right <$> postRecord (toNewRecord valid)
 
 removeRecord :: (RecordRepo :> es) => Int -> Eff es (Maybe ())
 removeRecord = deleteRecord

@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module App.Presentation.Task.Request
   ( UpdateTaskRequest (..),
@@ -12,11 +13,15 @@ module App.Presentation.Task.Request
 where
 
 import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand (..), UpdateTaskCommand (..))
-import App.Domain.Task.Entity (TaskPriority, TaskStatus)
-import Data.Aeson (FromJSON, ToJSON)
+import App.Domain.Task.Entity (TaskPriority (..), TaskStatus (..))
+import Data.Aeson (FromJSON)
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics (Generic)
+
+instance FromJSON TaskStatus
+
+instance FromJSON TaskPriority
 
 data UpdateTaskRequest = UpdateTaskRequest
   { taskTitle :: Text,
@@ -28,8 +33,6 @@ data UpdateTaskRequest = UpdateTaskRequest
   deriving (Show, Eq, Generic)
 
 instance FromJSON UpdateTaskRequest
-
-instance ToJSON UpdateTaskRequest
 
 toUpdateTaskCommand :: UpdateTaskRequest -> UpdateTaskCommand
 toUpdateTaskCommand UpdateTaskRequest {taskTitle = t, taskDescription = d, taskStatus = s, taskPriority = p, taskDueDate = dd} =
@@ -51,8 +54,6 @@ data PostTaskRequest = PostTaskRequest
   deriving (Show, Eq, Generic)
 
 instance FromJSON PostTaskRequest
-
-instance ToJSON PostTaskRequest
 
 toCreateTaskCommand :: PostTaskRequest -> CreateTaskCommand
 toCreateTaskCommand PostTaskRequest {taskTitle = t, taskDescription = d, taskStatus = s, taskPriority = p, taskDueDate = dd} =

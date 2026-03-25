@@ -15,9 +15,8 @@ module App.Application.Task.UseCase
 where
 
 import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand, UpdateTaskCommand)
-import App.Domain.Task.Entity (Task, TaskStatus)
+import App.Domain.Task.Entity (PatchedTask, Task)
 import App.Domain.Task.Repository (TaskRepo, deleteTask, getTask, getTaskAll, patchTask, postTask, putTask)
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, formatTime, getCurrentTime)
 import Effectful
@@ -58,7 +57,7 @@ fetchAllTasks = getTaskAll
 replaceTask :: (TaskRepo :> es) => Int -> UpdateTaskCommand -> Eff es (Maybe Task)
 replaceTask = putTask
 
-updateTaskStatus :: (TaskRepo :> es) => Int -> PatchTaskCommand -> Eff es (Maybe (Int, TaskStatus, Text))
+updateTaskStatus :: (TaskRepo :> es) => Int -> PatchTaskCommand -> Eff es (Maybe PatchedTask)
 updateTaskStatus = patchTask
 
 removeTask :: (TaskRepo :> es) => Int -> Eff es (Maybe ())

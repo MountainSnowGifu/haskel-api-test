@@ -12,7 +12,7 @@ where
 
 import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand (..), UpdateTaskCommand (..))
 import App.Domain.Auth.Entity (User (..), UserId (..))
-import App.Domain.Task.Entity (Task (..), TaskPriority (..), TaskStatus (..))
+import App.Domain.Task.Entity (PatchedTask (PatchedTask), Task (..), TaskPriority (..), TaskStatus (..))
 import App.Domain.Task.Repository (TaskRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
@@ -185,7 +185,7 @@ runTaskRepo pool user = interpret $ \_ -> \case
           IO [(Int, Text, Text)]
       return $
         listToMaybe rows >>= \(rowId, sts, updatedAt) ->
-          Just (rowId, parseStatus sts, updatedAt)
+          Just (PatchedTask rowId (parseStatus sts) updatedAt)
   DeleteTask tid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-

@@ -6,11 +6,12 @@ module App.Application.BudgetTracker.Command
   )
 where
 
+import App.Domain.BudgetTracker.Entity (RecordType)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
 data CreateRecordCommand = CreateRecordCommand
-  { cmdType      :: Text,
+  { cmdType      :: RecordType,
     cmdCategory  :: Text,
     cmdAmount    :: Int,
     cmdDate      :: Text,

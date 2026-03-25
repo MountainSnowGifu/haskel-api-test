@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module App.Presentation.Task.Response
   ( TaskResponse (..),
@@ -9,10 +10,14 @@ module App.Presentation.Task.Response
   )
 where
 
-import App.Domain.Task.Entity (Task (..), TaskPriority, TaskStatus)
+import App.Domain.Task.Entity (Task (..), TaskPriority (..), TaskStatus (..))
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.Text (Text)
 import GHC.Generics (Generic)
+
+instance ToJSON TaskStatus
+
+instance ToJSON TaskPriority
 
 data TaskResponse = TaskResponse
   { taskId :: Int,

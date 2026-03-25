@@ -12,6 +12,7 @@ where
 
 import App.Application.Task.UseCase (TaskValidationError (..), createTask, fetchAllTasks, fetchTask, removeTask, replaceTask, updateTaskStatus)
 import App.Domain.Auth.Entity (User)
+import App.Domain.Task.Entity (PatchedTask (..))
 import App.Infrastructure.DB.Types (MSSQLPool)
 import App.Infrastructure.Repository.TaskSQLServer (runTaskRepo)
 import App.Presentation.Task.Request (PatchTaskRequest, PostTaskRequest, UpdateTaskRequest, toCreateTaskCommand, toPatchTaskCommand, toUpdateTaskCommand)
@@ -53,8 +54,8 @@ patchTaskHandler pool user tid body = do
   result <- liftIO $ runEff (runTaskRepo pool user (updateTaskStatus tid (toPatchTaskCommand body)))
   case result of
     Nothing -> throwError err404
-    Just (rowId, status, updatedAt) ->
-      return $ PatchTaskResponse "Task updated successfully" rowId status updatedAt
+    Just pt ->
+      return $ PatchTaskResponse "Task updated successfully" (patchedId pt) (patchedStatus pt) (patchedAt pt)
 
 -- | DELETE /task/:id ハンドラ
 deleteTaskHandler :: MSSQLPool -> User -> Int -> Handler DeleteTaskResponse

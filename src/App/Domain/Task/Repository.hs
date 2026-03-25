@@ -16,17 +16,16 @@ module App.Domain.Task.Repository
 where
 
 import App.Application.Task.Command (CreateTaskCommand, PatchTaskCommand, UpdateTaskCommand)
-import App.Domain.Task.Entity (Task, TaskStatus)
-import Data.Text (Text)
+import App.Domain.Task.Entity (PatchedTask, Task)
 import Effectful
 import Effectful.Dispatch.Dynamic (send)
 
 data TaskRepo :: Effect where
-  GetTask :: Int -> TaskRepo m (Maybe Task)
+  GetTask    :: Int -> TaskRepo m (Maybe Task)
   GetTaskAll :: TaskRepo m [Task]
-  PostTask :: CreateTaskCommand -> TaskRepo m Task
-  PutTask :: Int -> UpdateTaskCommand -> TaskRepo m (Maybe Task)
-  PatchTask :: Int -> PatchTaskCommand -> TaskRepo m (Maybe (Int, TaskStatus, Text))
+  PostTask   :: CreateTaskCommand -> TaskRepo m Task
+  PutTask    :: Int -> UpdateTaskCommand -> TaskRepo m (Maybe Task)
+  PatchTask  :: Int -> PatchTaskCommand -> TaskRepo m (Maybe PatchedTask)
   DeleteTask :: Int -> TaskRepo m (Maybe ())
 
 type instance DispatchOf TaskRepo = Dynamic
@@ -43,8 +42,7 @@ postTask cmd = send (PostTask cmd)
 putTask :: (TaskRepo :> es) => Int -> UpdateTaskCommand -> Eff es (Maybe Task)
 putTask tid task = send (PutTask tid task)
 
--- | PATCH 用クエリ: (id, status, updatedAt) を返す
-patchTask :: (TaskRepo :> es) => Int -> PatchTaskCommand -> Eff es (Maybe (Int, TaskStatus, Text))
+patchTask :: (TaskRepo :> es) => Int -> PatchTaskCommand -> Eff es (Maybe PatchedTask)
 patchTask tid cmd = send (PatchTask tid cmd)
 
 deleteTask :: (TaskRepo :> es) => Int -> Eff es (Maybe ())

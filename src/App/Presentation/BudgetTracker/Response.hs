@@ -10,19 +10,23 @@ module App.Presentation.BudgetTracker.Response
   )
 where
 
-import App.Domain.BudgetTracker.Entity (Record (Record), Summary (..))
+import App.Domain.BudgetTracker.Entity (Record (Record), RecordType (..), Summary (..))
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
+showRecordType :: RecordType -> Text
+showRecordType Income  = "income"
+showRecordType Expense = "expense"
+
 data RecordResponse = RecordResponse
-  { recordId :: Int,
-    recordUserId :: Int,
-    recordType :: Text,
+  { recordId       :: Int,
+    recordUserId   :: Int,
+    recordType     :: Text,
     recordCategory :: Text,
-    recordAmount :: Int,
-    recordDate :: Text,
-    recordMemo :: Text
+    recordAmount   :: Int,
+    recordDate     :: Text,
+    recordMemo     :: Text
   }
   deriving (Show, Eq, Generic)
 
@@ -30,7 +34,7 @@ instance ToJSON RecordResponse
 
 toRecordResponse :: Record -> RecordResponse
 toRecordResponse (Record rid ruid rtype rcategory ramount rdate rmemo) =
-  RecordResponse rid ruid rtype rcategory ramount rdate rmemo
+  RecordResponse rid ruid (showRecordType rtype) rcategory ramount rdate rmemo
 
 data SummaryResponse = SummaryResponse
   { month   :: Text,
