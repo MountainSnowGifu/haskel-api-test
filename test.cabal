@@ -3,65 +3,68 @@ name:                test
 version:             0.1.0.0
 build-type:          Simple
 
-executable test
-  main-is:           Main.hs
-  other-modules:     App.Core.Config
-                   , App.Core.Env
-                   , App.Infrastructure.DB.Types
-                   , App.Infrastructure.DB.SQLite
-                   , App.Infrastructure.DB.SqlServer
-                   , App.Infrastructure.DB.Redis
-                   , App.Infrastructure.Logger.CsvLogger
-                   , App.Middleware.TokenAuth
-                   , App.Domain.Auth.Entity
-                   , App.Domain.Auth.Repository
-                   , App.Application.Auth.UseCase
-                   , App.Infrastructure.Repository.UserInMemory
-                   , App.Infrastructure.Repository.UserSQLServer
-                   , App.Infrastructure.Repository.TokenRedis
-                   , App.Presentation.Auth.API
-                   , App.Presentation.Auth.Handler
-                   , App.Domain.Chat.Entity
-                   , App.Domain.Chat.Repository
-                   , App.Application.Chat.Command
-                   , App.Application.Chat.UseCase
-                   , App.Infrastructure.Repository.ChatSTM
-                   , App.Presentation.Chat.Request
-                   , App.Presentation.Chat.Response
-                   , App.Presentation.Chat.API
-                   , App.Presentation.Chat.Handler
-                   , App.Domain.Task.Entity
-                   , App.Domain.Task.Repository
-                   , App.Application.Task.Command
-                   , App.Application.Task.UseCase
-                   , App.Infrastructure.Repository.TaskSQLServer
-                   , App.Presentation.Task.Request
-                   , App.Presentation.Task.Response
-                   , App.Presentation.Task.API
-                   , App.Presentation.Task.Handler
-                   , App.Infrastructure.Repository.RecordSQLite
-                   , App.Presentation.BudgetTracker.Request
-                   , App.Presentation.BudgetTracker.API
-                   , App.Presentation.BudgetTracker.Response
-                   , App.Presentation.BudgetTracker.Handler
-                   , App.Server.API
-                   , App.Server.Router
-                   , App.Domain.BudgetTracker.Entity
-                   , App.Domain.BudgetTracker.Repository
-                   , App.Application.BudgetTracker.Command
-                   , App.Application.BudgetTracker.UseCase
-                   , App.Domain.HabitTracker.Entity
-                   , App.Domain.HabitTracker.Repository
-                   , App.Application.HabitTracker.UseCase
-                   , App.Infrastructure.Repository.HabitSQLServer
-                   , App.Presentation.HabitTracker.Request
-                   , App.Presentation.HabitTracker.Response
-                   , App.Presentation.HabitTracker.API
-                   , App.Presentation.HabitTracker.Handler
-
+-- ─────────────────────────────────────────────
+-- Library: src/ 以下の本体ロジック全体
+-- ─────────────────────────────────────────────
+library
   hs-source-dirs:    src
   default-language:  Haskell2010
-  ghc-options:       -Wall -threaded
+  ghc-options:       -Wall
+
+  exposed-modules:
+      App.Core.Config
+    , App.Core.Env
+    , App.Infrastructure.DB.Types
+    , App.Infrastructure.DB.SQLite
+    , App.Infrastructure.DB.SqlServer
+    , App.Infrastructure.DB.Redis
+    , App.Infrastructure.Logger.CsvLogger
+    , App.Middleware.TokenAuth
+    , App.Domain.Auth.Entity
+    , App.Domain.Auth.Repository
+    , App.Application.Auth.UseCase
+    , App.Infrastructure.Repository.UserInMemory
+    , App.Infrastructure.Repository.UserSQLServer
+    , App.Infrastructure.Repository.TokenRedis
+    , App.Presentation.Auth.API
+    , App.Presentation.Auth.Handler
+    , App.Domain.Chat.Entity
+    , App.Domain.Chat.Repository
+    , App.Application.Chat.Command
+    , App.Application.Chat.UseCase
+    , App.Infrastructure.Repository.ChatSTM
+    , App.Presentation.Chat.Request
+    , App.Presentation.Chat.Response
+    , App.Presentation.Chat.API
+    , App.Presentation.Chat.Handler
+    , App.Domain.Task.Entity
+    , App.Domain.Task.Repository
+    , App.Application.Task.Command
+    , App.Application.Task.UseCase
+    , App.Infrastructure.Repository.TaskSQLServer
+    , App.Presentation.Task.Request
+    , App.Presentation.Task.Response
+    , App.Presentation.Task.API
+    , App.Presentation.Task.Handler
+    , App.Infrastructure.Repository.RecordSQLite
+    , App.Presentation.BudgetTracker.Request
+    , App.Presentation.BudgetTracker.API
+    , App.Presentation.BudgetTracker.Response
+    , App.Presentation.BudgetTracker.Handler
+    , App.Server.API
+    , App.Server.Router
+    , App.Domain.BudgetTracker.Entity
+    , App.Domain.BudgetTracker.Repository
+    , App.Application.BudgetTracker.Command
+    , App.Application.BudgetTracker.UseCase
+    , App.Domain.HabitTracker.Entity
+    , App.Domain.HabitTracker.Repository
+    , App.Application.HabitTracker.UseCase
+    , App.Infrastructure.Repository.HabitSQLServer
+    , App.Presentation.HabitTracker.Request
+    , App.Presentation.HabitTracker.Response
+    , App.Presentation.HabitTracker.API
+    , App.Presentation.HabitTracker.Handler
 
   build-depends:
       base           >= 4.7 && < 5
@@ -88,3 +91,37 @@ executable test
     , servant-websockets
     , websockets
     , stm
+
+-- ─────────────────────────────────────────────
+-- Executable: Main.hs だけ（起動のみ担当）
+-- ─────────────────────────────────────────────
+executable test
+  main-is:           Main.hs
+  hs-source-dirs:    app
+  default-language:  Haskell2010
+  ghc-options:       -Wall -threaded
+
+  build-depends:
+      base           >= 4.7 && < 5
+    , test
+    , mssql-simple
+    , hedis
+
+-- ─────────────────────────────────────────────
+-- Test suite: library を参照してテスト
+-- ─────────────────────────────────────────────
+test-suite spec
+  type:              exitcode-stdio-1.0
+  hs-source-dirs:    test
+  main-is:           Spec.hs
+  default-language:  Haskell2010
+  ghc-options:       -Wall -threaded
+
+  other-modules:
+      App.Domain.BudgetTracker.EntitySpec
+
+  build-depends:
+      base
+    , hspec
+    , text
+    , test

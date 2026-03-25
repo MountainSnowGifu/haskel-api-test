@@ -20,9 +20,9 @@ import Effectful
 import Effectful.Dispatch.Dynamic (send)
 
 data RecordRepo :: Effect where
-  GetRecordsAll     :: RecordRepo m [Record]
-  PostRecord        :: CreateRecordCommand -> RecordRepo m Record
-  DeleteRecord      :: Int -> RecordRepo m (Maybe ())
+  GetRecordsAll :: RecordRepo m [Record]
+  PostRecord :: CreateRecordCommand -> RecordRepo m Record
+  DeleteRecord :: Int -> RecordRepo m (Maybe ())
   GetRecordsByMonth :: Text -> RecordRepo m [Record]
 
 type instance DispatchOf RecordRepo = Dynamic
