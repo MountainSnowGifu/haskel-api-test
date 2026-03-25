@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module App.Presentation.HabitTracker.Handler
   ( getHabitsAllHandler,

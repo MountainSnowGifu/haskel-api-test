@@ -11,7 +11,6 @@ module App.Domain.HabitTracker.Repository
 where
 
 import App.Domain.HabitTracker.Entity (Habit)
-import Data.Text (Text)
 import Effectful
 import Effectful.Dispatch.Dynamic (send)
 
