@@ -42,6 +42,7 @@ library
     , App.Application.Task.Command
     , App.Application.Task.UseCase
     , App.Infrastructure.Repository.TaskSQLServer
+    , App.Infrastructure.Repository.TaskSQLServer2
     , App.Presentation.Task.Request
     , App.Presentation.Task.Response
     , App.Presentation.Task.API

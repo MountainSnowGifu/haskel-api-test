@@ -13,7 +13,8 @@ import App.Infrastructure.Logger.CsvLogger (csvLogger)
 import App.Infrastructure.Repository.ChatSTM (MessageStore, RoomState, newMessageStore, newRoomState)
 import App.Infrastructure.Repository.HabitSQLServer (runHabitRepo)
 import App.Infrastructure.Repository.RecordSQLite (runRecordRepo)
-import App.Infrastructure.Repository.TaskSQLServer (runTaskRepo)
+-- import App.Infrastructure.Repository.TaskSQLServer (runTaskRepo)
+import App.Infrastructure.Repository.TaskSQLServer2 (runTaskRepo2)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler)
 import App.Presentation.BudgetTracker.Handler (RecordRunner, deleteRecordHandler, getRecordsAllHandler, getSummaryHandler, postRecordHandler)
@@ -38,7 +39,8 @@ corsPolicy =
 app :: SqliteDb -> MSSQLPool -> Connection -> RoomState -> MessageStore -> ConnStore -> Application
 app sqliteDb sqlserverPool redisConn rooms store connStore =
   let mkTaskRunner :: User -> TaskRunner
-      mkTaskRunner user eff = runEff (runTaskRepo sqlserverPool user eff)
+      mkTaskRunner user eff = runEff (runTaskRepo2 sqlserverPool user eff)
+      -- mkTaskRunner user eff = runEff (runTaskRepo sqlserverPool user eff)
 
       mkRecordRunner :: User -> RecordRunner
       mkRecordRunner user eff = runEff (runRecordRepo sqliteDb user eff)
