@@ -1,12 +1,12 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module App.Domain.BudgetTracker.EntitySpec (spec) where
 
 import App.Domain.BudgetTracker.Entity
-import Data.Text (Text)
 import Test.Hspec
 
-mkRecord :: Int -> Text -> Int -> Record
+mkRecord :: Int -> RecordType -> Int -> Record
 mkRecord rid rtype amount =
   Record
     { recordId = rid,
@@ -28,8 +28,8 @@ spec = describe "summarize" $ do
 
   it "income レコードのみを合計する" $ do
     let records =
-          [ mkRecord 1 "income" 1000,
-            mkRecord 2 "income" 500
+          [ mkRecord 1 Income 1000,
+            mkRecord 2 Income 500
           ]
         result = summarize "2026-03" records
     summaryIncome result `shouldBe` 1500
@@ -38,8 +38,8 @@ spec = describe "summarize" $ do
 
   it "expense レコードのみを合計する" $ do
     let records =
-          [ mkRecord 1 "expense" 300,
-            mkRecord 2 "expense" 200
+          [ mkRecord 1 Expense 300,
+            mkRecord 2 Expense 200
           ]
         result = summarize "2026-03" records
     summaryIncome result `shouldBe` 0
@@ -48,10 +48,10 @@ spec = describe "summarize" $ do
 
   it "income と expense が混在するとき balance = income - expense" $ do
     let records =
-          [ mkRecord 1 "income" 2000,
-            mkRecord 2 "expense" 800,
-            mkRecord 3 "income" 500,
-            mkRecord 4 "expense" 300
+          [ mkRecord 1 Income 2000,
+            mkRecord 2 Expense 800,
+            mkRecord 3 Income 500,
+            mkRecord 4 Expense 300
           ]
         result = summarize "2026-03" records
     summaryIncome result `shouldBe` 2500

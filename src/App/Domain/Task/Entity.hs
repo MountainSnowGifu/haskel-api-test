@@ -18,9 +18,9 @@ data TaskPriority = Low | Medium | High
   deriving (Show, Eq, Generic)
 
 data PatchedTask = PatchedTask
-  { patchedId     :: Int,
+  { patchedId :: Int,
     patchedStatus :: TaskStatus,
-    patchedAt     :: Text
+    patchedAt :: Text
   }
   deriving (Show, Eq, Generic)
 
