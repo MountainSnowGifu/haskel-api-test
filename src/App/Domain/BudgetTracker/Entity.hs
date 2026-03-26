@@ -5,7 +5,6 @@ module App.Domain.BudgetTracker.Entity
     RecordType (..),
     Summary (..),
     summarize,
-    NewRecord (..),
   )
 where
 
@@ -31,15 +30,6 @@ data Summary = Summary
     summaryIncome :: Int,
     summaryExpense :: Int,
     summaryBalance :: Int
-  }
-  deriving (Show, Eq, Generic)
-
-data NewRecord = NewRecord
-  { newRecordType :: RecordType,
-    newRecordCategory :: Text,
-    newRecordAmount :: Int,
-    newRecordDate :: Text,
-    newRecordMemo :: Text
   }
   deriving (Show, Eq, Generic)
 

@@ -15,8 +15,10 @@ module App.Application.Task.UseCase
 where
 
 import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand (..), UpdateTaskCommand (..))
-import App.Domain.Task.Entity (NewTask (..), PatchedTask, Task, TaskPatch (..), UpdateTask (UpdateTask))
-import App.Domain.Task.Repository (TaskRepo, deleteTask, getTask, getTaskAll, patchTask, postTask, putTask)
+import App.Domain.Task.Entity (Task)
+import App.Domain.Task.Operation (ChangeTaskStatus (..), CreateTask (..), ReplaceTask (..), TaskStatusChanged)
+import App.Domain.Task.Repository (TaskRepo, deleteTask, getTask, getTaskAll)
+import App.Domain.Task.Repository qualified as TaskRepo
 import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, formatTime, getCurrentTime)
 import Effectful
@@ -46,7 +48,7 @@ createTask cmd = case validateCreate cmd of
   Left e -> return (Left e)
   Right (CreateTaskCommand t d s p dd _ _) -> do
     now <- liftIO $ T.pack . formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" <$> getCurrentTime
-    Right <$> postTask (NewTask t d s p dd now now)
+    Right <$> TaskRepo.createTask (CreateTask t d s p dd now now)
 
 fetchTask :: (TaskRepo :> es) => Int -> Eff es (Maybe Task)
 fetchTask = getTask
@@ -55,10 +57,12 @@ fetchAllTasks :: (TaskRepo :> es) => Eff es [Task]
 fetchAllTasks = getTaskAll
 
 replaceTask :: (TaskRepo :> es) => Int -> UpdateTaskCommand -> Eff es (Maybe Task)
-replaceTask tid (UpdateTaskCommand t d s p dd) = putTask tid (UpdateTask t d s p dd)
+replaceTask tid (UpdateTaskCommand t d s p dd) =
+  TaskRepo.replaceTask tid (ReplaceTask t d s p dd)
 
-updateTaskStatus :: (TaskRepo :> es) => Int -> PatchTaskCommand -> Eff es (Maybe PatchedTask)
-updateTaskStatus tid (PatchTaskCommand s) = patchTask tid (TaskPatch s)
+updateTaskStatus :: (TaskRepo :> es) => Int -> PatchTaskCommand -> Eff es (Maybe TaskStatusChanged)
+updateTaskStatus tid (PatchTaskCommand s) =
+  TaskRepo.changeTaskStatus tid (ChangeTaskStatus s)
 
 removeTask :: (TaskRepo :> es) => Int -> Eff es (Maybe ())
 removeTask = deleteTask

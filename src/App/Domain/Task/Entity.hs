@@ -4,10 +4,6 @@ module App.Domain.Task.Entity
   ( Task (..),
     TaskStatus (..),
     TaskPriority (..),
-    PatchedTask (..),
-    NewTask (..),
-    UpdateTask (..),
-    TaskPatch (..),
   )
 where
 
@@ -20,13 +16,6 @@ data TaskStatus = Todo | InProgress | Done
 data TaskPriority = Low | Medium | High
   deriving (Show, Eq, Generic)
 
-data PatchedTask = PatchedTask
-  { patchedId :: Int,
-    patchedStatus :: TaskStatus,
-    patchedAt :: Text
-  }
-  deriving (Show, Eq, Generic)
-
 data Task = Task
   { taskId :: Int,
     taskUserId :: Int,
@@ -37,30 +26,5 @@ data Task = Task
     taskDueDate :: Text,
     taskCreatedAt :: Text,
     taskUpdatedAt :: Text
-  }
-  deriving (Show, Eq, Generic)
-
-data NewTask = NewTask
-  { newTaskTitle :: Text,
-    newTaskDescription :: Text,
-    newTaskStatus :: TaskStatus,
-    newTaskPriority :: TaskPriority,
-    newTaskDueDate :: Text,
-    newTaskCreatedAt :: Text,
-    newTaskUpdatedAt :: Text
-  }
-  deriving (Show, Eq, Generic)
-
-data UpdateTask = UpdateTask
-  { updateTaskTitle :: Text,
-    updateTaskDescription :: Text,
-    updateTaskStatus :: TaskStatus,
-    updateTaskPriority :: TaskPriority,
-    updateTaskDueDate :: Text
-  }
-  deriving (Show, Eq, Generic)
-
-newtype TaskPatch = TaskPatch
-  { taskPatchStatus :: TaskStatus
   }
   deriving (Show, Eq, Generic)

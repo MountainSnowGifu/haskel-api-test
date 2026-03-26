@@ -7,24 +7,25 @@
 module App.Domain.Task.Repository
   ( TaskRepo (..),
     getTask,
-    postTask,
     getTaskAll,
-    putTask,
-    patchTask,
+    createTask,
+    replaceTask,
+    changeTaskStatus,
     deleteTask,
   )
 where
 
-import App.Domain.Task.Entity (NewTask, PatchedTask, Task, TaskPatch, UpdateTask)
+import App.Domain.Task.Entity (Task)
+import App.Domain.Task.Operation (ChangeTaskStatus, CreateTask, ReplaceTask, TaskStatusChanged)
 import Effectful
 import Effectful.Dispatch.Dynamic (send)
 
 data TaskRepo :: Effect where
   GetTask :: Int -> TaskRepo m (Maybe Task)
   GetTaskAll :: TaskRepo m [Task]
-  PostTask :: NewTask -> TaskRepo m Task
-  PutTask :: Int -> UpdateTask -> TaskRepo m (Maybe Task)
-  PatchTask :: Int -> TaskPatch -> TaskRepo m (Maybe PatchedTask)
+  CreateTaskOp :: CreateTask -> TaskRepo m Task
+  ReplaceTaskOp :: Int -> ReplaceTask -> TaskRepo m (Maybe Task)
+  ChangeTaskStatusOp :: Int -> ChangeTaskStatus -> TaskRepo m (Maybe TaskStatusChanged)
   DeleteTask :: Int -> TaskRepo m (Maybe ())
 
 type instance DispatchOf TaskRepo = Dynamic
@@ -35,14 +36,14 @@ getTask tid = send (GetTask tid)
 getTaskAll :: (TaskRepo :> es) => Eff es [Task]
 getTaskAll = send GetTaskAll
 
-postTask :: (TaskRepo :> es) => NewTask -> Eff es Task
-postTask nt = send (PostTask nt)
+createTask :: (TaskRepo :> es) => CreateTask -> Eff es Task
+createTask op = send (CreateTaskOp op)
 
-putTask :: (TaskRepo :> es) => Int -> UpdateTask -> Eff es (Maybe Task)
-putTask tid ut = send (PutTask tid ut)
+replaceTask :: (TaskRepo :> es) => Int -> ReplaceTask -> Eff es (Maybe Task)
+replaceTask tid op = send (ReplaceTaskOp tid op)
 
-patchTask :: (TaskRepo :> es) => Int -> TaskPatch -> Eff es (Maybe PatchedTask)
-patchTask tid pt = send (PatchTask tid pt)
+changeTaskStatus :: (TaskRepo :> es) => Int -> ChangeTaskStatus -> Eff es (Maybe TaskStatusChanged)
+changeTaskStatus tid op = send (ChangeTaskStatusOp tid op)
 
 deleteTask :: (TaskRepo :> es) => Int -> Eff es (Maybe ())
 deleteTask tid = send (DeleteTask tid)

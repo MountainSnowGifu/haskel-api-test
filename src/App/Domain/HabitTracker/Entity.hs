@@ -2,22 +2,12 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module App.Domain.HabitTracker.Entity
-  ( Habit (..),
-    NewHabit (..),
-  )
+  ( Habit (..) )
 where
 
 import Data.Text (Text)
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
-
-data NewHabit = NewHabit
-  { newHabitTitle :: Text,
-    newHabitDescription :: Text,
-    newHabitColor :: Text,
-    newHabitCategory :: Text
-  }
-  deriving (Show, Eq, Generic)
 
 data Habit = Habit
   { habitId :: Int,

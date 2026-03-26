@@ -15,7 +15,7 @@ where
 
 import App.Application.Task.UseCase (TaskValidationError (..), createTask, fetchAllTasks, fetchTask, removeTask, replaceTask, updateTaskStatus)
 import App.Domain.Auth.Entity (User)
-import App.Domain.Task.Entity (PatchedTask (..))
+import App.Domain.Task.Operation (TaskStatusChanged (..))
 import App.Domain.Task.Repository (TaskRepo)
 import App.Presentation.Task.Request (PatchTaskRequest, PostTaskRequest, UpdateTaskRequest, toCreateTaskCommand, toPatchTaskCommand, toUpdateTaskCommand)
 import App.Presentation.Task.Response (DeleteTaskResponse (..), PatchTaskResponse (..), TaskResponse, toTaskResponse)
@@ -59,7 +59,12 @@ patchTaskHandler mkRun user tid body = do
   case result of
     Nothing -> throwError err404
     Just pt ->
-      return $ PatchTaskResponse "Task updated successfully" (patchedId pt) (patchedStatus pt) (patchedAt pt)
+      return $
+        PatchTaskResponse
+          "Task updated successfully"
+          (taskStatusChangedId pt)
+          (taskStatusChangedStatus pt)
+          (taskStatusChangedAt pt)
 
 -- | DELETE /task/:id ハンドラ
 deleteTaskHandler :: (User -> TaskRunner) -> User -> Int -> Handler DeleteTaskResponse

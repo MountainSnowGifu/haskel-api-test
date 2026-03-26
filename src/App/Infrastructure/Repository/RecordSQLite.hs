@@ -11,7 +11,8 @@ module App.Infrastructure.Repository.RecordSQLite
 where
 
 import App.Domain.Auth.Entity (User (..), UserId (..))
-import App.Domain.BudgetTracker.Entity (NewRecord (..), Record (..), RecordType (..))
+import App.Domain.BudgetTracker.Entity (Record (..), RecordType (..))
+import App.Domain.BudgetTracker.Operation (CreateRecord (..))
 import App.Domain.BudgetTracker.Repository (RecordRepo (..))
 import App.Infrastructure.DB.Types (SqliteDb (..))
 import Data.Text (Text)
@@ -48,23 +49,23 @@ runRecordRepo (SqliteDb dbfile) user = interpret $ \_ -> \case
       rows <- query conn "SELECT id, user_id, type, category, amount, date, memo FROM records WHERE user_id = ?" (Only uid) :: IO [(Int, Int, Text, Text, Int, Text, Text)]
       print rows
       return $ map (\(i, u, t, c, a, d, m) -> Record {recordId = i, recordUserId = u, recordType = toRecordType t, recordCategory = c, recordAmount = a, recordDate = d, recordMemo = m}) rows
-  PostRecord nr ->
+  CreateRecordOp op ->
     liftIO $ withConnection dbfile $ \conn -> do
       let uid = unUserId (userUserId user)
       execute
         conn
         "INSERT INTO records (user_id, type, category, amount, date, memo) VALUES (?,?,?,?,?,?)"
-        (uid, fromRecordType (newRecordType nr), newRecordCategory nr, newRecordAmount nr, newRecordDate nr, newRecordMemo nr)
+        (uid, fromRecordType (createRecordType op), createRecordCategory op, createRecordAmount op, createRecordDate op, createRecordMemo op)
       rowId <- fromIntegral <$> lastInsertRowId conn
       return
         Record
           { recordId       = rowId,
             recordUserId   = uid,
-            recordType     = newRecordType nr,
-            recordCategory = newRecordCategory nr,
-            recordAmount   = newRecordAmount nr,
-            recordDate     = newRecordDate nr,
-            recordMemo     = newRecordMemo nr
+            recordType     = createRecordType op,
+            recordCategory = createRecordCategory op,
+            recordAmount   = createRecordAmount op,
+            recordDate     = createRecordDate op,
+            recordMemo     = createRecordMemo op
           }
   DeleteRecord rid ->
     liftIO $ withConnection dbfile $ \conn -> do

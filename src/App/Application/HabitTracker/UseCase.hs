@@ -10,8 +10,10 @@ module App.Application.HabitTracker.UseCase
 where
 
 import App.Application.HabitTracker.Command (CreateHabitCommand (..))
-import App.Domain.HabitTracker.Entity (Habit, NewHabit (..))
-import App.Domain.HabitTracker.Repository (HabitRepo, getHabitAll, postHabit)
+import App.Domain.HabitTracker.Entity (Habit)
+import App.Domain.HabitTracker.Operation (CreateHabit (..))
+import App.Domain.HabitTracker.Repository (HabitRepo, getHabitAll)
+import App.Domain.HabitTracker.Repository qualified as HabitRepo
 import Data.Text qualified as T
 import Effectful (Eff, (:>))
 
@@ -33,4 +35,4 @@ createHabit ::
 createHabit cmd = case validateCreate cmd of
   Left e -> return (Left e)
   Right (CreateHabitCommand ht hd hc hcat) ->
-    Right <$> postHabit (NewHabit ht hd hc hcat)
+    Right <$> HabitRepo.createHabit (CreateHabit ht hd hc hcat)

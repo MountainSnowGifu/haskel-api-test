@@ -11,7 +11,8 @@ module App.Infrastructure.Repository.HabitSQLServer
 where
 
 import App.Domain.Auth.Entity (User (..), UserId (..))
-import App.Domain.HabitTracker.Entity (Habit (..), NewHabit (..))
+import App.Domain.HabitTracker.Entity (Habit (..))
+import App.Domain.HabitTracker.Operation (CreateHabit (..))
 import App.Domain.HabitTracker.Repository (HabitRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
@@ -29,7 +30,7 @@ runHabitRepo ::
   Eff (HabitRepo : es) a ->
   Eff es a
 runHabitRepo pool user = interpret $ \_ -> \case
-  PostHabit (NewHabit hTitle hDesc hColor hCategory) ->
+  CreateHabitOp (CreateHabit hTitle hDesc hColor hCategory) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId (userUserId user)
           esc = T.replace "'" "''"

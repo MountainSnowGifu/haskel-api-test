@@ -11,7 +11,8 @@ module App.Infrastructure.Repository.TaskSQLServer
 where
 
 import App.Domain.Auth.Entity (User (..), UserId (..))
-import App.Domain.Task.Entity (NewTask (..), PatchedTask (PatchedTask), Task (..), TaskPatch (..), TaskPriority (..), TaskStatus (..), UpdateTask (..))
+import App.Domain.Task.Entity (Task (..), TaskPriority (..), TaskStatus (..))
+import App.Domain.Task.Operation (ChangeTaskStatus (..), CreateTask (..), ReplaceTask (..), TaskStatusChanged (..))
 import App.Domain.Task.Repository (TaskRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
@@ -86,7 +87,7 @@ runTaskRepo pool user = interpret $ \_ -> \case
                 updatedAt
           )
           rows
-  PostTask (NewTask tTitle tDesc tStatus tPriority tDueDate tCreatedAt tUpdatedAt) ->
+  CreateTaskOp (CreateTask tTitle tDesc tStatus tPriority tDueDate tCreatedAt tUpdatedAt) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId (userUserId user)
           esc = T.replace "'" "''"
@@ -131,7 +132,7 @@ runTaskRepo pool user = interpret $ \_ -> \case
             (fromMaybe "" dueDate)
             createdAt
             updatedAt
-  PutTask tid (UpdateTask uTitle uDesc uStatus uPriority uDueDate) ->
+  ReplaceTaskOp tid (ReplaceTask uTitle uDesc uStatus uPriority uDueDate) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let esc = T.replace "'" "''"
           status = T.pack (show uStatus)
@@ -168,7 +169,7 @@ runTaskRepo pool user = interpret $ \_ -> \case
               (fromMaybe "" dueDate)
               createdAt
               updatedAt
-  PatchTask tid (TaskPatch pStatus) ->
+  ChangeTaskStatusOp tid (ChangeTaskStatus pStatus) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let statusText = T.pack (show pStatus)
           patchSql =
@@ -184,7 +185,7 @@ runTaskRepo pool user = interpret $ \_ -> \case
           IO [(Int, Text, Text)]
       return $
         listToMaybe rows >>= \(rowId, sts, updatedAt) ->
-          Just (PatchedTask rowId (parseStatus sts) updatedAt)
+          Just (TaskStatusChanged rowId (parseStatus sts) updatedAt)
   DeleteTask tid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
