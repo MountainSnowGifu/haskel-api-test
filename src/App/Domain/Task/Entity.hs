@@ -5,6 +5,9 @@ module App.Domain.Task.Entity
     TaskStatus (..),
     TaskPriority (..),
     PatchedTask (..),
+    NewTask (..),
+    UpdateTask (..),
+    TaskPatch (..),
   )
 where
 
@@ -34,5 +37,30 @@ data Task = Task
     taskDueDate :: Text,
     taskCreatedAt :: Text,
     taskUpdatedAt :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+data NewTask = NewTask
+  { newTaskTitle :: Text,
+    newTaskDescription :: Text,
+    newTaskStatus :: TaskStatus,
+    newTaskPriority :: TaskPriority,
+    newTaskDueDate :: Text,
+    newTaskCreatedAt :: Text,
+    newTaskUpdatedAt :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+data UpdateTask = UpdateTask
+  { updateTaskTitle :: Text,
+    updateTaskDescription :: Text,
+    updateTaskStatus :: TaskStatus,
+    updateTaskPriority :: TaskPriority,
+    updateTaskDueDate :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+newtype TaskPatch = TaskPatch
+  { taskPatchStatus :: TaskStatus
   }
   deriving (Show, Eq, Generic)

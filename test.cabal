@@ -60,6 +60,7 @@ library
     , App.Application.BudgetTracker.UseCase
     , App.Domain.HabitTracker.Entity
     , App.Domain.HabitTracker.Repository
+    , App.Application.HabitTracker.Command
     , App.Application.HabitTracker.UseCase
     , App.Infrastructure.Repository.HabitSQLServer
     , App.Presentation.HabitTracker.Request

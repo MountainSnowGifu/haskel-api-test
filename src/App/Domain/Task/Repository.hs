@@ -15,17 +15,16 @@ module App.Domain.Task.Repository
   )
 where
 
-import App.Application.Task.Command (CreateTaskCommand, PatchTaskCommand, UpdateTaskCommand)
-import App.Domain.Task.Entity (PatchedTask, Task)
+import App.Domain.Task.Entity (NewTask, PatchedTask, Task, TaskPatch, UpdateTask)
 import Effectful
 import Effectful.Dispatch.Dynamic (send)
 
 data TaskRepo :: Effect where
-  GetTask    :: Int -> TaskRepo m (Maybe Task)
+  GetTask :: Int -> TaskRepo m (Maybe Task)
   GetTaskAll :: TaskRepo m [Task]
-  PostTask   :: CreateTaskCommand -> TaskRepo m Task
-  PutTask    :: Int -> UpdateTaskCommand -> TaskRepo m (Maybe Task)
-  PatchTask  :: Int -> PatchTaskCommand -> TaskRepo m (Maybe PatchedTask)
+  PostTask :: NewTask -> TaskRepo m Task
+  PutTask :: Int -> UpdateTask -> TaskRepo m (Maybe Task)
+  PatchTask :: Int -> TaskPatch -> TaskRepo m (Maybe PatchedTask)
   DeleteTask :: Int -> TaskRepo m (Maybe ())
 
 type instance DispatchOf TaskRepo = Dynamic
@@ -36,14 +35,14 @@ getTask tid = send (GetTask tid)
 getTaskAll :: (TaskRepo :> es) => Eff es [Task]
 getTaskAll = send GetTaskAll
 
-postTask :: (TaskRepo :> es) => CreateTaskCommand -> Eff es Task
-postTask cmd = send (PostTask cmd)
+postTask :: (TaskRepo :> es) => NewTask -> Eff es Task
+postTask nt = send (PostTask nt)
 
-putTask :: (TaskRepo :> es) => Int -> UpdateTaskCommand -> Eff es (Maybe Task)
-putTask tid task = send (PutTask tid task)
+putTask :: (TaskRepo :> es) => Int -> UpdateTask -> Eff es (Maybe Task)
+putTask tid ut = send (PutTask tid ut)
 
-patchTask :: (TaskRepo :> es) => Int -> PatchTaskCommand -> Eff es (Maybe PatchedTask)
-patchTask tid cmd = send (PatchTask tid cmd)
+patchTask :: (TaskRepo :> es) => Int -> TaskPatch -> Eff es (Maybe PatchedTask)
+patchTask tid pt = send (PatchTask tid pt)
 
 deleteTask :: (TaskRepo :> es) => Int -> Eff es (Maybe ())
 deleteTask tid = send (DeleteTask tid)

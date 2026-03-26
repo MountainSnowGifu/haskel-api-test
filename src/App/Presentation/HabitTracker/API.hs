@@ -6,8 +6,10 @@ module App.Presentation.HabitTracker.API
   )
 where
 
+import App.Presentation.HabitTracker.Request
 import App.Presentation.HabitTracker.Response
 import Servant
 
 type HabitTrackerAPI =
   AuthProtect "token-auth" :> "api" :> "habits" :> Get '[JSON] [HabitResponse]
+    :<|> AuthProtect "token-auth" :> "api" :> "habits" :> ReqBody '[JSON] PostHabitRequest :> Post '[JSON] HabitResponse

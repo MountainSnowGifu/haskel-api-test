@@ -14,8 +14,8 @@ module App.Application.Task.UseCase
   )
 where
 
-import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand, UpdateTaskCommand)
-import App.Domain.Task.Entity (PatchedTask, Task)
+import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand (..), UpdateTaskCommand (..))
+import App.Domain.Task.Entity (NewTask (..), PatchedTask, Task, TaskPatch (..), UpdateTask (UpdateTask))
 import App.Domain.Task.Repository (TaskRepo, deleteTask, getTask, getTaskAll, patchTask, postTask, putTask)
 import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, formatTime, getCurrentTime)
@@ -28,9 +28,9 @@ import Effectful
 data TaskValidationError = TitleEmpty | TitleTooLong
 
 validateCreate :: CreateTaskCommand -> Either TaskValidationError CreateTaskCommand
-validateCreate cmd
-  | T.null (cmdTitle cmd) = Left TitleEmpty
-  | T.length (cmdTitle cmd) > 100 = Left TitleTooLong
+validateCreate cmd@(CreateTaskCommand t _ _ _ _ _ _)
+  | T.null t = Left TitleEmpty
+  | T.length t > 100 = Left TitleTooLong
   | otherwise = Right cmd
 
 -- ---------------------------------------------------------------------------
@@ -44,9 +44,9 @@ createTask ::
   Eff es (Either TaskValidationError Task)
 createTask cmd = case validateCreate cmd of
   Left e -> return (Left e)
-  Right valid -> do
+  Right (CreateTaskCommand t d s p dd _ _) -> do
     now <- liftIO $ T.pack . formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" <$> getCurrentTime
-    Right <$> postTask valid {cmdCreatedAt = now, cmdUpdatedAt = now}
+    Right <$> postTask (NewTask t d s p dd now now)
 
 fetchTask :: (TaskRepo :> es) => Int -> Eff es (Maybe Task)
 fetchTask = getTask
@@ -55,10 +55,10 @@ fetchAllTasks :: (TaskRepo :> es) => Eff es [Task]
 fetchAllTasks = getTaskAll
 
 replaceTask :: (TaskRepo :> es) => Int -> UpdateTaskCommand -> Eff es (Maybe Task)
-replaceTask = putTask
+replaceTask tid (UpdateTaskCommand t d s p dd) = putTask tid (UpdateTask t d s p dd)
 
 updateTaskStatus :: (TaskRepo :> es) => Int -> PatchTaskCommand -> Eff es (Maybe PatchedTask)
-updateTaskStatus = patchTask
+updateTaskStatus tid (PatchTaskCommand s) = patchTask tid (TaskPatch s)
 
 removeTask :: (TaskRepo :> es) => Int -> Eff es (Maybe ())
 removeTask = deleteTask

@@ -16,11 +16,11 @@ import qualified Data.Text as T
 import GHC.Generics (Generic)
 
 data PostRecordRequest = PostRecordRequest
-  { recordType     :: Text,
+  { recordType :: Text,
     recordCategory :: Text,
-    recordAmount   :: Int,
-    recordDate     :: Text,
-    recordMemo     :: Text
+    recordAmount :: Int,
+    recordDate :: Text,
+    recordMemo :: Text
   }
   deriving (Show, Eq, Generic)
 
@@ -30,16 +30,16 @@ instance ToJSON PostRecordRequest
 
 parseRecordType :: Text -> RecordType
 parseRecordType "income" = Income
-parseRecordType _        = Expense
+parseRecordType _ = Expense
 
 toCreateRecordCommand :: PostRecordRequest -> CreateRecordCommand
 toCreateRecordCommand req =
   CreateRecordCommand
-    { cmdType      = parseRecordType (recordType req),
-      cmdCategory  = recordCategory req,
-      cmdAmount    = recordAmount req,
-      cmdDate      = recordDate req,
-      cmdMemo      = recordMemo req,
-      cmdCreatedAt = T.empty,
-      cmdUpdatedAt = T.empty
+    { cmdRecordType = parseRecordType (recordType req),
+      cmdRecordCategory = recordCategory req,
+      cmdRecordAmount = recordAmount req,
+      cmdRecordDate = recordDate req,
+      cmdRecordMemo = recordMemo req,
+      cmdRecordCreatedAt = T.empty,
+      cmdRecordUpdatedAt = T.empty
     }

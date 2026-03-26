@@ -11,7 +11,7 @@ module App.Infrastructure.Repository.HabitSQLServer
 where
 
 import App.Domain.Auth.Entity (User (..), UserId (..))
-import App.Domain.HabitTracker.Entity (Habit (..))
+import App.Domain.HabitTracker.Entity (Habit (..), NewHabit (..))
 import App.Domain.HabitTracker.Repository (HabitRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
@@ -29,6 +29,42 @@ runHabitRepo ::
   Eff (HabitRepo : es) a ->
   Eff es a
 runHabitRepo pool user = interpret $ \_ -> \case
+  PostHabit (NewHabit hTitle hDesc hColor hCategory) ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      let uid = unUserId (userUserId user)
+          esc = T.replace "'" "''"
+          insertSql =
+            "INSERT INTO testdb.dbo.HABITS (userId, title, description, color, category) "
+              <> "OUTPUT INSERTED.id, INSERTED.title, INSERTED.description, INSERTED.color, INSERTED.category, INSERTED.createdAt, INSERTED.updatedAt "
+              <> "VALUES ("
+              <> T.pack (show uid)
+              <> ", N'"
+              <> esc hTitle
+              <> "', N'"
+              <> esc hDesc
+              <> "', N'"
+              <> esc hColor
+              <> "', N'"
+              <> esc hCategory
+              <> "')"
+      rows <-
+        sql conn insertSql ::
+          IO [(Int, Text, Text, Text, Text, UTCTime, UTCTime)]
+      let (rowId, title, desc, color, category, createdAt, updatedAt) = head rows
+      return
+        Habit
+          { habitId = rowId,
+            habitTitle = title,
+            habitDescription = desc,
+            habitColor = color,
+            habitCategory = category,
+            habitCurrentStreak = 0,
+            habitBestStreak = 0,
+            habitTotalCompletions = 0,
+            habitTodayCompleted = False,
+            habitCreatedAt = createdAt,
+            habitUpdatedAt = updatedAt
+          }
   GetHabitAll ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId (userUserId user)

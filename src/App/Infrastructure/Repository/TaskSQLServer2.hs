@@ -10,9 +10,8 @@ module App.Infrastructure.Repository.TaskSQLServer2
   )
 where
 
-import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand (..), UpdateTaskCommand (..))
 import App.Domain.Auth.Entity (User (..), UserId (..))
-import App.Domain.Task.Entity (PatchedTask (PatchedTask), Task (..), TaskPriority (..), TaskStatus (..))
+import App.Domain.Task.Entity (NewTask (..), PatchedTask (PatchedTask), Task (..), TaskPatch (..), TaskPriority (..), TaskStatus (..), UpdateTask (..))
 import App.Domain.Task.Repository (TaskRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
@@ -103,7 +102,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
                 updatedAt
           )
           rows
-  PostTask (CreateTaskCommand tTitle tDesc tStatus tPriority tDueDate tCreatedAt tUpdatedAt) ->
+  PostTask (NewTask tTitle tDesc tStatus tPriority tDueDate tCreatedAt tUpdatedAt) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId (userUserId user)
           status = T.pack (show tStatus)
@@ -151,7 +150,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
             (fromMaybe "" dueDate)
             createdAt
             updatedAt
-  PutTask tid (UpdateTaskCommand uTitle uDesc uStatus uPriority uDueDate) ->
+  PutTask tid (UpdateTask uTitle uDesc uStatus uPriority uDueDate) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let status = T.pack (show uStatus)
           priority = T.pack (show uPriority)
@@ -184,7 +183,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
               (fromMaybe "" dueDate)
               createdAt
               updatedAt
-  PatchTask tid (PatchTaskCommand pStatus) ->
+  PatchTask tid (TaskPatch pStatus) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let statusText = T.pack (show pStatus)
       RpcResponse _ _ rows <-

@@ -11,12 +11,12 @@ import Data.Text (Text)
 import GHC.Generics (Generic)
 
 data CreateRecordCommand = CreateRecordCommand
-  { cmdType      :: RecordType,
-    cmdCategory  :: Text,
-    cmdAmount    :: Int,
-    cmdDate      :: Text,
-    cmdMemo      :: Text,
-    cmdCreatedAt :: Text,
-    cmdUpdatedAt :: Text
+  { cmdRecordType :: RecordType,
+    cmdRecordCategory :: Text,
+    cmdRecordAmount :: Int,
+    cmdRecordDate :: Text,
+    cmdRecordMemo :: Text,
+    cmdRecordCreatedAt :: Text,
+    cmdRecordUpdatedAt :: Text
   }
   deriving (Show, Eq, Generic)

@@ -20,21 +20,11 @@ import Effectful
 
 data RecordValidationError = CategoryEmpty | AmountInvalid
 
-toNewRecord :: CreateRecordCommand -> NewRecord
-toNewRecord cmd =
-  NewRecord
-    { newRecordType     = cmdType cmd,
-      newRecordCategory = cmdCategory cmd,
-      newRecordAmount   = cmdAmount cmd,
-      newRecordDate     = cmdDate cmd,
-      newRecordMemo     = cmdMemo cmd
-    }
-
 validateCreate :: CreateRecordCommand -> Either RecordValidationError CreateRecordCommand
 validateCreate cmd
-  | T.null (cmdCategory cmd) = Left CategoryEmpty
-  | cmdAmount cmd <= 0       = Left AmountInvalid
-  | otherwise                = Right cmd
+  | T.null (cmdRecordCategory cmd) = Left CategoryEmpty
+  | cmdRecordAmount cmd <= 0 = Left AmountInvalid
+  | otherwise = Right cmd
 
 fetchAllRecords :: (RecordRepo :> es) => Eff es [Record]
 fetchAllRecords = getRecordsAll
@@ -44,8 +34,9 @@ createRecord ::
   CreateRecordCommand ->
   Eff es (Either RecordValidationError Record)
 createRecord cmd = case validateCreate cmd of
-  Left e      -> return (Left e)
-  Right valid -> Right <$> postRecord (toNewRecord valid)
+  Left e -> return (Left e)
+  Right (CreateRecordCommand rt rc ra rd rm _ _) ->
+    Right <$> postRecord (NewRecord rt rc ra rd rm)
 
 removeRecord :: (RecordRepo :> es) => Int -> Eff es (Maybe ())
 removeRecord = deleteRecord

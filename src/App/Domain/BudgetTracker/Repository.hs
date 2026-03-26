@@ -13,7 +13,7 @@ module App.Domain.BudgetTracker.Repository
   )
 where
 
-import App.Domain.BudgetTracker.Entity (NewRecord (..), Record (..))
+import App.Domain.BudgetTracker.Entity (NewRecord, Record (..))
 import Data.Text (Text)
 import Effectful
 import Effectful.Dispatch.Dynamic (send)
@@ -30,7 +30,7 @@ getRecordsAll :: (RecordRepo :> es) => Eff es [Record]
 getRecordsAll = send GetRecordsAll
 
 postRecord :: (RecordRepo :> es) => NewRecord -> Eff es Record
-postRecord cmd = send (PostRecord cmd)
+postRecord nr = send (PostRecord nr)
 
 deleteRecord :: (RecordRepo :> es) => Int -> Eff es (Maybe ())
 deleteRecord rid = send (DeleteRecord rid)
