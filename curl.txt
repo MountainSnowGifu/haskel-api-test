@@ -40,6 +40,12 @@ curl -s -X POST http://localhost:8081/api/records \
     "habitCategory": "学習"
   }' 2>&1 ; echo
 
+# DELETE /api/habits
+curl -X DELETE http://localhost:8081/api/habits \
+  -H "Authorization: Bearer 004ca737-9dea-49df-9c61-bae0010ad4aa" \
+  -H "Content-Type: application/json" \
+  -d '{"habitId": 1}'
+
 https://hoogle.haskell.org/
 
 SERVANT

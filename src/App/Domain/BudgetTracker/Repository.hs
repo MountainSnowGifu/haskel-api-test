@@ -13,28 +13,28 @@ module App.Domain.BudgetTracker.Repository
   )
 where
 
+import App.Application.BudgetTracker.Command (CreateRecordCmd)
 import App.Domain.BudgetTracker.Entity (Record (..))
-import App.Domain.BudgetTracker.Operation (CreateRecord)
 import Data.Text (Text)
 import Effectful
 import Effectful.Dispatch.Dynamic (send)
 
 data RecordRepo :: Effect where
-  GetRecordsAll :: RecordRepo m [Record]
-  CreateRecordOp :: CreateRecord -> RecordRepo m Record
-  DeleteRecord :: Int -> RecordRepo m (Maybe ())
-  GetRecordsByMonth :: Text -> RecordRepo m [Record]
+  GetRecordsOp :: RecordRepo m [Record]
+  CreateRecordOp :: CreateRecordCmd -> RecordRepo m Record
+  DeleteRecordOp :: Int -> RecordRepo m (Maybe ())
+  GetRecordsByMonthOp :: Text -> RecordRepo m [Record]
 
 type instance DispatchOf RecordRepo = Dynamic
 
 getRecordsAll :: (RecordRepo :> es) => Eff es [Record]
-getRecordsAll = send GetRecordsAll
+getRecordsAll = send GetRecordsOp
 
-createRecord :: (RecordRepo :> es) => CreateRecord -> Eff es Record
+createRecord :: (RecordRepo :> es) => CreateRecordCmd -> Eff es Record
 createRecord op = send (CreateRecordOp op)
 
 deleteRecord :: (RecordRepo :> es) => Int -> Eff es (Maybe ())
-deleteRecord rid = send (DeleteRecord rid)
+deleteRecord rid = send (DeleteRecordOp rid)
 
 getRecordsByMonth :: (RecordRepo :> es) => Text -> Eff es [Record]
-getRecordsByMonth month = send (GetRecordsByMonth month)
+getRecordsByMonth month = send (GetRecordsByMonthOp month)

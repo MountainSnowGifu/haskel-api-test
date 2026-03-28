@@ -12,7 +12,7 @@ where
 
 import App.Domain.Auth.Entity (User (..), UserId (..))
 import App.Domain.BudgetTracker.Entity (Record (..), RecordType (..))
-import App.Domain.BudgetTracker.Operation (CreateRecord (..))
+import App.Application.BudgetTracker.Command (CreateRecordCmd (..))
 import App.Domain.BudgetTracker.Repository (RecordRepo (..))
 import App.Infrastructure.DB.Types (SqliteDb (..))
 import Data.Text (Text)
@@ -43,7 +43,7 @@ runRecordRepo ::
   Eff (RecordRepo : es) a ->
   Eff es a
 runRecordRepo (SqliteDb dbfile) user = interpret $ \_ -> \case
-  GetRecordsAll ->
+  GetRecordsOp ->
     liftIO $ withConnection dbfile $ \conn -> do
       let uid = unUserId (userUserId user)
       rows <- query conn "SELECT id, user_id, type, category, amount, date, memo FROM records WHERE user_id = ?" (Only uid) :: IO [(Int, Int, Text, Text, Int, Text, Text)]
@@ -67,11 +67,11 @@ runRecordRepo (SqliteDb dbfile) user = interpret $ \_ -> \case
             recordDate     = createRecordDate op,
             recordMemo     = createRecordMemo op
           }
-  DeleteRecord rid ->
+  DeleteRecordOp rid ->
     liftIO $ withConnection dbfile $ \conn -> do
       execute conn "DELETE FROM records WHERE id = ?" (Only rid)
       return (Just ())
-  GetRecordsByMonth month ->
+  GetRecordsByMonthOp month ->
     liftIO $ withConnection dbfile $ \conn -> do
       let uid = unUserId (userUserId user)
       rows <- query conn "SELECT id, user_id, type, category, amount, date, memo FROM records WHERE user_id = ? AND strftime('%Y-%m', date) = ?" (uid, month) :: IO [(Int, Int, Text, Text, Int, Text, Text)]

@@ -1,9 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module App.Domain.HabitTracker.Entity
-  ( Habit (..) )
-where
+module App.Domain.HabitTracker.Entity (Habit (..)) where
 
 import Data.Text (Text)
 import Data.Time (UTCTime)

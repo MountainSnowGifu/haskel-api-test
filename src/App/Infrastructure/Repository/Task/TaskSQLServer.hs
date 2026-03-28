@@ -12,7 +12,7 @@ where
 
 import App.Domain.Auth.Entity (User (..), UserId (..))
 import App.Domain.Task.Entity (Task (..), TaskPriority (..), TaskStatus (..))
-import App.Domain.Task.Operation (ChangeTaskStatus (..), CreateTask (..), ReplaceTask (..), TaskStatusChanged (..))
+import App.Application.Task.Command (ChangeTaskStatusCmd (..), CreateTaskCmd (..), ReplaceTaskCmd (..), TaskStatusChanged (..))
 import App.Domain.Task.Repository (TaskRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
@@ -48,7 +48,7 @@ runTaskRepo ::
   Eff (TaskRepo : es) a ->
   Eff es a
 runTaskRepo pool user = interpret $ \_ -> \case
-  GetTask tid ->
+  GetTaskOp tid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
         sql conn ("SELECT id, userId, title, description, status, priority, dueDate, createdAt, updatedAt FROM testdb.dbo.TASKS_NEW WHERE id = " <> T.pack (show tid)) ::
@@ -66,7 +66,7 @@ runTaskRepo pool user = interpret $ \_ -> \case
               (fromMaybe "" dueDate)
               createdAt
               updatedAt
-  GetTaskAll ->
+  GetTasksOp ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId (userUserId user)
       rows <-
@@ -87,7 +87,7 @@ runTaskRepo pool user = interpret $ \_ -> \case
                 updatedAt
           )
           rows
-  CreateTaskOp (CreateTask tTitle tDesc tStatus tPriority tDueDate tCreatedAt tUpdatedAt) ->
+  CreateTaskOp (CreateTaskCmd tTitle tDesc tStatus tPriority tDueDate tCreatedAt tUpdatedAt) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId (userUserId user)
           esc = T.replace "'" "''"
@@ -132,7 +132,7 @@ runTaskRepo pool user = interpret $ \_ -> \case
             (fromMaybe "" dueDate)
             createdAt
             updatedAt
-  ReplaceTaskOp tid (ReplaceTask uTitle uDesc uStatus uPriority uDueDate) ->
+  ReplaceTaskOp tid (ReplaceTaskCmd uTitle uDesc uStatus uPriority uDueDate) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let esc = T.replace "'" "''"
           status = T.pack (show uStatus)
@@ -169,7 +169,7 @@ runTaskRepo pool user = interpret $ \_ -> \case
               (fromMaybe "" dueDate)
               createdAt
               updatedAt
-  ChangeTaskStatusOp tid (ChangeTaskStatus pStatus) ->
+  ChangeTaskStatusOp tid (ChangeTaskStatusCmd pStatus) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let statusText = T.pack (show pStatus)
           patchSql =
@@ -186,7 +186,7 @@ runTaskRepo pool user = interpret $ \_ -> \case
       return $
         listToMaybe rows >>= \(rowId, sts, updatedAt) ->
           Just (TaskStatusChanged rowId (parseStatus sts) updatedAt)
-  DeleteTask tid ->
+  DeleteTaskOp tid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
         sql conn ("DELETE FROM testdb.dbo.TASKS_NEW OUTPUT DELETED.id, DELETED.userId WHERE id = " <> T.pack (show tid)) ::

@@ -16,34 +16,34 @@ module App.Domain.Task.Repository
 where
 
 import App.Domain.Task.Entity (Task)
-import App.Domain.Task.Operation (ChangeTaskStatus, CreateTask, ReplaceTask, TaskStatusChanged)
+import App.Application.Task.Command (ChangeTaskStatusCmd, CreateTaskCmd, ReplaceTaskCmd, TaskStatusChanged)
 import Effectful
 import Effectful.Dispatch.Dynamic (send)
 
 data TaskRepo :: Effect where
-  GetTask :: Int -> TaskRepo m (Maybe Task)
-  GetTaskAll :: TaskRepo m [Task]
-  CreateTaskOp :: CreateTask -> TaskRepo m Task
-  ReplaceTaskOp :: Int -> ReplaceTask -> TaskRepo m (Maybe Task)
-  ChangeTaskStatusOp :: Int -> ChangeTaskStatus -> TaskRepo m (Maybe TaskStatusChanged)
-  DeleteTask :: Int -> TaskRepo m (Maybe ())
+  GetTaskOp :: Int -> TaskRepo m (Maybe Task)
+  GetTasksOp :: TaskRepo m [Task]
+  CreateTaskOp :: CreateTaskCmd -> TaskRepo m Task
+  ReplaceTaskOp :: Int -> ReplaceTaskCmd -> TaskRepo m (Maybe Task)
+  ChangeTaskStatusOp :: Int -> ChangeTaskStatusCmd -> TaskRepo m (Maybe TaskStatusChanged)
+  DeleteTaskOp :: Int -> TaskRepo m (Maybe ())
 
 type instance DispatchOf TaskRepo = Dynamic
 
 getTask :: (TaskRepo :> es) => Int -> Eff es (Maybe Task)
-getTask tid = send (GetTask tid)
+getTask tid = send (GetTaskOp tid)
 
 getTaskAll :: (TaskRepo :> es) => Eff es [Task]
-getTaskAll = send GetTaskAll
+getTaskAll = send GetTasksOp
 
-createTask :: (TaskRepo :> es) => CreateTask -> Eff es Task
+createTask :: (TaskRepo :> es) => CreateTaskCmd -> Eff es Task
 createTask op = send (CreateTaskOp op)
 
-replaceTask :: (TaskRepo :> es) => Int -> ReplaceTask -> Eff es (Maybe Task)
+replaceTask :: (TaskRepo :> es) => Int -> ReplaceTaskCmd -> Eff es (Maybe Task)
 replaceTask tid op = send (ReplaceTaskOp tid op)
 
-changeTaskStatus :: (TaskRepo :> es) => Int -> ChangeTaskStatus -> Eff es (Maybe TaskStatusChanged)
+changeTaskStatus :: (TaskRepo :> es) => Int -> ChangeTaskStatusCmd -> Eff es (Maybe TaskStatusChanged)
 changeTaskStatus tid op = send (ChangeTaskStatusOp tid op)
 
 deleteTask :: (TaskRepo :> es) => Int -> Eff es (Maybe ())
-deleteTask tid = send (DeleteTask tid)
+deleteTask tid = send (DeleteTaskOp tid)

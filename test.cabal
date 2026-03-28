@@ -38,7 +38,6 @@ library
     , App.Presentation.Chat.API
     , App.Presentation.Chat.Handler
     , App.Domain.Task.Entity
-    , App.Domain.Task.Operation
     , App.Domain.Task.Repository
     , App.Application.Task.Command
     , App.Application.Task.UseCase
@@ -56,12 +55,10 @@ library
     , App.Server.API
     , App.Server.Router
     , App.Domain.BudgetTracker.Entity
-    , App.Domain.BudgetTracker.Operation
     , App.Domain.BudgetTracker.Repository
     , App.Application.BudgetTracker.Command
     , App.Application.BudgetTracker.UseCase
     , App.Domain.HabitTracker.Entity
-    , App.Domain.HabitTracker.Operation
     , App.Domain.HabitTracker.Repository
     , App.Application.HabitTracker.Command
     , App.Application.HabitTracker.UseCase

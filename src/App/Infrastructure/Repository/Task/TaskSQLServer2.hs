@@ -12,7 +12,7 @@ where
 
 import App.Domain.Auth.Entity (User (..), UserId (..))
 import App.Domain.Task.Entity (Task (..), TaskPriority (..), TaskStatus (..))
-import App.Domain.Task.Operation (ChangeTaskStatus (..), CreateTask (..), ReplaceTask (..), TaskStatusChanged (..))
+import App.Application.Task.Command (ChangeTaskStatusCmd (..), CreateTaskCmd (..), ReplaceTaskCmd (..), TaskStatusChanged (..))
 import App.Domain.Task.Repository (TaskRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
@@ -48,7 +48,7 @@ runTaskRepo2 ::
   Eff (TaskRepo : es) a ->
   Eff es a
 runTaskRepo2 pool user = interpret $ \_ -> \case
-  GetTask tid ->
+  GetTaskOp tid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       RpcResponse _ _ rows <-
         rpc
@@ -74,7 +74,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
               (fromMaybe "" dueDate)
               createdAt
               updatedAt
-  GetTaskAll ->
+  GetTasksOp ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId (userUserId user)
       RpcResponse _ _ rows <-
@@ -103,7 +103,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
                 updatedAt
           )
           rows
-  CreateTaskOp (CreateTask tTitle tDesc tStatus tPriority tDueDate tCreatedAt tUpdatedAt) ->
+  CreateTaskOp (CreateTaskCmd tTitle tDesc tStatus tPriority tDueDate tCreatedAt tUpdatedAt) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId (userUserId user)
           status = T.pack (show tStatus)
@@ -151,7 +151,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
             (fromMaybe "" dueDate)
             createdAt
             updatedAt
-  ReplaceTaskOp tid (ReplaceTask uTitle uDesc uStatus uPriority uDueDate) ->
+  ReplaceTaskOp tid (ReplaceTaskCmd uTitle uDesc uStatus uPriority uDueDate) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let status = T.pack (show uStatus)
           priority = T.pack (show uPriority)
@@ -184,7 +184,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
               (fromMaybe "" dueDate)
               createdAt
               updatedAt
-  ChangeTaskStatusOp tid (ChangeTaskStatus pStatus) ->
+  ChangeTaskStatusOp tid (ChangeTaskStatusCmd pStatus) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let statusText = T.pack (show pStatus)
       RpcResponse _ _ rows <-
@@ -202,7 +202,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
       return $
         listToMaybe rows >>= \(rowId, sts, updatedAt) ->
           Just (TaskStatusChanged rowId (parseStatus sts) updatedAt)
-  DeleteTask tid ->
+  DeleteTaskOp tid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       RpcResponse _ _ rows <-
         rpc

@@ -5,13 +5,15 @@ module App.Presentation.HabitTracker.Handler
   ( HabitRunner,
     getHabitsAllHandler,
     postHabitHandler,
+    deleteHabitHandler,
   )
 where
 
-import App.Application.HabitTracker.UseCase (HabitValidationError (..), createHabit, fetchAllHabits)
+import App.Application.HabitTracker.UseCase (HabitValidationError (..), createHabit, deleteHabit, fetchAllHabits)
 import App.Domain.Auth.Entity (User)
 import App.Domain.HabitTracker.Repository (HabitRepo)
-import App.Presentation.HabitTracker.Request
+import App.Application.HabitTracker.Command (DeleteHabitCommand (..))
+import App.Presentation.HabitTracker.Request (PostHabitRequest, toCreateHabitCommand)
 import App.Presentation.HabitTracker.Response
   ( HabitResponse,
     toHabitResponse,
@@ -34,3 +36,8 @@ postHabitHandler mkRun user body = do
     Left CategoryEmpty -> throwError err400
     Left AmountInvalid -> throwError err400
     Right record -> return (toHabitResponse record)
+
+deleteHabitHandler :: (User -> HabitRunner) -> User -> Int -> Handler NoContent
+deleteHabitHandler mkRun user hid = do
+  liftIO $ mkRun user (deleteHabit (DeleteHabitCommand hid))
+  return NoContent

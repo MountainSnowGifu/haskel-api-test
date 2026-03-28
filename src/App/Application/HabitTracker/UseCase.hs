@@ -6,12 +6,12 @@ module App.Application.HabitTracker.UseCase
   ( fetchAllHabits,
     HabitValidationError (..),
     createHabit,
+    deleteHabit,
   )
 where
 
-import App.Application.HabitTracker.Command (CreateHabitCommand (..))
+import App.Application.HabitTracker.Command (CreateHabitCmd (..), CreateHabitCommand (..), DeleteHabitCommand (..))
 import App.Domain.HabitTracker.Entity (Habit)
-import App.Domain.HabitTracker.Operation (CreateHabit (..))
 import App.Domain.HabitTracker.Repository (HabitRepo, getHabitAll)
 import App.Domain.HabitTracker.Repository qualified as HabitRepo
 import Data.Text qualified as T
@@ -35,4 +35,7 @@ createHabit ::
 createHabit cmd = case validateCreate cmd of
   Left e -> return (Left e)
   Right (CreateHabitCommand ht hd hc hcat) ->
-    Right <$> HabitRepo.createHabit (CreateHabit ht hd hc hcat)
+    Right <$> HabitRepo.createHabit (CreateHabitCmd ht hd hc hcat)
+
+deleteHabit :: (HabitRepo :> es) => DeleteHabitCommand -> Eff es ()
+deleteHabit (DeleteHabitCommand habitId) = HabitRepo.deleteHabit habitId

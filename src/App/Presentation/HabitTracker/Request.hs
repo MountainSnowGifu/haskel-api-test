@@ -33,3 +33,4 @@ toCreateHabitCommand PostHabitRequest {..} =
       cmdHabitColor = habitColor,
       cmdHabitCategory = habitCategory
     }
+
