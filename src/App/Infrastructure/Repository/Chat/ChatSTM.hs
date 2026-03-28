@@ -5,7 +5,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeOperators #-}
 
-module App.Infrastructure.Repository.ChatSTM
+module App.Infrastructure.Repository.Chat.ChatSTM
   ( RoomState,
     newRoomState,
     MessageStore,

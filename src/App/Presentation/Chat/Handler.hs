@@ -11,7 +11,7 @@ where
 import App.Application.Chat.Command (MessageSendCommand (..))
 import App.Application.Chat.UseCase (ValidationError (..), disconnectClient, initConnection, storeMessage, validateMessageSend)
 import App.Domain.Chat.Entity (ConnectedClient (..), ErrorCode (..), errorCodeText)
-import App.Infrastructure.Repository.ChatSTM (MessageStore, RoomState, runChatRepo)
+import App.Infrastructure.Repository.Chat.ChatSTM (MessageStore, RoomState, runChatRepo)
 import App.Presentation.Chat.Request (ConnectionInitRequest, MessageSendRequest, toConnectionInitCommand, toMessageSendCommand)
 import App.Presentation.Chat.Response (toBroadcastResponse, toConnectionAckResponse)
 import Control.Concurrent.STM (TVar, atomically, modifyTVar, newTVarIO, readTVarIO)

@@ -4,7 +4,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeOperators #-}
 
-module App.Infrastructure.Repository.TokenRedis
+module App.Infrastructure.Repository.Auth.TokenRedis
   ( runTokenRedis,
   )
 where

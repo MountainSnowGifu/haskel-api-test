@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
-module App.Infrastructure.Repository.RecordSQLite
+module App.Infrastructure.Repository.Record.RecordSQLite
   ( runRecordRepo,
   )
 where

@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
-module App.Infrastructure.Repository.TaskSQLServer
+module App.Infrastructure.Repository.Task.TaskSQLServer
   ( runTaskRepo,
   )
 where

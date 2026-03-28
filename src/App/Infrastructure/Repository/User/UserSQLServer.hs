@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
-module App.Infrastructure.Repository.UserSQLServer
+module App.Infrastructure.Repository.User.UserSQLServer
   ( runUserRepoSqlServer,
   )
 where

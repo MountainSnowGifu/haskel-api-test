@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
-module App.Infrastructure.Repository.UserInMemory
+module App.Infrastructure.Repository.Auth.UserInMemory
   ( runUserRepoInMemory,
   )
 where

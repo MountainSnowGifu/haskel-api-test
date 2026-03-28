@@ -23,16 +23,16 @@ library
     , App.Domain.Auth.Entity
     , App.Domain.Auth.Repository
     , App.Application.Auth.UseCase
-    , App.Infrastructure.Repository.UserInMemory
-    , App.Infrastructure.Repository.UserSQLServer
-    , App.Infrastructure.Repository.TokenRedis
+    , App.Infrastructure.Repository.Auth.UserInMemory
+    , App.Infrastructure.Repository.User.UserSQLServer
+    , App.Infrastructure.Repository.Auth.TokenRedis
     , App.Presentation.Auth.API
     , App.Presentation.Auth.Handler
     , App.Domain.Chat.Entity
     , App.Domain.Chat.Repository
     , App.Application.Chat.Command
     , App.Application.Chat.UseCase
-    , App.Infrastructure.Repository.ChatSTM
+    , App.Infrastructure.Repository.Chat.ChatSTM
     , App.Presentation.Chat.Request
     , App.Presentation.Chat.Response
     , App.Presentation.Chat.API
@@ -42,13 +42,13 @@ library
     , App.Domain.Task.Repository
     , App.Application.Task.Command
     , App.Application.Task.UseCase
-    , App.Infrastructure.Repository.TaskSQLServer
-    , App.Infrastructure.Repository.TaskSQLServer2
+    , App.Infrastructure.Repository.Task.TaskSQLServer
+    , App.Infrastructure.Repository.Task.TaskSQLServer2
     , App.Presentation.Task.Request
     , App.Presentation.Task.Response
     , App.Presentation.Task.API
     , App.Presentation.Task.Handler
-    , App.Infrastructure.Repository.RecordSQLite
+    , App.Infrastructure.Repository.Record.RecordSQLite
     , App.Presentation.BudgetTracker.Request
     , App.Presentation.BudgetTracker.API
     , App.Presentation.BudgetTracker.Response
@@ -65,7 +65,7 @@ library
     , App.Domain.HabitTracker.Repository
     , App.Application.HabitTracker.Command
     , App.Application.HabitTracker.UseCase
-    , App.Infrastructure.Repository.HabitSQLServer
+    , App.Infrastructure.Repository.Habit.HabitSQLServer
     , App.Presentation.HabitTracker.Request
     , App.Presentation.HabitTracker.Response
     , App.Presentation.HabitTracker.API
