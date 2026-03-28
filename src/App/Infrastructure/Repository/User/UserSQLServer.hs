@@ -11,7 +11,7 @@ module App.Infrastructure.Repository.User.UserSQLServer
 where
 
 import App.Domain.Auth.Entity (Password (..), User (..), UserId (..), Username (..))
-import App.Domain.Auth.Repository (UserRepo (..))
+import App.Application.Auth.Repository (UserRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
 import qualified Data.Text as T

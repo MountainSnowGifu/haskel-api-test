@@ -15,7 +15,7 @@ module App.Infrastructure.Repository.Chat.ChatSTM
 where
 
 import App.Domain.Chat.Entity (ChatMessage (..), ConnectedClient (..))
-import App.Domain.Chat.Repository (ChatRepo (..))
+import App.Application.Chat.Repository (ChatRepo (..))
 import Control.Concurrent.STM (TVar, atomically, modifyTVar, newTVarIO, readTVar)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map

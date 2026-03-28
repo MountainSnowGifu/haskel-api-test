@@ -21,7 +21,7 @@ library
     , App.Infrastructure.Logger.CsvLogger
     , App.Middleware.TokenAuth
     , App.Domain.Auth.Entity
-    , App.Domain.Auth.Repository
+    , App.Application.Auth.Repository
     , App.Application.Auth.UseCase
     , App.Infrastructure.Repository.Auth.UserInMemory
     , App.Infrastructure.Repository.User.UserSQLServer
@@ -29,7 +29,7 @@ library
     , App.Presentation.Auth.API
     , App.Presentation.Auth.Handler
     , App.Domain.Chat.Entity
-    , App.Domain.Chat.Repository
+    , App.Application.Chat.Repository
     , App.Application.Chat.Command
     , App.Application.Chat.UseCase
     , App.Infrastructure.Repository.Chat.ChatSTM
@@ -38,7 +38,7 @@ library
     , App.Presentation.Chat.API
     , App.Presentation.Chat.Handler
     , App.Domain.Task.Entity
-    , App.Domain.Task.Repository
+    , App.Application.Task.Repository
     , App.Application.Task.Command
     , App.Application.Task.UseCase
     , App.Infrastructure.Repository.Task.TaskSQLServer
@@ -55,11 +55,11 @@ library
     , App.Server.API
     , App.Server.Router
     , App.Domain.BudgetTracker.Entity
-    , App.Domain.BudgetTracker.Repository
+    , App.Application.BudgetTracker.Repository
     , App.Application.BudgetTracker.Command
     , App.Application.BudgetTracker.UseCase
     , App.Domain.HabitTracker.Entity
-    , App.Domain.HabitTracker.Repository
+    , App.Application.HabitTracker.Repository
     , App.Application.HabitTracker.Command
     , App.Application.HabitTracker.UseCase
     , App.Infrastructure.Repository.HabitTracker.HabitSQLServer

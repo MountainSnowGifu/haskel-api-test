@@ -13,8 +13,8 @@ where
 
 import App.Application.BudgetTracker.Command (CreateRecordCmd (..), CreateRecordCommand (..))
 import App.Domain.BudgetTracker.Entity (Record, Summary (..), summarize)
-import App.Domain.BudgetTracker.Repository (RecordRepo, deleteRecord, getRecordsAll, getRecordsByMonth)
-import App.Domain.BudgetTracker.Repository qualified as RecordRepo
+import App.Application.BudgetTracker.Repository (RecordRepo, deleteRecord, getRecordsAll, getRecordsByMonth)
+import App.Application.BudgetTracker.Repository qualified as RecordRepo
 import Data.Text (Text)
 import Data.Text qualified as T
 import Effectful

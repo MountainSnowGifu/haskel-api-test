@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module App.Domain.Task.Repository
+module App.Application.Task.Repository
   ( TaskRepo (..),
     getTask,
     getTaskAll,

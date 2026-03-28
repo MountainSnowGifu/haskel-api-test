@@ -13,7 +13,7 @@ where
 
 import App.Application.BudgetTracker.UseCase (RecordValidationError (..), createRecord, fetchAllRecords, fetchSummary, removeRecord)
 import App.Domain.Auth.Entity (User)
-import App.Domain.BudgetTracker.Repository (RecordRepo)
+import App.Application.BudgetTracker.Repository (RecordRepo)
 import App.Presentation.BudgetTracker.Request (PostRecordRequest, toCreateRecordCommand)
 import App.Presentation.BudgetTracker.Response (DeleteRecordResponse (..), RecordResponse (..), SummaryResponse, toRecordResponse, toSummaryResponse)
 import Control.Monad.IO.Class (liftIO)

@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module App.Domain.HabitTracker.Repository
+module App.Application.HabitTracker.Repository
   ( HabitRepo (..),
     getHabitAll,
     createHabit,

@@ -12,8 +12,8 @@ where
 
 import App.Application.HabitTracker.Command (CreateHabitCmd (..), CreateHabitCommand (..), DeleteHabitCommand (..))
 import App.Domain.HabitTracker.Entity (Habit)
-import App.Domain.HabitTracker.Repository (HabitRepo, getHabitAll)
-import App.Domain.HabitTracker.Repository qualified as HabitRepo
+import App.Application.HabitTracker.Repository (HabitRepo, getHabitAll)
+import App.Application.HabitTracker.Repository qualified as HabitRepo
 import Data.Text qualified as T
 import Effectful (Eff, (:>))
 

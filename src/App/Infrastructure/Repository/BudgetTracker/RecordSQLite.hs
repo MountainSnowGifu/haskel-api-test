@@ -13,7 +13,7 @@ where
 import App.Domain.Auth.Entity (User (..), UserId (..))
 import App.Domain.BudgetTracker.Entity (Record (..), RecordType (..))
 import App.Application.BudgetTracker.Command (CreateRecordCmd (..))
-import App.Domain.BudgetTracker.Repository (RecordRepo (..))
+import App.Application.BudgetTracker.Repository (RecordRepo (..))
 import App.Infrastructure.DB.Types (SqliteDb (..))
 import Data.Text (Text)
 import Database.SQLite.Simple (Only (..), execute, lastInsertRowId, query, withConnection)

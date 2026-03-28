@@ -16,7 +16,7 @@ where
 import App.Application.Task.UseCase (TaskValidationError (..), createTask, fetchAllTasks, fetchTask, removeTask, replaceTask, updateTaskStatus)
 import App.Domain.Auth.Entity (User)
 import App.Application.Task.Command (TaskStatusChanged (..))
-import App.Domain.Task.Repository (TaskRepo)
+import App.Application.Task.Repository (TaskRepo)
 import App.Presentation.Task.Request (PatchTaskRequest, PostTaskRequest, UpdateTaskRequest, toCreateTaskCommand, toPatchTaskCommand, toUpdateTaskCommand)
 import App.Presentation.Task.Response (DeleteTaskResponse (..), PatchTaskResponse (..), TaskResponse, toTaskResponse)
 import Control.Monad.IO.Class (liftIO)

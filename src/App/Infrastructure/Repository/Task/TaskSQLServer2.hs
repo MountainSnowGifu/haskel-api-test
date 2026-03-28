@@ -13,7 +13,7 @@ where
 import App.Domain.Auth.Entity (User (..), UserId (..))
 import App.Domain.Task.Entity (Task (..), TaskPriority (..), TaskStatus (..))
 import App.Application.Task.Command (ChangeTaskStatusCmd (..), CreateTaskCmd (..), ReplaceTaskCmd (..), TaskStatusChanged (..))
-import App.Domain.Task.Repository (TaskRepo (..))
+import App.Application.Task.Repository (TaskRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
 import Data.Maybe (fromMaybe, listToMaybe)

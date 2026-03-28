@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module App.Domain.Chat.Repository
+module App.Application.Chat.Repository
   ( ChatRepo (..),
     addClient,
     removeClient,

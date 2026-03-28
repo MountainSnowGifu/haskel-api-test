@@ -13,7 +13,7 @@ where
 
 import App.Application.Chat.Command (ConnectionInitCommand (..), MessageSendCommand (..))
 import App.Domain.Chat.Entity (ChatMessage (..), ConnectedClient (..))
-import App.Domain.Chat.Repository (ChatRepo, addClient, getClients, removeClient, saveMessage)
+import App.Application.Chat.Repository (ChatRepo, addClient, getClients, removeClient, saveMessage)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, formatTime, getCurrentTime)

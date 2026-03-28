@@ -8,7 +8,7 @@ module App.Application.Auth.UseCase
 where
 
 import App.Domain.Auth.Entity (Password (..), Token (..), User (..), Username)
-import App.Domain.Auth.Repository (TokenStore, UserRepo, findByUsername, storeToken)
+import App.Application.Auth.Repository (TokenStore, UserRepo, findByUsername, storeToken)
 import Data.UUID (toText)
 import Data.UUID.V4 (nextRandom)
 import Effectful

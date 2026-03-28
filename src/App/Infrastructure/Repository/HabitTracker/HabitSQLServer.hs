@@ -13,7 +13,7 @@ where
 import App.Domain.Auth.Entity (User (..), UserId (..))
 import App.Domain.HabitTracker.Entity (Habit (..))
 import App.Application.HabitTracker.Command (CreateHabitCmd (..))
-import App.Domain.HabitTracker.Repository (HabitRepo (..))
+import App.Application.HabitTracker.Repository (HabitRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
 import Data.Text (Text)

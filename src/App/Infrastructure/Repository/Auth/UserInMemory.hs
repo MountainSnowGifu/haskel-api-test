@@ -11,7 +11,7 @@ module App.Infrastructure.Repository.Auth.UserInMemory
 where
 
 import App.Domain.Auth.Entity (Password (..), User (..), UserId (..), Username (..))
-import App.Domain.Auth.Repository (UserRepo (..))
+import App.Application.Auth.Repository (UserRepo (..))
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import Effectful

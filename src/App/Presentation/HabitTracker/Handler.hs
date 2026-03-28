@@ -11,7 +11,7 @@ where
 
 import App.Application.HabitTracker.UseCase (HabitValidationError (..), createHabit, deleteHabit, fetchAllHabits)
 import App.Domain.Auth.Entity (User)
-import App.Domain.HabitTracker.Repository (HabitRepo)
+import App.Application.HabitTracker.Repository (HabitRepo)
 import App.Application.HabitTracker.Command (DeleteHabitCommand (..))
 import App.Presentation.HabitTracker.Request (PostHabitRequest, toCreateHabitCommand)
 import App.Presentation.HabitTracker.Response

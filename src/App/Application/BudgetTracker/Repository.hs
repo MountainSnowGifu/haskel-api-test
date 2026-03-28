@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module App.Domain.BudgetTracker.Repository
+module App.Application.BudgetTracker.Repository
   ( RecordRepo (..),
     getRecordsAll,
     createRecord,

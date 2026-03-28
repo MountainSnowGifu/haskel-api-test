@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module App.Domain.Auth.Repository
+module App.Application.Auth.Repository
   ( UserRepo (..),
     findByUserId,
     findByUsername,

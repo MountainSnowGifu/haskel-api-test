@@ -16,17 +16,17 @@ import Data.Text (Text)
 import GHC.Generics (Generic)
 
 showRecordType :: RecordType -> Text
-showRecordType Income  = "income"
+showRecordType Income = "income"
 showRecordType Expense = "expense"
 
 data RecordResponse = RecordResponse
-  { recordId       :: Int,
-    recordUserId   :: Int,
-    recordType     :: Text,
+  { recordId :: Int,
+    recordUserId :: Int,
+    recordType :: Text,
     recordCategory :: Text,
-    recordAmount   :: Int,
-    recordDate     :: Text,
-    recordMemo     :: Text
+    recordAmount :: Int,
+    recordDate :: Text,
+    recordMemo :: Text
   }
   deriving (Show, Eq, Generic)
 
@@ -37,8 +37,8 @@ toRecordResponse (Record rid ruid rtype rcategory ramount rdate rmemo) =
   RecordResponse rid ruid (showRecordType rtype) rcategory ramount rdate rmemo
 
 data SummaryResponse = SummaryResponse
-  { month   :: Text,
-    income  :: Int,
+  { month :: Text,
+    income :: Int,
     expense :: Int,
     balance :: Int
   }
@@ -49,8 +49,8 @@ instance ToJSON SummaryResponse
 toSummaryResponse :: Summary -> SummaryResponse
 toSummaryResponse s =
   SummaryResponse
-    { month   = summaryMonth s,
-      income  = summaryIncome s,
+    { month = summaryMonth s,
+      income = summaryIncome s,
       expense = summaryExpense s,
       balance = summaryBalance s
     }

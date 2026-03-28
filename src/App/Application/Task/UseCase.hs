@@ -16,8 +16,8 @@ where
 
 import App.Application.Task.Command (ChangeTaskStatusCmd (..), CreateTaskCmd (..), CreateTaskCommand (..), PatchTaskCommand (..), ReplaceTaskCmd (..), TaskStatusChanged, UpdateTaskCommand (..))
 import App.Domain.Task.Entity (Task)
-import App.Domain.Task.Repository (TaskRepo, deleteTask, getTask, getTaskAll)
-import App.Domain.Task.Repository qualified as TaskRepo
+import App.Application.Task.Repository (TaskRepo, deleteTask, getTask, getTaskAll)
+import App.Application.Task.Repository qualified as TaskRepo
 import Data.Text qualified as T
 import Data.Time (defaultTimeLocale, formatTime, getCurrentTime)
 import Effectful

@@ -10,7 +10,7 @@ module App.Infrastructure.Repository.Auth.TokenRedis
 where
 
 import App.Domain.Auth.Entity (Token (..), UserId (..), User (..))
-import App.Domain.Auth.Repository (TokenStore (..))
+import App.Application.Auth.Repository (TokenStore (..))
 import App.Infrastructure.DB.Redis (withRedisConn)
 import qualified Data.ByteString.Char8 as BS8
 import Data.Text.Encoding (encodeUtf8)
