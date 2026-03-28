@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
-module App.Infrastructure.Repository.Habit.HabitSQLServer
+module App.Infrastructure.Repository.HabitTracker.HabitSQLServer
   ( runHabitRepo,
   )
 where

@@ -48,7 +48,7 @@ library
     , App.Presentation.Task.Response
     , App.Presentation.Task.API
     , App.Presentation.Task.Handler
-    , App.Infrastructure.Repository.Record.RecordSQLite
+    , App.Infrastructure.Repository.BudgetTracker.RecordSQLite
     , App.Presentation.BudgetTracker.Request
     , App.Presentation.BudgetTracker.API
     , App.Presentation.BudgetTracker.Response
@@ -65,7 +65,7 @@ library
     , App.Domain.HabitTracker.Repository
     , App.Application.HabitTracker.Command
     , App.Application.HabitTracker.UseCase
-    , App.Infrastructure.Repository.Habit.HabitSQLServer
+    , App.Infrastructure.Repository.HabitTracker.HabitSQLServer
     , App.Presentation.HabitTracker.Request
     , App.Presentation.HabitTracker.Response
     , App.Presentation.HabitTracker.API
