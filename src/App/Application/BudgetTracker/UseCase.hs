@@ -11,7 +11,7 @@ module App.Application.BudgetTracker.UseCase
   )
 where
 
-import App.Application.BudgetTracker.Command (CreateRecordCmd (..), CreateRecordCommand (..))
+import App.Application.BudgetTracker.Command (CreateRecordCommand (..))
 import App.Domain.BudgetTracker.Entity (Record, Summary (..), summarize)
 import App.Application.BudgetTracker.Repository (RecordRepo, deleteRecord, getRecordsAll, getRecordsByMonth)
 import App.Application.BudgetTracker.Repository qualified as RecordRepo
@@ -36,8 +36,8 @@ createRecord ::
   Eff es (Either RecordValidationError Record)
 createRecord cmd = case validateCreate cmd of
   Left e -> return (Left e)
-  Right (CreateRecordCommand rt rc ra rd rm _ _) ->
-    Right <$> RecordRepo.createRecord (CreateRecordCmd rt rc ra rd rm)
+  Right cmd' ->
+    Right <$> RecordRepo.createRecord cmd'
 
 removeRecord :: (RecordRepo :> es) => Int -> Eff es (Maybe ())
 removeRecord = deleteRecord

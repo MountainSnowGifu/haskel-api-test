@@ -14,7 +14,7 @@ module App.Application.Task.UseCase
   )
 where
 
-import App.Application.Task.Command (ChangeTaskStatusCmd (..), CreateTaskCmd (..), CreateTaskCommand (..), PatchTaskCommand (..), ReplaceTaskCmd (..), TaskStatusChanged, UpdateTaskCommand (..))
+import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand (..), TaskStatusChanged, UpdateTaskCommand (..))
 import App.Domain.Task.Entity (Task)
 import App.Application.Task.Repository (TaskRepo, deleteTask, getTask, getTaskAll)
 import App.Application.Task.Repository qualified as TaskRepo
@@ -29,7 +29,7 @@ import Effectful
 data TaskValidationError = TitleEmpty | TitleTooLong
 
 validateCreate :: CreateTaskCommand -> Either TaskValidationError CreateTaskCommand
-validateCreate cmd@(CreateTaskCommand t _ _ _ _ _ _)
+validateCreate cmd@(CreateTaskCommand t _ _ _ _)
   | T.null t = Left TitleEmpty
   | T.length t > 100 = Left TitleTooLong
   | otherwise = Right cmd
@@ -45,9 +45,9 @@ createTask ::
   Eff es (Either TaskValidationError Task)
 createTask cmd = case validateCreate cmd of
   Left e -> return (Left e)
-  Right (CreateTaskCommand t d s p dd _ _) -> do
+  Right cmd' -> do
     now <- liftIO $ T.pack . formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" <$> getCurrentTime
-    Right <$> TaskRepo.createTask (CreateTaskCmd t d s p dd now now)
+    Right <$> TaskRepo.createTask cmd' now now
 
 fetchTask :: (TaskRepo :> es) => Int -> Eff es (Maybe Task)
 fetchTask = getTask
@@ -56,12 +56,10 @@ fetchAllTasks :: (TaskRepo :> es) => Eff es [Task]
 fetchAllTasks = getTaskAll
 
 replaceTask :: (TaskRepo :> es) => Int -> UpdateTaskCommand -> Eff es (Maybe Task)
-replaceTask tid (UpdateTaskCommand t d s p dd) =
-  TaskRepo.replaceTask tid (ReplaceTaskCmd t d s p dd)
+replaceTask = TaskRepo.replaceTask
 
 updateTaskStatus :: (TaskRepo :> es) => Int -> PatchTaskCommand -> Eff es (Maybe TaskStatusChanged)
-updateTaskStatus tid (PatchTaskCommand s) =
-  TaskRepo.changeTaskStatus tid (ChangeTaskStatusCmd s)
+updateTaskStatus = TaskRepo.changeTaskStatus
 
 removeTask :: (TaskRepo :> es) => Int -> Eff es (Maybe ())
 removeTask = deleteTask

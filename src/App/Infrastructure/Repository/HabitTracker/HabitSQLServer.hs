@@ -12,7 +12,7 @@ where
 
 import App.Domain.Auth.Entity (User (..), UserId (..))
 import App.Domain.HabitTracker.Entity (Habit (..))
-import App.Application.HabitTracker.Command (CreateHabitCmd (..))
+import App.Application.HabitTracker.Command (CreateHabitCommand (..))
 import App.Application.HabitTracker.Repository (HabitRepo (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
@@ -37,7 +37,7 @@ runHabitRepo pool user = interpret $ \_ -> \case
               <> T.pack (show hid)
       _ <- sql conn deleteSql :: IO ()
       return ()
-  CreateHabitOp (CreateHabitCmd hTitle hDesc hColor hCategory) ->
+  CreateHabitOp (CreateHabitCommand hTitle hDesc hColor hCategory) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId (userUserId user)
           esc = T.replace "'" "''"

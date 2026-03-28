@@ -12,7 +12,7 @@ where
 
 import App.Domain.Auth.Entity (User (..), UserId (..))
 import App.Domain.BudgetTracker.Entity (Record (..), RecordType (..))
-import App.Application.BudgetTracker.Command (CreateRecordCmd (..))
+import App.Application.BudgetTracker.Command (CreateRecordCommand (..))
 import App.Application.BudgetTracker.Repository (RecordRepo (..))
 import App.Infrastructure.DB.Types (SqliteDb (..))
 import Data.Text (Text)
@@ -55,17 +55,17 @@ runRecordRepo (SqliteDb dbfile) user = interpret $ \_ -> \case
       execute
         conn
         "INSERT INTO records (user_id, type, category, amount, date, memo) VALUES (?,?,?,?,?,?)"
-        (uid, fromRecordType (createRecordType op), createRecordCategory op, createRecordAmount op, createRecordDate op, createRecordMemo op)
+        (uid, fromRecordType (cmdRecordType op), cmdRecordCategory op, cmdRecordAmount op, cmdRecordDate op, cmdRecordMemo op)
       rowId <- fromIntegral <$> lastInsertRowId conn
       return
         Record
           { recordId       = rowId,
             recordUserId   = uid,
-            recordType     = createRecordType op,
-            recordCategory = createRecordCategory op,
-            recordAmount   = createRecordAmount op,
-            recordDate     = createRecordDate op,
-            recordMemo     = createRecordMemo op
+            recordType     = cmdRecordType op,
+            recordCategory = cmdRecordCategory op,
+            recordAmount   = cmdRecordAmount op,
+            recordDate     = cmdRecordDate op,
+            recordMemo     = cmdRecordMemo op
           }
   DeleteRecordOp rid ->
     liftIO $ withConnection dbfile $ \conn -> do

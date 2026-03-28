@@ -10,10 +10,10 @@ module App.Application.HabitTracker.UseCase
   )
 where
 
-import App.Application.HabitTracker.Command (CreateHabitCmd (..), CreateHabitCommand (..), DeleteHabitCommand (..))
-import App.Domain.HabitTracker.Entity (Habit)
+import App.Application.HabitTracker.Command (CreateHabitCommand (..), DeleteHabitCommand (..))
 import App.Application.HabitTracker.Repository (HabitRepo, getHabitAll)
 import App.Application.HabitTracker.Repository qualified as HabitRepo
+import App.Domain.HabitTracker.Entity (Habit)
 import Data.Text qualified as T
 import Effectful (Eff, (:>))
 
@@ -34,8 +34,8 @@ createHabit ::
   Eff es (Either HabitValidationError Habit)
 createHabit cmd = case validateCreate cmd of
   Left e -> return (Left e)
-  Right (CreateHabitCommand ht hd hc hcat) ->
-    Right <$> HabitRepo.createHabit (CreateHabitCmd ht hd hc hcat)
+  Right cmd' ->
+    Right <$> HabitRepo.createHabit cmd'
 
 deleteHabit :: (HabitRepo :> es) => DeleteHabitCommand -> Eff es ()
 deleteHabit (DeleteHabitCommand habitId) = HabitRepo.deleteHabit habitId

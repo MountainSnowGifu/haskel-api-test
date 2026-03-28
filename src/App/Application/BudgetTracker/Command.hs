@@ -3,7 +3,6 @@
 
 module App.Application.BudgetTracker.Command
   ( CreateRecordCommand (..),
-    CreateRecordCmd (..),
   )
 where
 
@@ -16,17 +15,6 @@ data CreateRecordCommand = CreateRecordCommand
     cmdRecordCategory :: Text,
     cmdRecordAmount :: Int,
     cmdRecordDate :: Text,
-    cmdRecordMemo :: Text,
-    cmdRecordCreatedAt :: Text,
-    cmdRecordUpdatedAt :: Text
-  }
-  deriving (Show, Eq, Generic)
-
-data CreateRecordCmd = CreateRecordCmd
-  { createRecordType :: RecordType,
-    createRecordCategory :: Text,
-    createRecordAmount :: Int,
-    createRecordDate :: Text,
-    createRecordMemo :: Text
+    cmdRecordMemo :: Text
   }
   deriving (Show, Eq, Generic)

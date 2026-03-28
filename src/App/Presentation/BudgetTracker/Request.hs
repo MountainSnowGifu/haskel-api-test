@@ -12,7 +12,6 @@ import App.Application.BudgetTracker.Command (CreateRecordCommand (..))
 import App.Domain.BudgetTracker.Entity (RecordType (..))
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
-import qualified Data.Text as T
 import GHC.Generics (Generic)
 
 data PostRecordRequest = PostRecordRequest
@@ -39,7 +38,5 @@ toCreateRecordCommand req =
       cmdRecordCategory = recordCategory req,
       cmdRecordAmount = recordAmount req,
       cmdRecordDate = recordDate req,
-      cmdRecordMemo = recordMemo req,
-      cmdRecordCreatedAt = T.empty,
-      cmdRecordUpdatedAt = T.empty
+      cmdRecordMemo = recordMemo req
     }

@@ -12,14 +12,14 @@ module App.Application.HabitTracker.Repository
   )
 where
 
-import App.Application.HabitTracker.Command (CreateHabitCmd)
+import App.Application.HabitTracker.Command (CreateHabitCommand)
 import App.Domain.HabitTracker.Entity (Habit)
 import Effectful
 import Effectful.Dispatch.Dynamic (send)
 
 data HabitRepo :: Effect where
   GetHabitsOp :: HabitRepo m [Habit]
-  CreateHabitOp :: CreateHabitCmd -> HabitRepo m Habit
+  CreateHabitOp :: CreateHabitCommand -> HabitRepo m Habit
   DeleteHabitOp :: Int -> HabitRepo m ()
 
 type instance DispatchOf HabitRepo = Dynamic
@@ -27,7 +27,7 @@ type instance DispatchOf HabitRepo = Dynamic
 getHabitAll :: (HabitRepo :> es) => Eff es [Habit]
 getHabitAll = send GetHabitsOp
 
-createHabit :: (HabitRepo :> es) => CreateHabitCmd -> Eff es Habit
+createHabit :: (HabitRepo :> es) => CreateHabitCommand -> Eff es Habit
 createHabit op = send (CreateHabitOp op)
 
 deleteHabit :: (HabitRepo :> es) => Int -> Eff es ()

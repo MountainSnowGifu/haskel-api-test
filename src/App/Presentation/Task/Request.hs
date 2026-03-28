@@ -16,7 +16,6 @@ import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand (.
 import App.Domain.Task.Entity (TaskPriority (..), TaskStatus (..))
 import Data.Aeson (FromJSON)
 import Data.Text (Text)
-import qualified Data.Text as T
 import GHC.Generics (Generic)
 
 instance FromJSON TaskStatus
@@ -62,9 +61,7 @@ toCreateTaskCommand PostTaskRequest {taskTitle = t, taskDescription = d, taskSta
       cmdDescription = d,
       cmdStatus = s,
       cmdPriority = p,
-      cmdDueDate = dd,
-      cmdCreatedAt = T.empty,
-      cmdUpdatedAt = T.empty
+      cmdDueDate = dd
     }
 
 newtype PatchTaskRequest = PatchTaskRequest
