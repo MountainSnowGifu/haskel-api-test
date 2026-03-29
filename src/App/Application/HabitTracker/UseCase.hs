@@ -9,10 +9,11 @@ module App.Application.HabitTracker.UseCase
     HabitValidationError (..),
     createHabit,
     deleteHabit,
+    updateHabit,
   )
 where
 
-import App.Application.HabitTracker.Command (CreateHabitCommand (..), DeleteHabitCommand (..))
+import App.Application.HabitTracker.Command (CreateHabitCommand (..), DeleteHabitCommand (..), UpdateHabitCommand (..))
 import App.Application.HabitTracker.Repository (HabitRepo, getHabitAll)
 import App.Application.HabitTracker.Repository qualified as HabitRepo
 import App.Domain.HabitTracker.Entity (Habit (..), HabitLog (..), HabitWithStats (..))
@@ -69,3 +70,8 @@ createHabit cmd = case validateCreate cmd of
 
 deleteHabit :: (HabitRepo :> es) => DeleteHabitCommand -> Eff es ()
 deleteHabit (DeleteHabitCommand hid) = HabitRepo.deleteHabit hid
+
+updateHabit :: (HabitRepo :> es) => UpdateHabitCommand -> Eff es Habit
+updateHabit cmd = do
+  let hid = cmdUpdateHabitId cmd
+  HabitRepo.updateHabit hid cmd

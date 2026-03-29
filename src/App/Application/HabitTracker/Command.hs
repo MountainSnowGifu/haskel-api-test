@@ -4,6 +4,7 @@
 module App.Application.HabitTracker.Command
   ( CreateHabitCommand (..),
     DeleteHabitCommand (..),
+    UpdateHabitCommand (..),
   )
 where
 
@@ -19,4 +20,13 @@ data CreateHabitCommand = CreateHabitCommand
   deriving (Show, Eq, Generic)
 
 newtype DeleteHabitCommand = DeleteHabitCommand {cmdDeleteHabitId :: Int}
+  deriving (Show, Eq, Generic)
+
+data UpdateHabitCommand = UpdateHabitCommand
+  { cmdUpdateHabitId :: Int,
+    cmdUpdateHabitTitle :: Text,
+    cmdUpdateHabitDescription :: Text,
+    cmdUpdateHabitColor :: Text,
+    cmdUpdateHabitCategory :: Text
+  }
   deriving (Show, Eq, Generic)

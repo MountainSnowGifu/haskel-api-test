@@ -10,7 +10,7 @@ module App.Infrastructure.Repository.HabitTracker.HabitSQLServer
   )
 where
 
-import App.Application.HabitTracker.Command (CreateHabitCommand (..))
+import App.Application.HabitTracker.Command (CreateHabitCommand (..), UpdateHabitCommand (..))
 import App.Application.HabitTracker.Repository (HabitRepo (..))
 import App.Domain.Auth.Entity (User (..), UserId (..))
 import App.Domain.HabitTracker.Entity (Habit (..), HabitLog (..))
@@ -51,6 +51,37 @@ runHabitRepo pool user = interpret $ \_ -> \case
               <> "', SYSDATETIME(), SYSDATETIME())"
       rows <-
         sql conn insertSql ::
+          IO [(Int, Text, Text, Text, Text, UTCTime, UTCTime)]
+      let (rowId, title, desc, color, category, createdAt, updatedAt) = head rows
+      return
+        Habit
+          { habitId = rowId,
+            habitTitle = title,
+            habitDescription = desc,
+            habitColor = color,
+            habitCategory = category,
+            habitCreatedAt = createdAt,
+            habitUpdatedAt = updatedAt
+          }
+  UpdateHabitOp hid (UpdateHabitCommand _ hTitle hDesc hColor hCategory) ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      let esc = T.replace "'" "''"
+          updateSql =
+            "UPDATE testdb.dbo.HABITS SET "
+              <> "title = N'"
+              <> esc hTitle
+              <> "', description = N'"
+              <> esc hDesc
+              <> "', color = N'"
+              <> esc hColor
+              <> "', category = N'"
+              <> esc hCategory
+              <> "', updated_at = SYSDATETIME() "
+              <> "OUTPUT INSERTED.id, INSERTED.title, INSERTED.description, INSERTED.color, INSERTED.category, INSERTED.created_at, INSERTED.updated_at "
+              <> "WHERE id = "
+              <> T.pack (show hid)
+      rows <-
+        sql conn updateSql ::
           IO [(Int, Text, Text, Text, Text, UTCTime, UTCTime)]
       let (rowId, title, desc, color, category, createdAt, updatedAt) = head rows
       return

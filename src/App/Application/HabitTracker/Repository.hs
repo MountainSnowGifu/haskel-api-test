@@ -9,10 +9,11 @@ module App.Application.HabitTracker.Repository
     getHabitAll,
     createHabit,
     deleteHabit,
+    updateHabit,
   )
 where
 
-import App.Application.HabitTracker.Command (CreateHabitCommand)
+import App.Application.HabitTracker.Command (CreateHabitCommand (..), UpdateHabitCommand (..))
 import App.Domain.HabitTracker.Entity (Habit, HabitLog)
 import Effectful
 import Effectful.Dispatch.Dynamic (send)
@@ -22,6 +23,7 @@ data HabitRepo :: Effect where
   GetHabitsOp :: HabitRepo m [(Habit, [HabitLog])]
   CreateHabitOp :: CreateHabitCommand -> HabitRepo m Habit
   DeleteHabitOp :: Int -> HabitRepo m ()
+  UpdateHabitOp :: Int -> UpdateHabitCommand -> HabitRepo m Habit
 
 type instance DispatchOf HabitRepo = Dynamic
 
@@ -33,3 +35,6 @@ createHabit op = send (CreateHabitOp op)
 
 deleteHabit :: (HabitRepo :> es) => Int -> Eff es ()
 deleteHabit habitId = send (DeleteHabitOp habitId)
+
+updateHabit :: (HabitRepo :> es) => Int -> UpdateHabitCommand -> Eff es Habit
+updateHabit habitId cmd = send (UpdateHabitOp habitId cmd)

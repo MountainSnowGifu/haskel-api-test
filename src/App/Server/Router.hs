@@ -19,7 +19,7 @@ import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler)
 import App.Presentation.BudgetTracker.Handler (RecordRunner, deleteRecordHandler, getRecordsAllHandler, getSummaryHandler, postRecordHandler)
 import App.Presentation.Chat.Handler (ConnStore, newConnStore, wsHandler)
-import App.Presentation.HabitTracker.Handler (HabitRunner, deleteHabitHandler, getHabitHandler, getHabitsAllHandler, postHabitHandler)
+import App.Presentation.HabitTracker.Handler (HabitRunner, deleteHabitHandler, getHabitHandler, getHabitsAllHandler, postHabitHandler, updateHabitHandler)
 import App.Presentation.Task.Handler (TaskRunner, deleteTaskHandler, getTaskAllHandler, getTaskHandler, patchTaskHandler, postTaskHandler, putTaskHandler)
 import App.Server.API (combinedAPI)
 import Database.Redis (Connection)
@@ -56,7 +56,7 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
                 :<|> (getTaskHandler mkTaskRunner :<|> getTaskAllHandler mkTaskRunner :<|> postTaskHandler mkTaskRunner :<|> putTaskHandler mkTaskRunner :<|> patchTaskHandler mkTaskRunner :<|> deleteTaskHandler mkTaskRunner)
                 :<|> wsHandler rooms store connStore
                 :<|> (getRecordsAllHandler mkRecordRunner :<|> postRecordHandler mkRecordRunner :<|> deleteRecordHandler mkRecordRunner :<|> getSummaryHandler mkRecordRunner)
-                :<|> (getHabitsAllHandler mkHabitRunner :<|> postHabitHandler mkHabitRunner :<|> deleteHabitHandler mkHabitRunner :<|> getHabitHandler mkHabitRunner)
+                :<|> (getHabitsAllHandler mkHabitRunner :<|> postHabitHandler mkHabitRunner :<|> deleteHabitHandler mkHabitRunner :<|> getHabitHandler mkHabitRunner :<|> updateHabitHandler mkHabitRunner)
             )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()

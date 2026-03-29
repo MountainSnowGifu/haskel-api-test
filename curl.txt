@@ -46,9 +46,10 @@ curl -X DELETE http://localhost:8081/api/habits \
   -H "Content-Type: application/json" \
   -d '{"habitId": 1}'
 
-curl -X GET http://localhost:<PORT>/api/habits/1 \
+curl -X GET http://localhost:8081/api/habits/1 \
   -H "Authorization: Bearer cb11bfbd-a283-4970-9a46-31191ba7b339"
 
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8081/api/habits/1
 
 https://hoogle.haskell.org/
 
