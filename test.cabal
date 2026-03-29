@@ -59,6 +59,7 @@ library
     , App.Application.BudgetTracker.Command
     , App.Application.BudgetTracker.UseCase
     , App.Domain.HabitTracker.Entity
+    , App.Domain.HabitTracker.StreakService
     , App.Application.HabitTracker.Repository
     , App.Application.HabitTracker.Command
     , App.Application.HabitTracker.UseCase

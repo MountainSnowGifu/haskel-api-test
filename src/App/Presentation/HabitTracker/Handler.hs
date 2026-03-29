@@ -34,7 +34,7 @@ postHabitHandler mkRun user body = do
   result <- liftIO $ mkRun user (createHabit (toCreateHabitCommand body))
   case result of
     Left CategoryEmpty -> throwError err400
-    Left AmountInvalid -> throwError err400
+    Left ColorEmpty -> throwError err400
     Right record -> return (toHabitResponse record)
 
 deleteHabitHandler :: (User -> HabitRunner) -> User -> Int -> Handler NoContent

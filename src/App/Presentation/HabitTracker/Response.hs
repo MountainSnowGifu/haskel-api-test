@@ -1,6 +1,4 @@
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module App.Presentation.HabitTracker.Response
   ( HabitResponse,
@@ -8,7 +6,7 @@ module App.Presentation.HabitTracker.Response
   )
 where
 
-import App.Domain.HabitTracker.Entity (Habit (..))
+import App.Domain.HabitTracker.Entity (Habit (Habit), HabitWithStats (HabitWithStats))
 import Data.Aeson (ToJSON)
 import Data.Text (Text)
 import Data.Time (UTCTime)
@@ -31,5 +29,27 @@ data HabitResponse = HabitResponse
 
 instance ToJSON HabitResponse
 
-toHabitResponse :: Habit -> HabitResponse
-toHabitResponse Habit {..} = HabitResponse {..}
+-- Habit と HabitWithStats はフィールド名が重複するため、
+-- ポジション的パターンマッチでローカル変数に束縛して曖昧さを回避する。
+toHabitResponse :: HabitWithStats -> HabitResponse
+toHabitResponse
+  ( HabitWithStats
+      (Habit hId hTitle hDesc hColor hCat hCreated hUpdated)
+      curStreak
+      bestStreak
+      totalComp
+      todayDone
+    ) =
+    HabitResponse
+      { habitId = hId,
+        habitTitle = hTitle,
+        habitDescription = hDesc,
+        habitColor = hColor,
+        habitCategory = hCat,
+        habitCurrentStreak = curStreak,
+        habitBestStreak = bestStreak,
+        habitTotalCompletions = totalComp,
+        habitTodayCompleted = todayDone,
+        habitCreatedAt = hCreated,
+        habitUpdatedAt = hUpdated
+      }

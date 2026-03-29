@@ -10,15 +10,16 @@ module App.Infrastructure.Repository.HabitTracker.HabitSQLServer
   )
 where
 
-import App.Domain.Auth.Entity (User (..), UserId (..))
-import App.Domain.HabitTracker.Entity (Habit (..))
 import App.Application.HabitTracker.Command (CreateHabitCommand (..))
 import App.Application.HabitTracker.Repository (HabitRepo (..))
+import App.Domain.Auth.Entity (User (..), UserId (..))
+import App.Domain.HabitTracker.Entity (Habit (..), HabitLog (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Time (UTCTime)
+import Data.Time (Day, UTCTime (..))
+import Data.Time.Format (defaultTimeLocale, parseTimeM)
 import Database.MSSQLServer.Query (sql)
 import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
@@ -30,20 +31,13 @@ runHabitRepo ::
   Eff (HabitRepo : es) a ->
   Eff es a
 runHabitRepo pool user = interpret $ \_ -> \case
-  DeleteHabitOp hid ->
-    liftIO $ withMSSQLConn pool $ \conn -> do
-      let deleteSql =
-            "DELETE FROM testdb.dbo.HABITS WHERE id = "
-              <> T.pack (show hid)
-      _ <- sql conn deleteSql :: IO ()
-      return ()
   CreateHabitOp (CreateHabitCommand hTitle hDesc hColor hCategory) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId (userUserId user)
           esc = T.replace "'" "''"
           insertSql =
-            "INSERT INTO testdb.dbo.HABITS (userId, title, description, color, category) "
-              <> "OUTPUT INSERTED.id, INSERTED.title, INSERTED.description, INSERTED.color, INSERTED.category, INSERTED.createdAt, INSERTED.updatedAt "
+            "INSERT INTO testdb.dbo.HABITS (user_id, title, description, color, category, created_at, updated_at) "
+              <> "OUTPUT INSERTED.id, INSERTED.title, INSERTED.description, INSERTED.color, INSERTED.category, INSERTED.created_at, INSERTED.updated_at "
               <> "VALUES ("
               <> T.pack (show uid)
               <> ", N'"
@@ -54,7 +48,7 @@ runHabitRepo pool user = interpret $ \_ -> \case
               <> esc hColor
               <> "', N'"
               <> esc hCategory
-              <> "')"
+              <> "', SYSDATETIME(), SYSDATETIME())"
       rows <-
         sql conn insertSql ::
           IO [(Int, Text, Text, Text, Text, UTCTime, UTCTime)]
@@ -66,36 +60,65 @@ runHabitRepo pool user = interpret $ \_ -> \case
             habitDescription = desc,
             habitColor = color,
             habitCategory = category,
-            habitCurrentStreak = 0,
-            habitBestStreak = 0,
-            habitTotalCompletions = 0,
-            habitTodayCompleted = False,
             habitCreatedAt = createdAt,
             habitUpdatedAt = updatedAt
           }
+  DeleteHabitOp hid ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      let deleteSql =
+            "DELETE FROM testdb.dbo.HABITS WHERE id = "
+              <> T.pack (show hid)
+      _ <- sql conn deleteSql :: IO ()
+      return ()
   GetHabitsOp ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId (userUserId user)
-      print uid
-      rows <-
-        sql conn ("SELECT id, title, description, color, category, currentStreak, bestStreak, totalCompletions, todayCompleted, createdAt, updatedAt FROM testdb.dbo.HABITS WHERE userId = " <> T.pack (show uid)) ::
-          IO [(Int, Text, Text, Text, Text, Int, Int, Int, Bool, UTCTime, UTCTime)]
-      print rows
-      return $
-        map
-          ( \(hid, htitle, hdesc, hcolor, hcat, hcur, hbest, htotal, htoday, hcreated, hupdated) ->
-              Habit
-                { habitId = hid,
-                  habitTitle = htitle,
-                  habitDescription = hdesc,
-                  habitColor = hcolor,
-                  habitCategory = hcat,
-                  habitCurrentStreak = hcur,
-                  habitBestStreak = hbest,
-                  habitTotalCompletions = htotal,
-                  habitTodayCompleted = htoday,
-                  habitCreatedAt = hcreated,
-                  habitUpdatedAt = hupdated
-                }
-          )
-          rows
+      habitRows <-
+        sql
+          conn
+          ( "SELECT id, title, description, color, category, created_at, updated_at "
+              <> "FROM testdb.dbo.HABITS "
+              <> "WHERE user_id = "
+              <> T.pack (show uid)
+          ) ::
+          IO [(Int, Text, Text, Text, Text, UTCTime, UTCTime)]
+      logRows <-
+        sql
+          conn
+          ( "SELECT l.habit_id, CONVERT(NVARCHAR(10), l.date, 23), l.status "
+              <> "FROM testdb.dbo.habit_logs l "
+              <> "INNER JOIN testdb.dbo.HABITS h ON l.habit_id = h.id "
+              <> "WHERE h.user_id = "
+              <> T.pack (show uid)
+              <> " ORDER BY l.habit_id, l.date"
+          ) ::
+          IO [(Int, Text, Text)]
+      return $ map (buildHabit logRows) habitRows
+  where
+    parseDay :: Text -> Maybe Day
+    parseDay = parseTimeM True defaultTimeLocale "%Y-%m-%d" . T.unpack
+
+    -- DB から取得した生データを (Habit, [HabitLog]) に変換する。
+    -- ストリーク計算は行わない。Application 層の責務。
+    buildHabit ::
+      [(Int, Text, Text)] ->
+      (Int, Text, Text, Text, Text, UTCTime, UTCTime) ->
+      (Habit, [HabitLog])
+    buildHabit logRows (hid, htitle, hdesc, hcolor, hcat, hcreated, hupdated) =
+      let habitLogs =
+            [ HabitLog 0 lid day status "" (UTCTime day 0)
+              | (lid, dateText, status) <- logRows,
+                lid == hid,
+                Just day <- [parseDay dateText]
+            ]
+          habit =
+            Habit
+              { habitId = hid,
+                habitTitle = htitle,
+                habitDescription = hdesc,
+                habitColor = hcolor,
+                habitCategory = hcat,
+                habitCreatedAt = hcreated,
+                habitUpdatedAt = hupdated
+              }
+       in (habit, habitLogs)
