@@ -362,7 +362,25 @@ Authorization: Bearer <token>
 
 **リクエスト**
 
-```json
+```json"CREATE TABLE HABITS (
+  id          INT IDENTITY    PRIMARY KEY,
+  user_id     INT             NOT NULL,
+  title       NVARCHAR(100)   NOT NULL,
+  description NVARCHAR(500)   NOT NULL,
+  color       NCHAR(7)        NOT NULL,
+  category    NVARCHAR(50)    NOT NULL,
+  created_at  DATETIME2       NOT NULL,
+  updated_at  DATETIME2       NOT NULL
+);"
+
+"CREATE TABLE habit_logs (
+  id         INT IDENTITY    PRIMARY KEY,
+  habit_id   INT             NOT NULL,
+  date       DATE            NOT NULL,
+  status     NVARCHAR(10)    NOT NULL,
+  note       NVARCHAR(500)   NOT NULL,
+  created_at DATETIME2       NOT NULL
+);"
 {
   "status": "skipped",
   "note": "体調不良のためスキップ"
@@ -399,7 +417,25 @@ GET /habits/hab_001/logs?year=2026&month=3
 ```json
 {
   "status": "success",
-  "data": {
+  "data": {"CREATE TABLE HABITS (
+  id          INT IDENTITY    PRIMARY KEY,
+  user_id     INT             NOT NULL,
+  title       NVARCHAR(100)   NOT NULL,
+  description NVARCHAR(500)   NOT NULL,
+  color       NCHAR(7)        NOT NULL,
+  category    NVARCHAR(50)    NOT NULL,
+  created_at  DATETIME2       NOT NULL,
+  updated_at  DATETIME2       NOT NULL
+);"
+
+"CREATE TABLE habit_logs (
+  id         INT IDENTITY    PRIMARY KEY,
+  habit_id   INT             NOT NULL,
+  date       DATE            NOT NULL,
+  status     NVARCHAR(10)    NOT NULL,
+  note       NVARCHAR(500)   NOT NULL,
+  created_at DATETIME2       NOT NULL
+);"
     "year": 2026,
     "month": 3,
     "logs": [
@@ -663,3 +699,23 @@ best_streak の計算:
 | 習慣のアーカイブ   | `POST /habits/:habitId/archive` | 削除せず非表示にする         |
 | 年次レポート       | `GET /reports/yearly`           | 年間の振り返りデータ         |
 | データエクスポート | `GET /export`                   | CSV / JSON形式でダウンロード |
+
+"CREATE TABLE HABITS (
+id INT IDENTITY PRIMARY KEY,
+user_id INT NOT NULL,
+title NVARCHAR(100) NOT NULL,
+description NVARCHAR(500) NOT NULL,
+color NCHAR(7) NOT NULL,
+category NVARCHAR(50) NOT NULL,
+created_at DATETIME2 NOT NULL,
+updated_at DATETIME2 NOT NULL
+);"
+
+"CREATE TABLE habit_logs (
+id INT IDENTITY PRIMARY KEY,
+habit_id INT NOT NULL,
+date DATE NOT NULL,
+status NVARCHAR(10) NOT NULL,
+note NVARCHAR(500) NOT NULL,
+created_at DATETIME2 NOT NULL
+);"
