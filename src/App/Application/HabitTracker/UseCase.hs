@@ -5,6 +5,7 @@
 
 module App.Application.HabitTracker.UseCase
   ( fetchAllHabits,
+    fetchHabit,
     HabitValidationError (..),
     createHabit,
     deleteHabit,
@@ -14,10 +15,10 @@ where
 import App.Application.HabitTracker.Command (CreateHabitCommand (..), DeleteHabitCommand (..))
 import App.Application.HabitTracker.Repository (HabitRepo, getHabitAll)
 import App.Application.HabitTracker.Repository qualified as HabitRepo
-import App.Domain.HabitTracker.Entity (Habit, HabitLog (..), HabitWithStats (..))
+import App.Domain.HabitTracker.Entity (Habit (..), HabitLog (..), HabitWithStats (..))
 import App.Domain.HabitTracker.StreakService (calcBestStreak, calcCurrentStreak)
-import Data.List (sort)
-import qualified Data.Set as Set
+import Data.List (find, sort)
+import Data.Set qualified as Set
 import Data.Text qualified as T
 import Data.Time (Day, getCurrentTime, utctDay)
 import Effectful (Eff, IOE, liftIO, (:>))
@@ -29,6 +30,12 @@ fetchAllHabits = do
   pairs <- getHabitAll
   today <- liftIO $ utctDay <$> getCurrentTime
   return $ map (toHabitWithStats today) pairs
+
+fetchHabit :: (HabitRepo :> es, IOE :> es) => Int -> Eff es (Maybe HabitWithStats)
+fetchHabit hid = do
+  pairs <- getHabitAll
+  today <- liftIO $ utctDay <$> getCurrentTime
+  return $ toHabitWithStats today <$> find (\(h, _) -> habitId h == hid) pairs
 
 -- ドメインサービスを呼んで HabitWithStats を組み立てる
 toHabitWithStats :: Day -> (Habit, [HabitLog]) -> HabitWithStats
@@ -61,4 +68,4 @@ createHabit cmd = case validateCreate cmd of
     return $ Right $ HabitWithStats habit 0 0 0 False
 
 deleteHabit :: (HabitRepo :> es) => DeleteHabitCommand -> Eff es ()
-deleteHabit (DeleteHabitCommand habitId) = HabitRepo.deleteHabit habitId
+deleteHabit (DeleteHabitCommand hid) = HabitRepo.deleteHabit hid

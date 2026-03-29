@@ -14,3 +14,4 @@ type HabitTrackerAPI =
   AuthProtect "token-auth" :> "api" :> "habits" :> Get '[JSON] [HabitResponse]
     :<|> AuthProtect "token-auth" :> "api" :> "habits" :> ReqBody '[JSON] PostHabitRequest :> Post '[JSON] HabitResponse
     :<|> AuthProtect "token-auth" :> "api" :> "habits" :> Capture "id" Int :> Delete '[JSON] NoContent
+    :<|> AuthProtect "token-auth" :> "api" :> "habits" :> Capture "id" Int :> Get '[JSON] HabitResponse

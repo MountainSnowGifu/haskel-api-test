@@ -6,13 +6,14 @@ module App.Presentation.HabitTracker.Handler
     getHabitsAllHandler,
     postHabitHandler,
     deleteHabitHandler,
+    getHabitHandler,
   )
 where
 
-import App.Application.HabitTracker.UseCase (HabitValidationError (..), createHabit, deleteHabit, fetchAllHabits)
-import App.Domain.Auth.Entity (User)
-import App.Application.HabitTracker.Repository (HabitRepo)
 import App.Application.HabitTracker.Command (DeleteHabitCommand (..))
+import App.Application.HabitTracker.Repository (HabitRepo)
+import App.Application.HabitTracker.UseCase (HabitValidationError (..), createHabit, deleteHabit, fetchAllHabits, fetchHabit)
+import App.Domain.Auth.Entity (User)
 import App.Presentation.HabitTracker.Request (PostHabitRequest, toCreateHabitCommand)
 import App.Presentation.HabitTracker.Response
   ( HabitResponse,
@@ -28,6 +29,13 @@ getHabitsAllHandler :: (User -> HabitRunner) -> User -> Handler [HabitResponse]
 getHabitsAllHandler mkRun user = do
   habits <- liftIO $ mkRun user fetchAllHabits
   return (map toHabitResponse habits)
+
+getHabitHandler :: (User -> HabitRunner) -> User -> Int -> Handler HabitResponse
+getHabitHandler mkRun user hid = do
+  result <- liftIO $ mkRun user (fetchHabit hid)
+  case result of
+    Nothing    -> throwError err404
+    Just habit -> return (toHabitResponse habit)
 
 postHabitHandler :: (User -> HabitRunner) -> User -> PostHabitRequest -> Handler HabitResponse
 postHabitHandler mkRun user body = do
