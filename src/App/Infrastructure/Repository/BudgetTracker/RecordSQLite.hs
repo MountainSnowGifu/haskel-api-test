@@ -10,10 +10,10 @@ module App.Infrastructure.Repository.BudgetTracker.RecordSQLite
   )
 where
 
-import App.Domain.Auth.Entity (User (..), UserId (..))
-import App.Domain.BudgetTracker.Entity (Record (..), RecordType (..))
 import App.Application.BudgetTracker.Command (CreateRecordCommand (..))
 import App.Application.BudgetTracker.Repository (RecordRepo (..))
+import App.Domain.Auth.Entity (User (..), UserId (..))
+import App.Domain.BudgetTracker.Entity (Record (..), RecordType (..))
 import App.Infrastructure.DB.Types (SqliteDb (..))
 import Data.Text (Text)
 import Database.SQLite.Simple (Only (..), execute, lastInsertRowId, query, withConnection)
@@ -22,10 +22,10 @@ import Effectful.Dispatch.Dynamic (interpret)
 
 toRecordType :: Text -> RecordType
 toRecordType "income" = Income
-toRecordType _        = Expense
+toRecordType _ = Expense
 
 fromRecordType :: RecordType -> Text
-fromRecordType Income  = "income"
+fromRecordType Income = "income"
 fromRecordType Expense = "expense"
 
 -- | RecordRepo エフェクトを SQLite で解釈するインタープリタ
@@ -59,13 +59,13 @@ runRecordRepo (SqliteDb dbfile) user = interpret $ \_ -> \case
       rowId <- fromIntegral <$> lastInsertRowId conn
       return
         Record
-          { recordId       = rowId,
-            recordUserId   = uid,
-            recordType     = cmdRecordType op,
+          { recordId = rowId,
+            recordUserId = uid,
+            recordType = cmdRecordType op,
             recordCategory = cmdRecordCategory op,
-            recordAmount   = cmdRecordAmount op,
-            recordDate     = cmdRecordDate op,
-            recordMemo     = cmdRecordMemo op
+            recordAmount = cmdRecordAmount op,
+            recordDate = cmdRecordDate op,
+            recordMemo = cmdRecordMemo op
           }
   DeleteRecordOp rid ->
     liftIO $ withConnection dbfile $ \conn -> do
