@@ -12,7 +12,7 @@ where
 
 import App.Application.BudgetTracker.Command (CreateRecordCommand (..))
 import App.Application.BudgetTracker.Repository (RecordRepo (..))
-import App.Domain.Auth.Entity (User (..), UserId (..))
+import App.Domain.Auth.Entity (UserId (..))
 import App.Domain.BudgetTracker.Entity (Record (..), RecordType (..))
 import App.Infrastructure.DB.Types (SqliteDb (..))
 import Data.Text (Text)
@@ -33,25 +33,25 @@ fromRecordType Expense = "expense"
 --   型シグネチャ:
 --     IOE :> es               -- IO を実行できるエフェクトが必要
 --     => SqliteDb             -- DBファイルパス
---     -> User                 -- 認証済みユーザー
+--     -> UserId               -- 認証済みユーザーID
 --     -> Eff (RecordRepo : es) a  -- RecordRepo を含むスタック
 --     -> Eff es a                 -- RecordRepo を除いたスタック
 runRecordRepo ::
   (IOE :> es) =>
   SqliteDb ->
-  User ->
+  UserId ->
   Eff (RecordRepo : es) a ->
   Eff es a
-runRecordRepo (SqliteDb dbfile) user = interpret $ \_ -> \case
+runRecordRepo (SqliteDb dbfile) authUserId = interpret $ \_ -> \case
   GetRecordsOp ->
     liftIO $ withConnection dbfile $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
       rows <- query conn "SELECT id, user_id, type, category, amount, date, memo FROM records WHERE user_id = ?" (Only uid) :: IO [(Int, Int, Text, Text, Int, Text, Text)]
       print rows
       return $ map (\(i, u, t, c, a, d, m) -> Record {recordId = i, recordUserId = u, recordType = toRecordType t, recordCategory = c, recordAmount = a, recordDate = d, recordMemo = m}) rows
   CreateRecordOp op ->
     liftIO $ withConnection dbfile $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
       execute
         conn
         "INSERT INTO records (user_id, type, category, amount, date, memo) VALUES (?,?,?,?,?,?)"
@@ -73,6 +73,6 @@ runRecordRepo (SqliteDb dbfile) user = interpret $ \_ -> \case
       return (Just ())
   GetRecordsByMonthOp month ->
     liftIO $ withConnection dbfile $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
       rows <- query conn "SELECT id, user_id, type, category, amount, date, memo FROM records WHERE user_id = ? AND strftime('%Y-%m', date) = ?" (uid, month) :: IO [(Int, Int, Text, Text, Int, Text, Text)]
       return $ map (\(i, u, t, c, a, d, m) -> Record {recordId = i, recordUserId = u, recordType = toRecordType t, recordCategory = c, recordAmount = a, recordDate = d, recordMemo = m}) rows

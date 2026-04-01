@@ -22,6 +22,7 @@ library
     , App.Middleware.TokenAuth
     , App.Domain.Auth.Entity
     , App.Application.Auth.Repository
+    , App.Application.Auth.Principal
     , App.Application.Auth.UseCase
     , App.Infrastructure.Repository.Auth.UserInMemory
     , App.Infrastructure.Repository.User.UserSQLServer

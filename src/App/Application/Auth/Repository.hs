@@ -35,9 +35,9 @@ findByUsername = send . FindByUsername
 
 -- | トークン保存エフェクト
 data TokenStore :: Effect where
-  StoreToken :: Token -> User -> Integer -> TokenStore m ()
+  StoreToken :: Token -> UserId -> Integer -> TokenStore m ()
 
 type instance DispatchOf TokenStore = Dynamic
 
-storeToken :: (TokenStore :> es) => Token -> User -> Integer -> Eff es ()
-storeToken tok user ttl = send (StoreToken tok user ttl)
+storeToken :: (TokenStore :> es) => Token -> UserId -> Integer -> Eff es ()
+storeToken tok uid ttl = send (StoreToken tok uid ttl)

@@ -44,6 +44,6 @@ login uname inputPwd = do
       if userPassword user == inputPwd
         then do
           tok <- liftIO generateToken
-          storeToken tok user tokenTTL
+          storeToken tok (userUserId user) tokenTTL
           return $ Right tok
         else return $ Left InvalidPassword

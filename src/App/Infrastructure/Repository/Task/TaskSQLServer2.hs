@@ -12,7 +12,7 @@ where
 
 import App.Application.Task.Command (CreateTaskCommand (..), PatchTaskCommand (..), TaskStatusChanged (..), UpdateTaskCommand (..))
 import App.Application.Task.Repository (TaskRepo (..))
-import App.Domain.Auth.Entity (User (..), UserId (..))
+import App.Domain.Auth.Entity (UserId (..))
 import App.Domain.Task.Entity (Task (..), TaskPriority (..), TaskStatus (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
@@ -38,19 +38,19 @@ parsePriority _ = Medium
 --   型シグネチャ:
 --     IOE :> es              -- IO を実行できるエフェクトが必要
 --     => MSSQLPool           -- コネクションプール
---     -> User                -- 認証済みユーザー
+--     -> UserId              -- 認証済みユーザーID
 --     -> Eff (TaskRepo : es) a   -- TaskRepo を含むスタック
 --     -> Eff es a                -- TaskRepo を除いたスタック
 runTaskRepo2 ::
   (IOE :> es) =>
   MSSQLPool ->
-  User ->
+  UserId ->
   Eff (TaskRepo : es) a ->
   Eff es a
-runTaskRepo2 pool user = interpret $ \_ -> \case
+runTaskRepo2 pool authUserId = interpret $ \_ -> \case
   GetTaskOp tid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
       RpcResponse _ _ rows <-
         rpc
           conn
@@ -78,7 +78,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
               updatedAt
   GetTasksOp ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
       RpcResponse _ _ rows <-
         rpc
           conn
@@ -107,7 +107,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
           rows
   CreateTaskOp (CreateTaskCommand tTitle tDesc tStatus tPriority tDueDate) tCreatedAt tUpdatedAt ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
           status = T.pack (show tStatus)
           priority = T.pack (show tPriority)
       withTransaction conn $ do
@@ -157,7 +157,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
                 updatedAt
   ReplaceTaskOp tid (UpdateTaskCommand uTitle uDesc uStatus uPriority uDueDate) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
           status = T.pack (show uStatus)
           priority = T.pack (show uPriority)
       RpcResponse _ _ rows <-
@@ -192,7 +192,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
               updatedAt
   ChangeTaskStatusOp tid (PatchTaskCommand pStatus) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
           statusText = T.pack (show pStatus)
       RpcResponse _ _ rows <-
         rpc
@@ -212,7 +212,7 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
           Just (TaskStatusChanged rowId (parseStatus sts) updatedAt)
   DeleteTaskOp tid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
       RpcResponse _ _ rows <-
         rpc
           conn

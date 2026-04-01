@@ -6,8 +6,8 @@ module App.Server.Router
   )
 where
 
+import App.Application.Auth.Principal (AuthPrincipal (..))
 import App.Core.Config (Config (..))
-import App.Domain.Auth.Entity (User)
 import App.Infrastructure.DB.Types (MSSQLPool, SqliteDb)
 import App.Infrastructure.Logger.CsvLogger (csvLogger)
 import App.Infrastructure.Repository.BudgetTracker.RecordSQLite (runRecordRepo)
@@ -61,15 +61,15 @@ corsPolicy =
 
 app :: SqliteDb -> MSSQLPool -> Connection -> RoomState -> MessageStore -> ConnStore -> Application
 app sqliteDb sqlserverPool redisConn rooms store connStore =
-  let mkTaskRunner :: User -> TaskRunner
-      mkTaskRunner user eff = runEff (runTaskRepo2 sqlserverPool user eff)
-      -- mkTaskRunner user eff = runEff (runTaskRepo sqlserverPool user eff)
+  let mkTaskRunner :: AuthPrincipal -> TaskRunner
+      mkTaskRunner principal eff = runEff (runTaskRepo2 sqlserverPool (principalUserId principal) eff)
+      -- mkTaskRunner principal eff = runEff (runTaskRepo sqlserverPool (principalUserId principal) eff)
 
-      mkRecordRunner :: User -> RecordRunner
-      mkRecordRunner user eff = runEff (runRecordRepo sqliteDb user eff)
+      mkRecordRunner :: AuthPrincipal -> RecordRunner
+      mkRecordRunner principal eff = runEff (runRecordRepo sqliteDb (principalUserId principal) eff)
 
-      mkHabitRunner :: User -> HabitRunner
-      mkHabitRunner user eff = runEff (runHabitRepo sqlserverPool user eff)
+      mkHabitRunner :: AuthPrincipal -> HabitRunner
+      mkHabitRunner principal eff = runEff (runHabitRepo sqlserverPool (principalUserId principal) eff)
 
       taskHandlers =
         getTaskHandler mkTaskRunner

@@ -12,7 +12,7 @@ where
 
 import App.Application.HabitTracker.Command (CreateHabitCommand (..), CreateHabitLogCommand (..), UpdateHabitCommand (..))
 import App.Application.HabitTracker.Repository (HabitRepo (..))
-import App.Domain.Auth.Entity (User (..), UserId (..))
+import App.Domain.Auth.Entity (UserId (..))
 import App.Domain.HabitTracker.Entity (Habit (..), HabitLog (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
@@ -27,13 +27,13 @@ import Effectful.Dispatch.Dynamic (interpret)
 runHabitRepo ::
   (IOE :> es) =>
   MSSQLPool ->
-  User ->
+  UserId ->
   Eff (HabitRepo : es) a ->
   Eff es a
-runHabitRepo pool user = interpret $ \_ -> \case
+runHabitRepo pool authUserId = interpret $ \_ -> \case
   CreateHabitOp (CreateHabitCommand hTitle hDesc hColor hCategory) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
           esc = T.replace "'" "''"
           insertSql =
             "INSERT INTO testdb.dbo.HABITS (user_id, title, description, color, category, created_at, updated_at) "
@@ -68,7 +68,7 @@ runHabitRepo pool user = interpret $ \_ -> \case
                 }
   UpdateHabitOp hid (UpdateHabitCommand _ hTitle hDesc hColor hCategory) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
           esc = T.replace "'" "''"
           updateSql =
             "UPDATE testdb.dbo.HABITS SET "
@@ -105,7 +105,7 @@ runHabitRepo pool user = interpret $ \_ -> \case
                 }
   DeleteHabitOp hid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
           deleteSql =
             "DELETE FROM testdb.dbo.HABITS WHERE id = "
               <> T.pack (show hid)
@@ -115,7 +115,7 @@ runHabitRepo pool user = interpret $ \_ -> \case
       return ()
   CreateHabitLogOp hid (CreateHabitLogCommand _ status) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
           esc = T.replace "'" "''"
       -- habit_id が自分の habit であることを確認してから INSERT
       ownerRows <-
@@ -135,7 +135,7 @@ runHabitRepo pool user = interpret $ \_ -> \case
           return (Just ())
   GetHabitsOp ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
       habitRows <-
         sql
           conn

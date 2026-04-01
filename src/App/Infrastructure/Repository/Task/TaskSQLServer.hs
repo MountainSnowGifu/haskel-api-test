@@ -10,7 +10,7 @@ module App.Infrastructure.Repository.Task.TaskSQLServer
   )
 where
 
-import App.Domain.Auth.Entity (User (..), UserId (..))
+import App.Domain.Auth.Entity (UserId (..))
 import App.Domain.Task.Entity (Task (..), TaskPriority (..), TaskStatus (..))
 import App.Application.Task.Command (CreateTaskCommand (..), UpdateTaskCommand (..), PatchTaskCommand (..), TaskStatusChanged (..))
 import App.Application.Task.Repository (TaskRepo (..))
@@ -38,16 +38,16 @@ parsePriority _ = Medium
 --   型シグネチャ:
 --     IOE :> es              -- IO を実行できるエフェクトが必要
 --     => MSSQLPool           -- コネクションプール
---     -> User                -- 認証済みユーザー
+--     -> UserId              -- 認証済みユーザーID
 --     -> Eff (TaskRepo : es) a   -- TaskRepo を含むスタック
 --     -> Eff es a                -- TaskRepo を除いたスタック
 runTaskRepo ::
   (IOE :> es) =>
   MSSQLPool ->
-  User ->
+  UserId ->
   Eff (TaskRepo : es) a ->
   Eff es a
-runTaskRepo pool user = interpret $ \_ -> \case
+runTaskRepo pool authUserId = interpret $ \_ -> \case
   GetTaskOp tid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
@@ -68,7 +68,7 @@ runTaskRepo pool user = interpret $ \_ -> \case
               updatedAt
   GetTasksOp ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
       rows <-
         sql conn ("SELECT id, userId, title, description, status, priority, dueDate, createdAt, updatedAt FROM testdb.dbo.TASKS_NEW WHERE userId = " <> T.pack (show uid)) ::
           IO [(Int, Int, Text, Maybe Text, Text, Text, Maybe Text, Text, Text)]
@@ -89,7 +89,7 @@ runTaskRepo pool user = interpret $ \_ -> \case
           rows
   CreateTaskOp (CreateTaskCommand tTitle tDesc tStatus tPriority tDueDate) tCreatedAt tUpdatedAt ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId (userUserId user)
+      let uid = unUserId authUserId
           esc = T.replace "'" "''"
           status = T.pack (show tStatus)
           priority = T.pack (show tPriority)

@@ -9,7 +9,7 @@ module App.Infrastructure.Repository.Auth.TokenRedis
   )
 where
 
-import App.Domain.Auth.Entity (Token (..), UserId (..), User (..))
+import App.Domain.Auth.Entity (Token (..), UserId (..))
 import App.Application.Auth.Repository (TokenStore (..))
 import App.Infrastructure.DB.Redis (withRedisConn)
 import qualified Data.ByteString.Char8 as BS8
@@ -28,7 +28,7 @@ runTokenRedis ::
   Eff (TokenStore : es) a ->
   Eff es a
 runTokenRedis conn = interpret $ \_ -> \case
-  StoreToken (Token tok) (User _ _ (UserId uid)) ttl ->
+  StoreToken (Token tok) (UserId uid) ttl ->
     liftIO $ withRedisConn conn $ do
       _ <- set (encodeUtf8 tok) (BS8.pack (show uid))
       _ <- expire (encodeUtf8 tok) ttl

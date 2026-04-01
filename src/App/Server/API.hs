@@ -8,7 +8,7 @@ module App.Server.API
   )
 where
 
-import App.Domain.Auth.Entity (User)
+import App.Application.Auth.Principal (AuthPrincipal)
 import App.Presentation.Auth.API (LoginAPI)
 import App.Presentation.BudgetTracker.API (BudgetTrackerAPI)
 import App.Presentation.Chat.API (ChatAPI)
@@ -19,9 +19,9 @@ import Servant.Server.Experimental.Auth (AuthServerData)
 
 -- | AuthProtect "token-auth" が解決する値の型を宣言する
 --
--- これにより Servant は AuthHandler Request User を
+-- これにより Servant は AuthHandler Request AuthPrincipal を
 -- Context から探してハンドラに渡すことができる。
-type instance AuthServerData (AuthProtect "token-auth") = User
+type instance AuthServerData (AuthProtect "token-auth") = AuthPrincipal
 
 type API = LoginAPI :<|> TaskAPI :<|> ChatAPI :<|> BudgetTrackerAPI :<|> HabitTrackerAPI
 
