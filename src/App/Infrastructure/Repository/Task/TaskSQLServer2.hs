@@ -50,23 +50,25 @@ runTaskRepo2 ::
 runTaskRepo2 pool user = interpret $ \_ -> \case
   GetTaskOp tid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
+      let uid = unUserId (userUserId user)
       RpcResponse _ _ rows <-
         rpc
           conn
           ( RpcQuery
               SP_ExecuteSql
-              ( nvarcharVal "" (Just "SELECT id, userId, title, description, status, priority, dueDate, createdAt, updatedAt FROM testdb.dbo.TASKS_NEW WHERE id = @Id"),
-                nvarcharVal "" (Just "@Id int"),
-                intVal "@Id" (Just tid)
+              ( nvarcharVal "" (Just "SELECT id, userId, title, description, status, priority, dueDate, createdAt, updatedAt FROM testdb.dbo.TASKS_NEW WHERE id = @Id AND userId = @UserId"),
+                nvarcharVal "" (Just "@Id int, @UserId int"),
+                intVal "@Id" (Just tid),
+                intVal "@UserId" (Just uid)
               )
           ) ::
           IO (RpcResponse () [(Int, Int, Text, Maybe Text, Text, Text, Maybe Text, Text, Text)])
       return $
-        listToMaybe rows >>= \(rowId, uid, title, desc, status, priority, dueDate, createdAt, updatedAt) ->
+        listToMaybe rows >>= \(rowId, _uid, title, desc, status, priority, dueDate, createdAt, updatedAt) ->
           Just $
             Task
               rowId
-              uid
+              _uid
               title
               (fromMaybe "" desc)
               (parseStatus status)
@@ -127,47 +129,51 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
                 )
             ) ::
             IO (RpcResponse () [(Int, Int, Text, Maybe Text, Text, Text, Maybe Text, Text, Text)])
-        let (rowId, rUid, title, desc, sts, pri, dueDate, createdAt, updatedAt) = head rows
-        _ <-
-          ( rpc
-              conn
-              ( RpcQuery
-                  SP_ExecuteSql
-                  ( nvarcharVal "" (Just "INSERT INTO testdb.dbo.LOGS (logid) OUTPUT INSERTED.logid VALUES (@LogId)"),
-                    nvarcharVal "" (Just "@LogId int"),
-                    intVal "@LogId" (Just rowId)
-                  )
-              ) ::
-              IO (RpcResponse () [Only Int])
-            )
-        return $
-          Task
-            rowId
-            rUid
-            title
-            (fromMaybe "" desc)
-            (parseStatus sts)
-            (parsePriority pri)
-            (fromMaybe "" dueDate)
-            createdAt
-            updatedAt
+        case rows of
+          [] -> error "CreateTaskOp: INSERT returned no rows"
+          (rowId, rUid, title, desc, sts, pri, dueDate, createdAt, updatedAt) : _ -> do
+            _ <-
+              ( rpc
+                  conn
+                  ( RpcQuery
+                      SP_ExecuteSql
+                      ( nvarcharVal "" (Just "INSERT INTO testdb.dbo.LOGS (logid) OUTPUT INSERTED.logid VALUES (@LogId)"),
+                        nvarcharVal "" (Just "@LogId int"),
+                        intVal "@LogId" (Just rowId)
+                      )
+                  ) ::
+                  IO (RpcResponse () [Only Int])
+                )
+            return $
+              Task
+                rowId
+                rUid
+                title
+                (fromMaybe "" desc)
+                (parseStatus sts)
+                (parsePriority pri)
+                (fromMaybe "" dueDate)
+                createdAt
+                updatedAt
   ReplaceTaskOp tid (UpdateTaskCommand uTitle uDesc uStatus uPriority uDueDate) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let status = T.pack (show uStatus)
+      let uid = unUserId (userUserId user)
+          status = T.pack (show uStatus)
           priority = T.pack (show uPriority)
       RpcResponse _ _ rows <-
         rpc
           conn
           ( RpcQuery
               SP_ExecuteSql
-              ( nvarcharVal "" (Just "UPDATE testdb.dbo.TASKS_NEW SET title = @Title, description = @Desc, status = @Status, priority = @Priority, dueDate = @DueDate, updatedAt = GETDATE() OUTPUT INSERTED.id, INSERTED.userId, INSERTED.title, INSERTED.description, INSERTED.status, INSERTED.priority, INSERTED.dueDate, INSERTED.createdAt, INSERTED.updatedAt WHERE id = @Id"),
-                nvarcharVal "" (Just "@Title nvarchar(max), @Desc nvarchar(max), @Status nvarchar(50), @Priority nvarchar(50), @DueDate nvarchar(50), @Id int"),
+              ( nvarcharVal "" (Just "UPDATE testdb.dbo.TASKS_NEW SET title = @Title, description = @Desc, status = @Status, priority = @Priority, dueDate = @DueDate, updatedAt = GETDATE() OUTPUT INSERTED.id, INSERTED.userId, INSERTED.title, INSERTED.description, INSERTED.status, INSERTED.priority, INSERTED.dueDate, INSERTED.createdAt, INSERTED.updatedAt WHERE id = @Id AND userId = @UserId"),
+                nvarcharVal "" (Just "@Title nvarchar(max), @Desc nvarchar(max), @Status nvarchar(50), @Priority nvarchar(50), @DueDate nvarchar(50), @Id int, @UserId int"),
                 nvarcharVal "@Title" (Just uTitle),
                 nvarcharVal "@Desc" (Just uDesc),
                 nvarcharVal "@Status" (Just status),
                 nvarcharVal "@Priority" (Just priority),
                 nvarcharVal "@DueDate" (Just uDueDate),
-                intVal "@Id" (Just tid)
+                intVal "@Id" (Just tid),
+                intVal "@UserId" (Just uid)
               )
           ) ::
           IO (RpcResponse () [(Int, Int, Text, Maybe Text, Text, Text, Maybe Text, Text, Text)])
@@ -186,16 +192,18 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
               updatedAt
   ChangeTaskStatusOp tid (PatchTaskCommand pStatus) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let statusText = T.pack (show pStatus)
+      let uid = unUserId (userUserId user)
+          statusText = T.pack (show pStatus)
       RpcResponse _ _ rows <-
         rpc
           conn
           ( RpcQuery
               SP_ExecuteSql
-              ( nvarcharVal "" (Just "UPDATE testdb.dbo.TASKS_NEW SET status = @Status, updatedAt = GETDATE() OUTPUT INSERTED.id, INSERTED.status, INSERTED.updatedAt WHERE id = @Id"),
-                nvarcharVal "" (Just "@Status nvarchar(50), @Id int"),
+              ( nvarcharVal "" (Just "UPDATE testdb.dbo.TASKS_NEW SET status = @Status, updatedAt = GETDATE() OUTPUT INSERTED.id, INSERTED.status, INSERTED.updatedAt WHERE id = @Id AND userId = @UserId"),
+                nvarcharVal "" (Just "@Status nvarchar(50), @Id int, @UserId int"),
                 nvarcharVal "@Status" (Just statusText),
-                intVal "@Id" (Just tid)
+                intVal "@Id" (Just tid),
+                intVal "@UserId" (Just uid)
               )
           ) ::
           IO (RpcResponse () [(Int, Text, Text)])
@@ -204,14 +212,16 @@ runTaskRepo2 pool user = interpret $ \_ -> \case
           Just (TaskStatusChanged rowId (parseStatus sts) updatedAt)
   DeleteTaskOp tid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
+      let uid = unUserId (userUserId user)
       RpcResponse _ _ rows <-
         rpc
           conn
           ( RpcQuery
               SP_ExecuteSql
-              ( nvarcharVal "" (Just "DELETE FROM testdb.dbo.TASKS_NEW OUTPUT DELETED.id, DELETED.userId WHERE id = @Id"),
-                nvarcharVal "" (Just "@Id int"),
-                intVal "@Id" (Just tid)
+              ( nvarcharVal "" (Just "DELETE FROM testdb.dbo.TASKS_NEW OUTPUT DELETED.id, DELETED.userId WHERE id = @Id AND userId = @UserId"),
+                nvarcharVal "" (Just "@Id int, @UserId int"),
+                intVal "@Id" (Just tid),
+                intVal "@UserId" (Just uid)
               )
           ) ::
           IO (RpcResponse () [(Int, Int)])

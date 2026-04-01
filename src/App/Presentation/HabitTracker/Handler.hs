@@ -8,18 +8,38 @@ module App.Presentation.HabitTracker.Handler
     deleteHabitHandler,
     getHabitHandler,
     updateHabitHandler,
+    createHabitLogHandler,
+    getMonthlyReportHandler,
   )
 where
 
-import App.Application.HabitTracker.Command (DeleteHabitCommand (..))
+import App.Application.HabitTracker.Command (DeleteHabitCommand (..), FetchHabitLogsCommand (..))
 import App.Application.HabitTracker.Repository (HabitRepo)
-import App.Application.HabitTracker.UseCase (HabitValidationError (..), createHabit, deleteHabit, fetchAllHabits, fetchHabit, updateHabit)
+import App.Application.HabitTracker.UseCase
+  ( HabitValidationError (..),
+    createHabit,
+    createHabitLog,
+    deleteHabit,
+    fetchAllHabits,
+    fetchHabit,
+    fetchHabitLogs,
+    updateHabit,
+  )
 import App.Domain.Auth.Entity (User)
 import App.Domain.HabitTracker.Entity (HabitWithStats (..))
-import App.Presentation.HabitTracker.Request (PatchHabitRequest, PostHabitRequest, toCreateHabitCommand, toUpdateHabitCommand)
+import App.Presentation.HabitTracker.Request
+  ( PatchHabitRequest,
+    PostHabitLogRequest,
+    PostHabitRequest,
+    toCreateHabitCommand,
+    toCreateHabitLogCommand,
+    toUpdateHabitCommand,
+  )
 import App.Presentation.HabitTracker.Response
   ( HabitResponse,
+    MonthlyReportResponse,
     toHabitResponse,
+    toMonthlyReportResponse,
   )
 import Control.Monad.IO.Class (liftIO)
 import Effectful (Eff, IOE)
@@ -45,7 +65,8 @@ postHabitHandler mkRun user body = do
   case result of
     Left CategoryEmpty -> throwError err400
     Left ColorEmpty -> throwError err400
-    Right record -> return (toHabitResponse record)
+    Right Nothing -> throwError err500
+    Right (Just record) -> return (toHabitResponse record)
 
 deleteHabitHandler :: (User -> HabitRunner) -> User -> Int -> Handler NoContent
 deleteHabitHandler mkRun user hid = do
@@ -54,5 +75,19 @@ deleteHabitHandler mkRun user hid = do
 
 updateHabitHandler :: (User -> HabitRunner) -> User -> Int -> PatchHabitRequest -> Handler HabitResponse
 updateHabitHandler mkRun user hid body = do
-  habit <- liftIO $ mkRun user (updateHabit (toUpdateHabitCommand hid body))
-  return $ toHabitResponse (HabitWithStats habit 0 0 0 False)
+  result <- liftIO $ mkRun user (updateHabit (toUpdateHabitCommand hid body))
+  case result of
+    Nothing -> throwError err404
+    Just habit -> return $ toHabitResponse (HabitWithStats habit 0 0 0 False)
+
+createHabitLogHandler :: (User -> HabitRunner) -> User -> Int -> PostHabitLogRequest -> Handler NoContent
+createHabitLogHandler mkRun user hid body = do
+  result <- liftIO $ mkRun user (createHabitLog (toCreateHabitLogCommand hid body))
+  case result of
+    Nothing -> throwError err404
+    Just () -> return NoContent
+
+getMonthlyReportHandler :: (User -> HabitRunner) -> User -> Int -> Int -> Handler [MonthlyReportResponse]
+getMonthlyReportHandler mkRun user year month = do
+  results <- liftIO $ mkRun user (fetchHabitLogs (FetchHabitLogsCommand year month))
+  return (map toMonthlyReportResponse results)

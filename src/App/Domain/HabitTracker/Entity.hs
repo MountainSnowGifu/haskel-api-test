@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module App.Domain.HabitTracker.Entity (Habit (..), HabitLog (..), HabitWithStats (..)) where
+module App.Domain.HabitTracker.Entity (Habit (..), HabitLog (..), HabitWithStats (..), HabitWithLogs (..)) where
 
 import Data.Text (Text)
 import Data.Time (Day, UTCTime)
@@ -36,5 +36,11 @@ data HabitWithStats = HabitWithStats
     hwsBestStreak :: Int,
     hwsTotalCompletions :: Int,
     hwsTodayCompleted :: Bool
+  }
+  deriving (Show, Eq, Generic)
+
+data HabitWithLogs = HabitWithLogs
+  { hwlHabit :: Habit,
+    hwlLogs :: [HabitLog]
   }
   deriving (Show, Eq, Generic)

@@ -707,8 +707,8 @@ title NVARCHAR(100) NOT NULL,
 description NVARCHAR(500) NOT NULL,
 color NCHAR(7) NOT NULL,
 category NVARCHAR(50) NOT NULL,
-created_at DATETIME2 NOT NULL,
-updated_at DATETIME2 NOT NULL
+created_at DATETIME NOT NULL,
+updated_at DATETIME NOT NULL
 );"
 
 "CREATE TABLE habit_logs (
@@ -717,5 +717,5 @@ habit_id INT NOT NULL,
 date DATE NOT NULL,
 status NVARCHAR(10) NOT NULL,
 note NVARCHAR(500) NOT NULL,
-created_at DATETIME2 NOT NULL
+created_at DATETIME NOT NULL
 );"

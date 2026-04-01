@@ -7,10 +7,12 @@ module App.Presentation.HabitTracker.Request
     toCreateHabitCommand,
     PatchHabitRequest,
     toUpdateHabitCommand,
+    PostHabitLogRequest,
+    toCreateHabitLogCommand,
   )
 where
 
-import App.Application.HabitTracker.Command (CreateHabitCommand (..), UpdateHabitCommand (..))
+import App.Application.HabitTracker.Command (CreateHabitCommand (..), CreateHabitLogCommand (..), UpdateHabitCommand (..))
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
 import GHC.Generics (Generic)
@@ -56,4 +58,20 @@ toUpdateHabitCommand hid PatchHabitRequest {..} =
       cmdUpdateHabitDescription = habitDescription,
       cmdUpdateHabitColor = habitColor,
       cmdUpdateHabitCategory = habitCategory
+    }
+
+newtype PostHabitLogRequest = PostHabitLogRequest
+  { status :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+instance FromJSON PostHabitLogRequest
+
+instance ToJSON PostHabitLogRequest
+
+toCreateHabitLogCommand :: Int -> PostHabitLogRequest -> CreateHabitLogCommand
+toCreateHabitLogCommand hid PostHabitLogRequest {..} =
+  CreateHabitLogCommand
+    { cmdLogHabitId = hid,
+      cmdLogStatus = status
     }

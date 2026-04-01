@@ -10,14 +10,19 @@ module App.Infrastructure.Repository.User.UserSQLServer
   )
 where
 
-import App.Domain.Auth.Entity (Password (..), User (..), UserId (..), Username (..))
 import App.Application.Auth.Repository (UserRepo (..))
+import App.Domain.Auth.Entity (Password (..), User (..), UserId (..), Username (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
 import qualified Data.Text as T
 import Database.MSSQLServer.Query (sql)
 import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
+
+-- | SQL 文字列リテラル中のシングルクォートをエスケープする
+--   ' → '' に置換し、SQLインジェクションを防止する
+escapeSql :: T.Text -> T.Text
+escapeSql = T.replace "'" "''"
 
 -- | UserRepo エフェクトを SQL Server で解釈するインタープリタ
 --
@@ -41,7 +46,7 @@ runUserRepoSqlServer pool = interpret $ \_ -> \case
   FindByUsername (Username uname) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
-        sql conn ("SELECT id, username, password FROM testdb.dbo.USERS WHERE username = '" <> uname <> "'") ::
+        sql conn ("SELECT id, username, password FROM testdb.dbo.USERS WHERE username = '" <> escapeSql uname <> "'") ::
           IO [(Int, T.Text, T.Text)]
       case rows of
         [] -> return Nothing

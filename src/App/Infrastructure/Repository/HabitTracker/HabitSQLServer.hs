@@ -10,7 +10,7 @@ module App.Infrastructure.Repository.HabitTracker.HabitSQLServer
   )
 where
 
-import App.Application.HabitTracker.Command (CreateHabitCommand (..), UpdateHabitCommand (..))
+import App.Application.HabitTracker.Command (CreateHabitCommand (..), CreateHabitLogCommand (..), UpdateHabitCommand (..))
 import App.Application.HabitTracker.Repository (HabitRepo (..))
 import App.Domain.Auth.Entity (User (..), UserId (..))
 import App.Domain.HabitTracker.Entity (Habit (..), HabitLog (..))
@@ -20,7 +20,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Time (Day, UTCTime (..))
 import Data.Time.Format (defaultTimeLocale, parseTimeM)
-import Database.MSSQLServer.Query (sql)
+import Database.MSSQLServer.Query (Only (..), sql)
 import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
 
@@ -52,20 +52,24 @@ runHabitRepo pool user = interpret $ \_ -> \case
       rows <-
         sql conn insertSql ::
           IO [(Int, Text, Text, Text, Text, UTCTime, UTCTime)]
-      let (rowId, title, desc, color, category, createdAt, updatedAt) = head rows
-      return
-        Habit
-          { habitId = rowId,
-            habitTitle = title,
-            habitDescription = desc,
-            habitColor = color,
-            habitCategory = category,
-            habitCreatedAt = createdAt,
-            habitUpdatedAt = updatedAt
-          }
+      case rows of
+        [] -> return Nothing
+        (rowId, title, desc, color, category, createdAt, updatedAt) : _ ->
+          return $
+            Just
+              Habit
+                { habitId = rowId,
+                  habitTitle = title,
+                  habitDescription = desc,
+                  habitColor = color,
+                  habitCategory = category,
+                  habitCreatedAt = createdAt,
+                  habitUpdatedAt = updatedAt
+                }
   UpdateHabitOp hid (UpdateHabitCommand _ hTitle hDesc hColor hCategory) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let esc = T.replace "'" "''"
+      let uid = unUserId (userUserId user)
+          esc = T.replace "'" "''"
           updateSql =
             "UPDATE testdb.dbo.HABITS SET "
               <> "title = N'"
@@ -80,27 +84,55 @@ runHabitRepo pool user = interpret $ \_ -> \case
               <> "OUTPUT INSERTED.id, INSERTED.title, INSERTED.description, INSERTED.color, INSERTED.category, INSERTED.created_at, INSERTED.updated_at "
               <> "WHERE id = "
               <> T.pack (show hid)
+              <> " AND user_id = "
+              <> T.pack (show uid)
       rows <-
         sql conn updateSql ::
           IO [(Int, Text, Text, Text, Text, UTCTime, UTCTime)]
-      let (rowId, title, desc, color, category, createdAt, updatedAt) = head rows
-      return
-        Habit
-          { habitId = rowId,
-            habitTitle = title,
-            habitDescription = desc,
-            habitColor = color,
-            habitCategory = category,
-            habitCreatedAt = createdAt,
-            habitUpdatedAt = updatedAt
-          }
+      case rows of
+        [] -> return Nothing
+        (rowId, title, desc, color, category, createdAt, updatedAt) : _ ->
+          return $
+            Just
+              Habit
+                { habitId = rowId,
+                  habitTitle = title,
+                  habitDescription = desc,
+                  habitColor = color,
+                  habitCategory = category,
+                  habitCreatedAt = createdAt,
+                  habitUpdatedAt = updatedAt
+                }
   DeleteHabitOp hid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let deleteSql =
+      let uid = unUserId (userUserId user)
+          deleteSql =
             "DELETE FROM testdb.dbo.HABITS WHERE id = "
               <> T.pack (show hid)
+              <> " AND user_id = "
+              <> T.pack (show uid)
       _ <- sql conn deleteSql :: IO ()
       return ()
+  CreateHabitLogOp hid (CreateHabitLogCommand _ status) ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      let uid = unUserId (userUserId user)
+          esc = T.replace "'" "''"
+      -- habit_id が自分の habit であることを確認してから INSERT
+      ownerRows <-
+        sql conn ("SELECT id FROM testdb.dbo.HABITS WHERE id = " <> T.pack (show hid) <> " AND user_id = " <> T.pack (show uid)) ::
+          IO [Only Int]
+      case ownerRows of
+        [] -> return Nothing
+        _ -> do
+          let insertSql =
+                "INSERT INTO testdb.dbo.habit_logs (habit_id, date, status, note, created_at) "
+                  <> "VALUES ("
+                  <> T.pack (show hid)
+                  <> ", CAST(SYSDATETIME() AS DATE), N'"
+                  <> esc status
+                  <> "', N'', SYSDATETIME())"
+          _ <- sql conn insertSql :: IO ()
+          return (Just ())
   GetHabitsOp ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId (userUserId user)

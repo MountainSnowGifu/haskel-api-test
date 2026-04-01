@@ -17,10 +17,33 @@ import App.Infrastructure.Repository.HabitTracker.HabitSQLServer (runHabitRepo)
 import App.Infrastructure.Repository.Task.TaskSQLServer2 (runTaskRepo2)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler)
-import App.Presentation.BudgetTracker.Handler (RecordRunner, deleteRecordHandler, getRecordsAllHandler, getSummaryHandler, postRecordHandler)
+import App.Presentation.BudgetTracker.Handler
+  ( RecordRunner,
+    deleteRecordHandler,
+    getRecordsAllHandler,
+    getSummaryHandler,
+    postRecordHandler,
+  )
 import App.Presentation.Chat.Handler (ConnStore, newConnStore, wsHandler)
-import App.Presentation.HabitTracker.Handler (HabitRunner, deleteHabitHandler, getHabitHandler, getHabitsAllHandler, postHabitHandler, updateHabitHandler)
-import App.Presentation.Task.Handler (TaskRunner, deleteTaskHandler, getTaskAllHandler, getTaskHandler, patchTaskHandler, postTaskHandler, putTaskHandler)
+import App.Presentation.HabitTracker.Handler
+  ( HabitRunner,
+    createHabitLogHandler,
+    deleteHabitHandler,
+    getHabitHandler,
+    getHabitsAllHandler,
+    getMonthlyReportHandler,
+    postHabitHandler,
+    updateHabitHandler,
+  )
+import App.Presentation.Task.Handler
+  ( TaskRunner,
+    deleteTaskHandler,
+    getTaskAllHandler,
+    getTaskHandler,
+    patchTaskHandler,
+    postTaskHandler,
+    putTaskHandler,
+  )
 import App.Server.API (combinedAPI)
 import Database.Redis (Connection)
 import Effectful (runEff)
@@ -47,16 +70,39 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
 
       mkHabitRunner :: User -> HabitRunner
       mkHabitRunner user eff = runEff (runHabitRepo sqlserverPool user eff)
+
+      taskHandlers =
+        getTaskHandler mkTaskRunner
+          :<|> getTaskAllHandler mkTaskRunner
+          :<|> postTaskHandler mkTaskRunner
+          :<|> putTaskHandler mkTaskRunner
+          :<|> patchTaskHandler mkTaskRunner
+          :<|> deleteTaskHandler mkTaskRunner
+
+      recordHandlers =
+        getRecordsAllHandler mkRecordRunner
+          :<|> postRecordHandler mkRecordRunner
+          :<|> deleteRecordHandler mkRecordRunner
+          :<|> getSummaryHandler mkRecordRunner
+
+      habitHandlers =
+        getHabitsAllHandler mkHabitRunner
+          :<|> postHabitHandler mkHabitRunner
+          :<|> deleteHabitHandler mkHabitRunner
+          :<|> getHabitHandler mkHabitRunner
+          :<|> updateHabitHandler mkHabitRunner
+          :<|> createHabitLogHandler mkHabitRunner
+          :<|> getMonthlyReportHandler mkHabitRunner
    in csvLogger "access.csv" $
         cors (const $ Just corsPolicy) $
           serveWithContext
             combinedAPI
             (mkTokenAuthHandler redisConn :. EmptyContext)
             ( loginHandler sqlserverPool redisConn
-                :<|> (getTaskHandler mkTaskRunner :<|> getTaskAllHandler mkTaskRunner :<|> postTaskHandler mkTaskRunner :<|> putTaskHandler mkTaskRunner :<|> patchTaskHandler mkTaskRunner :<|> deleteTaskHandler mkTaskRunner)
+                :<|> taskHandlers
                 :<|> wsHandler rooms store connStore
-                :<|> (getRecordsAllHandler mkRecordRunner :<|> postRecordHandler mkRecordRunner :<|> deleteRecordHandler mkRecordRunner :<|> getSummaryHandler mkRecordRunner)
-                :<|> (getHabitsAllHandler mkHabitRunner :<|> postHabitHandler mkHabitRunner :<|> deleteHabitHandler mkHabitRunner :<|> getHabitHandler mkHabitRunner :<|> updateHabitHandler mkHabitRunner)
+                :<|> recordHandlers
+                :<|> habitHandlers
             )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()

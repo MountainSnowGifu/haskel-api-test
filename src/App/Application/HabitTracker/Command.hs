@@ -5,6 +5,8 @@ module App.Application.HabitTracker.Command
   ( CreateHabitCommand (..),
     DeleteHabitCommand (..),
     UpdateHabitCommand (..),
+    CreateHabitLogCommand (..),
+    FetchHabitLogsCommand (..),
   )
 where
 
@@ -28,5 +30,17 @@ data UpdateHabitCommand = UpdateHabitCommand
     cmdUpdateHabitDescription :: Text,
     cmdUpdateHabitColor :: Text,
     cmdUpdateHabitCategory :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+data CreateHabitLogCommand = CreateHabitLogCommand
+  { cmdLogHabitId :: Int,
+    cmdLogStatus :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+data FetchHabitLogsCommand = FetchHabitLogsCommand
+  { cmdYear :: Int,
+    cmdMonth :: Int
   }
   deriving (Show, Eq, Generic)
