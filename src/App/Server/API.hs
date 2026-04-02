@@ -10,6 +10,7 @@ where
 
 import App.Application.Auth.Principal (AuthPrincipal)
 import App.Presentation.Auth.API (LoginAPI)
+import App.Presentation.Board.API (BoardAPI)
 import App.Presentation.BudgetTracker.API (BudgetTrackerAPI)
 import App.Presentation.Chat.API (ChatAPI)
 import App.Presentation.HabitTracker.API (HabitTrackerAPI)
@@ -23,7 +24,7 @@ import Servant.Server.Experimental.Auth (AuthServerData)
 -- Context から探してハンドラに渡すことができる。
 type instance AuthServerData (AuthProtect "token-auth") = AuthPrincipal
 
-type API = LoginAPI :<|> TaskAPI :<|> ChatAPI :<|> BudgetTrackerAPI :<|> HabitTrackerAPI
+type API = LoginAPI :<|> TaskAPI :<|> ChatAPI :<|> BudgetTrackerAPI :<|> HabitTrackerAPI :<|> BoardAPI
 
 combinedAPI :: Proxy API
 combinedAPI = Proxy

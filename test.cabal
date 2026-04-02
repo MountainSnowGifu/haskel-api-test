@@ -69,6 +69,15 @@ library
     , App.Presentation.HabitTracker.Response
     , App.Presentation.HabitTracker.API
     , App.Presentation.HabitTracker.Handler
+    , App.Domain.Board.Entity
+    , App.Infrastructure.Repository.Board.BoardSQLServer
+    , App.Application.Board.Command
+    , App.Application.Board.Repository
+    , App.Application.Board.UseCase
+    , App.Presentation.Board.Request
+    , App.Presentation.Board.Response
+    , App.Presentation.Board.API
+    , App.Presentation.Board.Handler
 
   build-depends:
       base           >= 4.7 && < 5

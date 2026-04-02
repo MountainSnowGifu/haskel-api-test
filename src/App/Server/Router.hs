@@ -10,13 +10,16 @@ import App.Application.Auth.Principal (AuthPrincipal (..))
 import App.Core.Config (Config (..))
 import App.Infrastructure.DB.Types (MSSQLPool, SqliteDb)
 import App.Infrastructure.Logger.CsvLogger (csvLogger)
+-- import App.Infrastructure.Repository.Task.TaskSQLServer (runTaskRepo)
+
+import App.Infrastructure.Repository.Board.BoardSQLServer (runBoardRepo)
 import App.Infrastructure.Repository.BudgetTracker.RecordSQLite (runRecordRepo)
 import App.Infrastructure.Repository.Chat.ChatSTM (MessageStore, RoomState, newMessageStore, newRoomState)
 import App.Infrastructure.Repository.HabitTracker.HabitSQLServer (runHabitRepo)
--- import App.Infrastructure.Repository.Task.TaskSQLServer (runTaskRepo)
 import App.Infrastructure.Repository.Task.TaskSQLServer2 (runTaskRepo2)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler)
+import App.Presentation.Board.Handler (BoardRunner, postBoardHandler)
 import App.Presentation.BudgetTracker.Handler
   ( RecordRunner,
     deleteRecordHandler,
@@ -71,6 +74,9 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
       mkHabitRunner :: AuthPrincipal -> HabitRunner
       mkHabitRunner principal eff = runEff (runHabitRepo sqlserverPool (principalUserId principal) eff)
 
+      boardRunner :: AuthPrincipal -> BoardRunner
+      boardRunner principal eff = runEff (runBoardRepo sqlserverPool (principalUserId principal) eff)
+
       taskHandlers =
         getTaskHandler mkTaskRunner
           :<|> getTaskAllHandler mkTaskRunner
@@ -93,6 +99,9 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
           :<|> updateHabitHandler mkHabitRunner
           :<|> createHabitLogHandler mkHabitRunner
           :<|> getMonthlyReportHandler mkHabitRunner
+
+      boardHandlers =
+        postBoardHandler boardRunner
    in csvLogger "access.csv" $
         cors (const $ Just corsPolicy) $
           serveWithContext
@@ -103,6 +112,7 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
                 :<|> wsHandler rooms store connStore
                 :<|> recordHandlers
                 :<|> habitHandlers
+                :<|> boardHandlers
             )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()

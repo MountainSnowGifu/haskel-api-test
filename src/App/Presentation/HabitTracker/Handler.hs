@@ -13,6 +13,7 @@ module App.Presentation.HabitTracker.Handler
   )
 where
 
+import App.Application.Auth.Principal (AuthPrincipal)
 import App.Application.HabitTracker.Command (DeleteHabitCommand (..), FetchHabitLogsCommand (..))
 import App.Application.HabitTracker.Repository (HabitRepo)
 import App.Application.HabitTracker.UseCase
@@ -25,7 +26,6 @@ import App.Application.HabitTracker.UseCase
     fetchHabitLogs,
     updateHabit,
   )
-import App.Application.Auth.Principal (AuthPrincipal)
 import App.Domain.HabitTracker.Entity (HabitWithStats (..))
 import App.Presentation.HabitTracker.Request
   ( PatchHabitRequest,
