@@ -4,6 +4,7 @@
 module App.Application.Board.Command
   ( CreateBoardCommand (..),
     DeleteBoardCommand (..),
+    UpdateBoardCommand (..),
   )
 where
 
@@ -17,4 +18,11 @@ data CreateBoardCommand = CreateBoardCommand
   deriving (Show, Eq, Generic)
 
 newtype DeleteBoardCommand = DeleteBoardCommand {cmdDeleteBoardId :: Int}
+  deriving (Show, Eq, Generic)
+
+data UpdateBoardCommand = UpdateBoardCommand
+  { cmdBoardId :: Int,
+    cmdBoardTitle :: Text,
+    cmdBoardBodyMarkdown :: Text
+  }
   deriving (Show, Eq, Generic)

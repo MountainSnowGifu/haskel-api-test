@@ -85,6 +85,15 @@ curl -i \
   http://localhost:8081/api/board/3   2>&1 ; echo
 
 
+curl -s -X PUT http://localhost:8081/api/board/1002 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer 1edd4625-8d8c-4182-9449-172bae263638" \
+  -d '{
+    "putBoardTitle": "新しいタイトル",
+    "putBoardBodyMarkdown": "# 新しい本文"
+  }' \
+   2>&1 ; echo
+
 
 
 https://hoogle.haskell.org/

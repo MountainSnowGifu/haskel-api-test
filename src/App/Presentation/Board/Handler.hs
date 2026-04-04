@@ -9,14 +9,15 @@ module App.Presentation.Board.Handler
     getBoardsHandler,
     deleteBoardHandler,
     getBoardHandler,
+    updateBoardHandler,
   )
 where
 
 import App.Application.Auth.Principal (AuthPrincipal)
 import App.Application.Board.Command (DeleteBoardCommand (..))
 import App.Application.Board.Repository (BoardRepo)
-import App.Application.Board.UseCase (createBoard, deleteBoard, fetchAllBoards, fetchBoard)
-import App.Presentation.Board.Request (PostBoardRequest, toCreateBoardCommand)
+import App.Application.Board.UseCase (createBoard, deleteBoard, fetchAllBoardsPublic, fetchBoardPublic, updateBoard)
+import App.Presentation.Board.Request (PostBoardRequest, PutBoardRequest, toCreateBoardCommand, toUpdateBoardCommand)
 import App.Presentation.Board.Response
   ( BoardResponse (..),
     CreatedBoardResponse (..),
@@ -37,9 +38,9 @@ postBoardHandler mkRun user req = do
     Right Nothing -> throwError err400 {errBody = "Failed to create board."}
     Right (Just board) -> return (toCreatedBoardResponse board)
 
-getBoardsHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Handler [BoardResponse]
-getBoardsHandler mkRun user = do
-  boards <- liftIO $ mkRun user fetchAllBoards
+getBoardsHandler :: BoardRunner -> Handler [BoardResponse]
+getBoardsHandler runPublic = do
+  boards <- liftIO $ runPublic fetchAllBoardsPublic
   return (map toBoardResponse boards)
 
 deleteBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> Handler NoContent
@@ -47,9 +48,16 @@ deleteBoardHandler mkRun user hid = do
   liftIO $ mkRun user (deleteBoard (DeleteBoardCommand hid))
   return NoContent
 
-getBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> Handler BoardResponse
-getBoardHandler mkRun user bid = do
-  result <- liftIO $ mkRun user (fetchBoard bid)
+getBoardHandler :: BoardRunner -> Int -> Handler BoardResponse
+getBoardHandler runPublic bid = do
+  result <- liftIO $ runPublic (fetchBoardPublic bid)
+  case result of
+    Nothing -> throwError err404
+    Just board -> return (toBoardResponse board)
+
+updateBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> PutBoardRequest -> Handler BoardResponse
+updateBoardHandler mkRun user bid req = do
+  result <- liftIO $ mkRun user (updateBoard (toUpdateBoardCommand bid req))
   case result of
     Nothing -> throwError err404
     Just board -> return (toBoardResponse board)

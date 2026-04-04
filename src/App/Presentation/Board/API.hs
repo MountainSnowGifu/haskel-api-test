@@ -6,12 +6,13 @@ module App.Presentation.Board.API
   )
 where
 
-import App.Presentation.Board.Request (PostBoardRequest)
+import App.Presentation.Board.Request (PostBoardRequest, PutBoardRequest)
 import App.Presentation.Board.Response (BoardResponse, CreatedBoardResponse)
 import Servant
 
 type BoardAPI =
   AuthProtect "token-auth" :> "api" :> "board" :> ReqBody '[JSON] PostBoardRequest :> Post '[JSON] CreatedBoardResponse
-    :<|> AuthProtect "token-auth" :> "api" :> "board" :> Get '[JSON] [BoardResponse]
+    :<|> "api" :> "board" :> Get '[JSON] [BoardResponse]
     :<|> AuthProtect "token-auth" :> "api" :> "board" :> Capture "id" Int :> Delete '[JSON] NoContent
-    :<|> AuthProtect "token-auth" :> "api" :> "board" :> Capture "id" Int :> Get '[JSON] BoardResponse
+    :<|> "api" :> "board" :> Capture "id" Int :> Get '[JSON] BoardResponse
+    :<|> AuthProtect "token-auth" :> "api" :> "board" :> Capture "id" Int :> ReqBody '[JSON] PutBoardRequest :> Put '[JSON] BoardResponse

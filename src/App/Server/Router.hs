@@ -13,14 +13,21 @@ import App.Infrastructure.Logger.CsvLogger (csvLogger)
 import App.Infrastructure.Logger.JsonLogger (jsonLogger)
 -- import App.Infrastructure.Repository.Task.TaskSQLServer (runTaskRepo)
 
-import App.Infrastructure.Repository.Board.BoardSQLServer (runBoardRepo)
+import App.Infrastructure.Repository.Board.BoardSQLServer (runBoardRepo, runPublicBoardRepo)
 import App.Infrastructure.Repository.BudgetTracker.RecordSQLite (runRecordRepo)
 import App.Infrastructure.Repository.Chat.ChatSTM (MessageStore, RoomState, newMessageStore, newRoomState)
 import App.Infrastructure.Repository.HabitTracker.HabitSQLServer (runHabitRepo)
 import App.Infrastructure.Repository.Task.TaskSQLServer2 (runTaskRepo2)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler, logoutHandler)
-import App.Presentation.Board.Handler (BoardRunner, deleteBoardHandler, getBoardHandler, getBoardsHandler, postBoardHandler)
+import App.Presentation.Board.Handler
+  ( BoardRunner,
+    deleteBoardHandler,
+    getBoardHandler,
+    getBoardsHandler,
+    postBoardHandler,
+    updateBoardHandler,
+  )
 import App.Presentation.BudgetTracker.Handler
   ( RecordRunner,
     deleteRecordHandler,
@@ -78,6 +85,9 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
       boardRunner :: AuthPrincipal -> BoardRunner
       boardRunner principal eff = runEff (runBoardRepo sqlserverPool (principalUserId principal) eff)
 
+      publicBoardRunner :: BoardRunner
+      publicBoardRunner eff = runEff (runPublicBoardRepo sqlserverPool eff)
+
       taskHandlers =
         getTaskHandler mkTaskRunner
           :<|> getTaskAllHandler mkTaskRunner
@@ -103,10 +113,10 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
 
       boardHandlers =
         postBoardHandler boardRunner
-          :<|> getBoardsHandler boardRunner
+          :<|> getBoardsHandler publicBoardRunner
           :<|> deleteBoardHandler boardRunner
-          :<|> getBoardHandler boardRunner
-
+          :<|> getBoardHandler publicBoardRunner
+          :<|> updateBoardHandler boardRunner
       authHandlers =
         loginHandler sqlserverPool redisConn
           :<|> logoutHandler redisConn

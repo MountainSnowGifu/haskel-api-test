@@ -1,17 +1,20 @@
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 
 module App.Application.Board.UseCase
   ( createBoard,
     fetchAllBoards,
+    fetchAllBoardsPublic,
     deleteBoard,
     fetchBoard,
+    fetchBoardPublic,
+    updateBoard,
   )
 where
 
-import App.Application.Board.Command (CreateBoardCommand (..), DeleteBoardCommand (..))
+import App.Application.Board.Command (CreateBoardCommand (..), DeleteBoardCommand (..), UpdateBoardCommand (..))
 import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.Repository qualified as BoardRepo
 import App.Domain.Board.Entity (Board)
@@ -31,9 +34,9 @@ createBoard cmd = case validateCreate cmd of
     return $ Right mBoard
 
 validateCreate :: CreateBoardCommand -> Either BoardValidationError CreateBoardCommand
-validateCreate cmd
-  | T.null (cmdBoardTitle cmd) = Left TitleEmpty
-  | T.null (cmdBoardBodyMarkdown cmd) = Left BodyMarkdownEmpty
+validateCreate cmd@(CreateBoardCommand {cmdBoardTitle = title, cmdBoardBodyMarkdown = body})
+  | T.null title = Left TitleEmpty
+  | T.null body = Left BodyMarkdownEmpty
   | otherwise = Right cmd
 
 fetchAllBoards ::
@@ -41,8 +44,19 @@ fetchAllBoards ::
   Eff es [Board]
 fetchAllBoards = BoardRepo.getAllBoards
 
+fetchAllBoardsPublic ::
+  (BoardRepo :> es) =>
+  Eff es [Board]
+fetchAllBoardsPublic = BoardRepo.getAllPublicBoards
+
 fetchBoard :: (BoardRepo :> es) => Int -> Eff es (Maybe Board)
 fetchBoard = BoardRepo.getBoard
 
+fetchBoardPublic :: (BoardRepo :> es) => Int -> Eff es (Maybe Board)
+fetchBoardPublic = BoardRepo.getPublicBoard
+
 deleteBoard :: (BoardRepo :> es) => DeleteBoardCommand -> Eff es ()
-deleteBoard (DeleteBoardCommand bid) = BoardRepo.deleteBoard bid
+deleteBoard = BoardRepo.deleteBoard
+
+updateBoard :: (BoardRepo :> es) => UpdateBoardCommand -> Eff es (Maybe Board)
+updateBoard = BoardRepo.updateBoard
