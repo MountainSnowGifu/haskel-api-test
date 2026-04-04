@@ -27,6 +27,7 @@ import App.Presentation.Board.Handler
     getBoardsHandler,
     postBoardHandler,
     updateBoardHandler,
+    uploadAttachmentHandler,
   )
 import App.Presentation.BudgetTracker.Handler
   ( RecordRunner,
@@ -61,6 +62,7 @@ import Effectful (runEff)
 import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Cors
 import Servant
+import System.Directory (createDirectoryIfMissing)
 
 corsPolicy :: CorsResourcePolicy
 corsPolicy =
@@ -117,6 +119,7 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
           :<|> deleteBoardHandler boardRunner
           :<|> getBoardHandler publicBoardRunner
           :<|> updateBoardHandler boardRunner
+          :<|> uploadAttachmentHandler
       authHandlers =
         loginHandler sqlserverPool redisConn
           :<|> logoutHandler redisConn
@@ -130,10 +133,12 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
               :<|> recordHandlers
               :<|> habitHandlers
               :<|> boardHandlers
+              :<|> serveDirectoryWebApp "static/uploads"
           )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()
 runServant servantConfig sqliteDb sqlserverPool redisConn = do
+  createDirectoryIfMissing True "static/uploads"
   rooms <- newRoomState
   store <- newMessageStore
   connStore <- newConnStore

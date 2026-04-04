@@ -24,7 +24,7 @@ import Servant.Server.Experimental.Auth (AuthServerData)
 -- Context から探してハンドラに渡すことができる。
 type instance AuthServerData (AuthProtect "token-auth") = AuthPrincipal
 
-type API = AuthAPI :<|> TaskAPI :<|> ChatAPI :<|> BudgetTrackerAPI :<|> HabitTrackerAPI :<|> BoardAPI
+type API = AuthAPI :<|> TaskAPI :<|> ChatAPI :<|> BudgetTrackerAPI :<|> HabitTrackerAPI :<|> BoardAPI :<|> "uploads" :> Raw
 
 combinedAPI :: Proxy API
 combinedAPI = Proxy

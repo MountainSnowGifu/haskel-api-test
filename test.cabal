@@ -105,6 +105,9 @@ library
     , servant-websockets
     , websockets
     , stm
+    , servant-multipart
+    , filepath
+    , directory
 
 -- ─────────────────────────────────────────────
 -- Executable: Main.hs だけ（起動のみ担当）

@@ -10,6 +10,7 @@ module App.Presentation.Board.Handler
     deleteBoardHandler,
     getBoardHandler,
     updateBoardHandler,
+    uploadAttachmentHandler,
   )
 where
 
@@ -19,14 +20,21 @@ import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.UseCase (createBoard, deleteBoard, fetchAllBoardsPublic, fetchBoardPublic, updateBoard)
 import App.Presentation.Board.Request (PostBoardRequest, PutBoardRequest, toCreateBoardCommand, toUpdateBoardCommand)
 import App.Presentation.Board.Response
-  ( BoardResponse (..),
+  ( AttachmentResponse (..),
+    BoardResponse (..),
     CreatedBoardResponse (..),
     toBoardResponse,
     toCreatedBoardResponse,
   )
 import Control.Monad.IO.Class (liftIO)
+import Data.Text (pack, unpack)
+import Data.UUID (toText)
+import Data.UUID.V4 (nextRandom)
 import Effectful (Eff, IOE)
 import Servant
+import Servant.Multipart (MultipartData, Tmp, fdFileName, fdPayload, files)
+import System.Directory (copyFile)
+import System.FilePath (takeExtension)
 
 type BoardRunner = forall a. Eff '[BoardRepo, IOE] a -> IO a
 
@@ -61,3 +69,17 @@ updateBoardHandler mkRun user bid req = do
   case result of
     Nothing -> throwError err404
     Just board -> return (toBoardResponse board)
+
+uploadAttachmentHandler :: AuthPrincipal -> MultipartData Tmp -> Handler AttachmentResponse
+uploadAttachmentHandler _ multipart = case files multipart of
+  [] -> throwError err400 {errBody = "No file provided."}
+  (f : _) -> do
+    uuid <- liftIO nextRandom
+    let ext      = takeExtension (unpack (fdFileName f))
+        filename = toText uuid <> pack ext
+        dest     = "static/uploads/" <> unpack filename
+    liftIO $ copyFile (fdPayload f) dest
+    return $ AttachmentResponse
+      { attachmentId  = toText uuid
+      , attachmentUrl = "/uploads/" <> filename
+      }

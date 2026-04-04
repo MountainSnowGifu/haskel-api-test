@@ -7,6 +7,7 @@ module App.Presentation.Board.Response
     toCreatedBoardResponse,
     BoardResponse (..),
     toBoardResponse,
+    AttachmentResponse (..),
   )
 where
 
@@ -50,3 +51,11 @@ toBoardResponse Board {boardId = bid, boardTitle = t, boardBodyMarkdown = bmd} =
       title = t,
       bodyMarkdown = bmd
     }
+
+data AttachmentResponse = AttachmentResponse
+  { attachmentId :: Text,
+    attachmentUrl :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+instance ToJSON AttachmentResponse
