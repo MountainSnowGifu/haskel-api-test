@@ -64,11 +64,11 @@ curl -X GET "http://localhost:8081/api/reports/monthly?year=2026&month=3" \
 
 curl -X POST http://localhost:8081/api/board \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer 1d785307-d4d5-4534-9835-2d31ed444067" \
+  -H "Authorization: Bearer 07377746-3803-4676-8966-947984efbb69" \
   -d '{
     "boardTitle": "テストボード",
     "boardBodyMarkdown": "# Hello\nこれはテストです。"
-  }'
+  }' 2>&1 ; echo
 
 
 

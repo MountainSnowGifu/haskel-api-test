@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeOperators #-}
 
 module App.Presentation.Auth.API
-  ( LoginAPI,
+  ( AuthAPI,
     LoginRequest (..),
     TokenResponse (..),
   )
@@ -35,3 +35,7 @@ newtype TokenResponse = TokenResponse
 instance ToJSON TokenResponse
 
 type LoginAPI = "login" :> ReqBody '[JSON] LoginRequest :> Post '[JSON] TokenResponse
+
+type LogoutAPI = AuthProtect "token-auth" :> "logout" :> Post '[JSON] NoContent
+
+type AuthAPI = LoginAPI :<|> LogoutAPI

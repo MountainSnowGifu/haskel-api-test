@@ -3,9 +3,10 @@ module App.Application.Auth.Principal
   )
 where
 
-import App.Domain.Auth.Entity (UserId)
+import App.Domain.Auth.Entity (Token, UserId)
 
-newtype AuthPrincipal = AuthPrincipal
-  { principalUserId :: UserId
+data AuthPrincipal = AuthPrincipal
+  { principalUserId :: UserId,
+    principalToken :: Token
   }
   deriving (Show, Eq)

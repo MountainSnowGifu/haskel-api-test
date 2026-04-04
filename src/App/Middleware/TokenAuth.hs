@@ -6,11 +6,12 @@ module App.Middleware.TokenAuth
 where
 
 import App.Application.Auth.Principal (AuthPrincipal (..))
-import App.Domain.Auth.Entity (UserId (..))
+import App.Domain.Auth.Entity (Token (..), UserId (..))
 import App.Infrastructure.DB.Redis (withRedisConn)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
+import Data.Text.Encoding (decodeUtf8')
 import Database.Redis (Connection, get)
 import Network.HTTP.Types (hAuthorization)
 import Network.Wai (Request, requestHeaders)
@@ -36,9 +37,9 @@ mkTokenAuthHandler conn = mkAuthHandler $ \req ->
       result <- liftIO $ withRedisConn conn (get tok)
       case result of
         Right (Just val) ->
-          case readMaybe (BS8.unpack val) of
-            Just uid -> return $ AuthPrincipal (UserId uid)
-            Nothing -> throwError err401
+          case (readMaybe (BS8.unpack val), decodeUtf8' tok) of
+            (Just uid, Right tokenTxt) -> return $ AuthPrincipal (UserId uid) (Token tokenTxt)
+            _ -> throwError err401
         _ -> throwError err401
 
 -- | Request から Bearer トークンのバイト列を取り出す

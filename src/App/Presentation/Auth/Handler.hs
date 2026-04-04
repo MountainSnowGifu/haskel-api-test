@@ -2,10 +2,12 @@
 
 module App.Presentation.Auth.Handler
   ( loginHandler,
+    logoutHandler,
   )
 where
 
-import App.Application.Auth.UseCase (AuthError (..), login)
+import App.Application.Auth.Principal (AuthPrincipal (..))
+import App.Application.Auth.UseCase (AuthError (..), login, logout)
 import App.Domain.Auth.Entity (Password (..), Token (..), Username (..))
 import App.Infrastructure.DB.Types (MSSQLPool)
 import App.Infrastructure.Repository.Auth.TokenRedis (runTokenRedis)
@@ -35,3 +37,11 @@ loginHandler pool redisConn req = do
     Left UserNotFound -> throwError err401 {errBody = "User not found"}
     Left InvalidPassword -> throwError err401 {errBody = "Invalid password"}
     Right (Token tok) -> return $ TokenResponse tok
+
+logoutHandler :: Connection -> AuthPrincipal -> Handler NoContent
+logoutHandler redisConn principal = do
+  liftIO $
+    runEff $
+      runTokenRedis redisConn $
+        logout (principalToken principal)
+  return NoContent

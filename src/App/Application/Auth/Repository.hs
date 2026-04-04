@@ -10,6 +10,7 @@ module App.Application.Auth.Repository
     findByUsername,
     TokenStore (..),
     storeToken,
+    deleteToken,
   )
 where
 
@@ -36,8 +37,12 @@ findByUsername = send . FindByUsername
 -- | トークン保存エフェクト
 data TokenStore :: Effect where
   StoreToken :: Token -> UserId -> Integer -> TokenStore m ()
+  DeleteToken :: Token -> TokenStore m ()
 
 type instance DispatchOf TokenStore = Dynamic
 
 storeToken :: (TokenStore :> es) => Token -> UserId -> Integer -> Eff es ()
 storeToken tok uid ttl = send (StoreToken tok uid ttl)
+
+deleteToken :: (TokenStore :> es) => Token -> Eff es ()
+deleteToken tok = send (DeleteToken tok)

@@ -18,7 +18,7 @@ import App.Infrastructure.Repository.Chat.ChatSTM (MessageStore, RoomState, newM
 import App.Infrastructure.Repository.HabitTracker.HabitSQLServer (runHabitRepo)
 import App.Infrastructure.Repository.Task.TaskSQLServer2 (runTaskRepo2)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
-import App.Presentation.Auth.Handler (loginHandler)
+import App.Presentation.Auth.Handler (loginHandler, logoutHandler)
 import App.Presentation.Board.Handler (BoardRunner, postBoardHandler)
 import App.Presentation.BudgetTracker.Handler
   ( RecordRunner,
@@ -102,12 +102,16 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
 
       boardHandlers =
         postBoardHandler boardRunner
+
+      authHandlers =
+        loginHandler sqlserverPool redisConn
+          :<|> logoutHandler redisConn
    in csvLogger "access.csv" $
         cors (const $ Just corsPolicy) $
           serveWithContext
             combinedAPI
             (mkTokenAuthHandler redisConn :. EmptyContext)
-            ( loginHandler sqlserverPool redisConn
+            ( authHandlers
                 :<|> taskHandlers
                 :<|> wsHandler rooms store connStore
                 :<|> recordHandlers

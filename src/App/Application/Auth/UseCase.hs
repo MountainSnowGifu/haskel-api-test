@@ -4,11 +4,12 @@
 module App.Application.Auth.UseCase
   ( AuthError (..),
     login,
+    logout,
   )
 where
 
 import App.Domain.Auth.Entity (Password (..), Token (..), User (..), Username)
-import App.Application.Auth.Repository (TokenStore, UserRepo, findByUsername, storeToken)
+import App.Application.Auth.Repository (TokenStore, UserRepo, deleteToken, findByUsername, storeToken)
 import Data.UUID (toText)
 import Data.UUID.V4 (nextRandom)
 import Effectful
@@ -47,3 +48,6 @@ login uname inputPwd = do
           storeToken tok (userUserId user) tokenTTL
           return $ Right tok
         else return $ Left InvalidPassword
+
+logout :: (TokenStore :> es) => Token -> Eff es ()
+logout = deleteToken
