@@ -13,3 +13,5 @@ import Servant
 type BoardAPI =
   AuthProtect "token-auth" :> "api" :> "board" :> ReqBody '[JSON] PostBoardRequest :> Post '[JSON] CreatedBoardResponse
     :<|> AuthProtect "token-auth" :> "api" :> "board" :> Get '[JSON] [BoardResponse]
+    :<|> AuthProtect "token-auth" :> "api" :> "board" :> Capture "id" Int :> Delete '[JSON] NoContent
+    :<|> AuthProtect "token-auth" :> "api" :> "board" :> Capture "id" Int :> Get '[JSON] BoardResponse

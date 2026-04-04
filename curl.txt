@@ -75,6 +75,17 @@ curl -s http://localhost:8081/api/board \
   -H "Authorization: Bearer 07377746-3803-4676-8966-947984efbb69"
 
 
+curl -X DELETE http://localhost:8081/api/board/1 \
+  -H "Authorization: Bearer 53e73f12-f330-4f47-b188-577896e621fb" \
+  2>&1 ; echo
+
+curl -i \
+  -H "Authorization: Bearer 166c69c1-ee8c-4229-97b8-819ba67818a0" \
+  -H "Accept: application/json" \
+  http://localhost:8081/api/board/3   2>&1 ; echo
+
+
+
 
 https://hoogle.haskell.org/
 

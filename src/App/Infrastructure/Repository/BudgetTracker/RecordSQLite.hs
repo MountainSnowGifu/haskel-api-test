@@ -16,7 +16,7 @@ import App.Domain.Auth.Entity (UserId (..))
 import App.Domain.BudgetTracker.Entity (Record (..), RecordType (..))
 import App.Infrastructure.DB.Types (SqliteDb (..))
 import Data.Text (Text)
-import Database.SQLite.Simple (Only (..), execute, lastInsertRowId, query, withConnection)
+import Database.SQLite.Simple (Only (..), changes, execute, lastInsertRowId, query, withConnection)
 import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
 
@@ -69,8 +69,10 @@ runRecordRepo (SqliteDb dbfile) authUserId = interpret $ \_ -> \case
           }
   DeleteRecordOp rid ->
     liftIO $ withConnection dbfile $ \conn -> do
-      execute conn "DELETE FROM records WHERE id = ?" (Only rid)
-      return (Just ())
+      let uid = unUserId authUserId
+      execute conn "DELETE FROM records WHERE id = ? AND user_id = ?" (rid, uid)
+      affected <- changes conn
+      return $ if affected > 0 then Just () else Nothing
   GetRecordsByMonthOp month ->
     liftIO $ withConnection dbfile $ \conn -> do
       let uid = unUserId authUserId

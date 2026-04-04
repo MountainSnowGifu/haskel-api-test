@@ -5,11 +5,13 @@
 
 module App.Application.Board.UseCase
   ( createBoard,
-    getAllBoard,
+    fetchAllBoards,
+    deleteBoard,
+    fetchBoard,
   )
 where
 
-import App.Application.Board.Command (CreateBoardCommand (..))
+import App.Application.Board.Command (CreateBoardCommand (..), DeleteBoardCommand (..))
 import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.Repository qualified as BoardRepo
 import App.Domain.Board.Entity (Board)
@@ -34,7 +36,13 @@ validateCreate cmd
   | T.null (cmdBoardBodyMarkdown cmd) = Left BodyMarkdownEmpty
   | otherwise = Right cmd
 
-getAllBoard ::
+fetchAllBoards ::
   (BoardRepo :> es) =>
-  Eff es (Maybe [Board])
-getAllBoard = BoardRepo.getAllBoard
+  Eff es [Board]
+fetchAllBoards = BoardRepo.getAllBoards
+
+fetchBoard :: (BoardRepo :> es) => Int -> Eff es (Maybe Board)
+fetchBoard = BoardRepo.getBoard
+
+deleteBoard :: (BoardRepo :> es) => DeleteBoardCommand -> Eff es ()
+deleteBoard (DeleteBoardCommand bid) = BoardRepo.deleteBoard bid

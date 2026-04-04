@@ -3,6 +3,7 @@
 
 module App.Application.Board.Command
   ( CreateBoardCommand (..),
+    DeleteBoardCommand (..),
   )
 where
 
@@ -13,4 +14,7 @@ data CreateBoardCommand = CreateBoardCommand
   { cmdBoardTitle :: Text,
     cmdBoardBodyMarkdown :: Text
   }
+  deriving (Show, Eq, Generic)
+
+newtype DeleteBoardCommand = DeleteBoardCommand {cmdDeleteBoardId :: Int}
   deriving (Show, Eq, Generic)

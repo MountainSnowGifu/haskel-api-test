@@ -57,18 +57,53 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
           [] -> return Nothing
           (rowId, t, b) : _ ->
             return $ Just $ Board rowId t b
-  GetAllBoardOp ->
+  GetAllBoardsOp ->
     liftIO $ withMSSQLConn pool $ \conn -> do
+      let uid = unUserId authUserId
       RpcResponse _ _ rows <-
         rpc
           conn
           ( RpcQuery
               SP_ExecuteSql
-              ( nvarcharVal "" (Just "SELECT id, title, body_markdown FROM testdb.dbo.BOARDS"),
-                nvarcharVal "" (Just "")
+              ( nvarcharVal "" (Just "SELECT id, title, body_markdown FROM testdb.dbo.BOARDS WHERE author_id = @AuthorId"),
+                nvarcharVal "" (Just "@AuthorId int"),
+                intVal "@AuthorId" (Just uid)
+              )
+          ) ::
+          IO (RpcResponse () [(Int, Text, Text)])
+      return $ map (\(rowId, t, b) -> Board rowId t b) rows
+  GetBoardOp bId ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      let uid = unUserId authUserId
+      RpcResponse _ _ rows <-
+        rpc
+          conn
+          ( RpcQuery
+              SP_ExecuteSql
+              ( nvarcharVal "" (Just "SELECT id, title, body_markdown FROM testdb.dbo.BOARDS WHERE id = @BoardId AND author_id = @AuthorId"),
+                nvarcharVal "" (Just "@BoardId int, @AuthorId int"),
+                intVal "@BoardId" (Just bId),
+                intVal "@AuthorId" (Just uid)
               )
           ) ::
           IO (RpcResponse () [(Int, Text, Text)])
       case rows of
         [] -> return Nothing
-        rs -> return $ Just $ map (\(rowId, t, b) -> Board rowId t b) rs
+        (rowId, t, b) : _ -> return $ Just $ Board rowId t b
+  DeleteBoardOp bId ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      let uid = unUserId authUserId
+      withTransaction conn $ do
+        _ <-
+          rpc
+            conn
+            ( RpcQuery
+                SP_ExecuteSql
+                ( nvarcharVal "" (Just "DELETE FROM testdb.dbo.BOARDS OUTPUT DELETED.id, DELETED.title WHERE id = @BoardId AND author_id = @AuthorId"),
+                  nvarcharVal "" (Just "@BoardId int, @AuthorId int"),
+                  intVal "@BoardId" (Just bId),
+                  intVal "@AuthorId" (Just uid)
+                )
+            ) ::
+            IO (RpcResponse () [(Int, Text)])
+        return ()

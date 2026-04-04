@@ -7,14 +7,22 @@ module App.Presentation.Board.Handler
   ( postBoardHandler,
     BoardRunner,
     getBoardsHandler,
+    deleteBoardHandler,
+    getBoardHandler,
   )
 where
 
 import App.Application.Auth.Principal (AuthPrincipal)
+import App.Application.Board.Command (DeleteBoardCommand (..))
 import App.Application.Board.Repository (BoardRepo)
-import App.Application.Board.UseCase (createBoard, getAllBoard)
+import App.Application.Board.UseCase (createBoard, deleteBoard, fetchAllBoards, fetchBoard)
 import App.Presentation.Board.Request (PostBoardRequest, toCreateBoardCommand)
-import App.Presentation.Board.Response (BoardResponse (..), CreatedBoardResponse (..), toBoardResponse, toCreatedBoardResponse)
+import App.Presentation.Board.Response
+  ( BoardResponse (..),
+    CreatedBoardResponse (..),
+    toBoardResponse,
+    toCreatedBoardResponse,
+  )
 import Control.Monad.IO.Class (liftIO)
 import Effectful (Eff, IOE)
 import Servant
@@ -31,7 +39,17 @@ postBoardHandler mkRun user req = do
 
 getBoardsHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Handler [BoardResponse]
 getBoardsHandler mkRun user = do
-  result <- liftIO $ mkRun user getAllBoard
+  boards <- liftIO $ mkRun user fetchAllBoards
+  return (map toBoardResponse boards)
+
+deleteBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> Handler NoContent
+deleteBoardHandler mkRun user hid = do
+  liftIO $ mkRun user (deleteBoard (DeleteBoardCommand hid))
+  return NoContent
+
+getBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> Handler BoardResponse
+getBoardHandler mkRun user bid = do
+  result <- liftIO $ mkRun user (fetchBoard bid)
   case result of
-    Nothing -> throwError err400 {errBody = "Failed to fetch boards."}
-    Just boards -> return (map toBoardResponse boards)
+    Nothing -> throwError err404
+    Just board -> return (toBoardResponse board)

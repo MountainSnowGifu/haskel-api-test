@@ -20,7 +20,7 @@ import App.Infrastructure.Repository.HabitTracker.HabitSQLServer (runHabitRepo)
 import App.Infrastructure.Repository.Task.TaskSQLServer2 (runTaskRepo2)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler, logoutHandler)
-import App.Presentation.Board.Handler (BoardRunner, getBoardsHandler, postBoardHandler)
+import App.Presentation.Board.Handler (BoardRunner, deleteBoardHandler, getBoardHandler, getBoardsHandler, postBoardHandler)
 import App.Presentation.BudgetTracker.Handler
   ( RecordRunner,
     deleteRecordHandler,
@@ -104,6 +104,8 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
       boardHandlers =
         postBoardHandler boardRunner
           :<|> getBoardsHandler boardRunner
+          :<|> deleteBoardHandler boardRunner
+          :<|> getBoardHandler boardRunner
 
       authHandlers =
         loginHandler sqlserverPool redisConn

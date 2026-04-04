@@ -19,7 +19,7 @@ import qualified Data.UUID as UUID
 import qualified Data.UUID.V4 as UUIDv4
 import Network.HTTP.Types (HeaderName, Status (..))
 import Network.Wai (Middleware, mapResponseHeaders, rawPathInfo, requestHeaders, requestMethod, responseStatus)
-import System.IO (IOMode (..), hPutStrLn, withFile)
+import System.IO (IOMode (..), withFile)
 
 jsonLogger :: FilePath -> LogLevel -> Middleware
 jsonLogger logPath minLevel app req respond = do
