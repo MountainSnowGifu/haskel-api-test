@@ -7,9 +7,10 @@ module App.Server.Router
 where
 
 import App.Application.Auth.Principal (AuthPrincipal (..))
-import App.Core.Config (Config (..))
+import App.Core.Config (Config (..), LogFormat (..))
 import App.Infrastructure.DB.Types (MSSQLPool, SqliteDb)
 import App.Infrastructure.Logger.CsvLogger (csvLogger)
+import App.Infrastructure.Logger.JsonLogger (jsonLogger)
 -- import App.Infrastructure.Repository.Task.TaskSQLServer (runTaskRepo)
 
 import App.Infrastructure.Repository.Board.BoardSQLServer (runBoardRepo)
@@ -19,7 +20,7 @@ import App.Infrastructure.Repository.HabitTracker.HabitSQLServer (runHabitRepo)
 import App.Infrastructure.Repository.Task.TaskSQLServer2 (runTaskRepo2)
 import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler, logoutHandler)
-import App.Presentation.Board.Handler (BoardRunner, postBoardHandler)
+import App.Presentation.Board.Handler (BoardRunner, getBoardsHandler, postBoardHandler)
 import App.Presentation.BudgetTracker.Handler
   ( RecordRunner,
     deleteRecordHandler,
@@ -102,26 +103,31 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
 
       boardHandlers =
         postBoardHandler boardRunner
+          :<|> getBoardsHandler boardRunner
 
       authHandlers =
         loginHandler sqlserverPool redisConn
           :<|> logoutHandler redisConn
-   in csvLogger "access.csv" $
-        cors (const $ Just corsPolicy) $
-          serveWithContext
-            combinedAPI
-            (mkTokenAuthHandler redisConn :. EmptyContext)
-            ( authHandlers
-                :<|> taskHandlers
-                :<|> wsHandler rooms store connStore
-                :<|> recordHandlers
-                :<|> habitHandlers
-                :<|> boardHandlers
-            )
+   in cors (const $ Just corsPolicy) $
+        serveWithContext
+          combinedAPI
+          (mkTokenAuthHandler redisConn :. EmptyContext)
+          ( authHandlers
+              :<|> taskHandlers
+              :<|> wsHandler rooms store connStore
+              :<|> recordHandlers
+              :<|> habitHandlers
+              :<|> boardHandlers
+          )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()
 runServant servantConfig sqliteDb sqlserverPool redisConn = do
   rooms <- newRoomState
   store <- newMessageStore
   connStore <- newConnStore
-  run (port servantConfig) (app sqliteDb sqlserverPool redisConn rooms store connStore)
+  let logMiddleware =
+        case logFormat servantConfig of
+          Csv -> csvLogger (logFilePath servantConfig)
+          Json -> jsonLogger (logFilePath servantConfig) (logLevel servantConfig)
+      appWithMiddleware = logMiddleware (app sqliteDb sqlserverPool redisConn rooms store connStore)
+  run (port servantConfig) appWithMiddleware

@@ -5,6 +5,7 @@
 
 module App.Application.Board.UseCase
   ( createBoard,
+    getAllBoard,
   )
 where
 
@@ -32,3 +33,8 @@ validateCreate cmd
   | T.null (cmdBoardTitle cmd) = Left TitleEmpty
   | T.null (cmdBoardBodyMarkdown cmd) = Left BodyMarkdownEmpty
   | otherwise = Right cmd
+
+getAllBoard ::
+  (BoardRepo :> es) =>
+  Eff es (Maybe [Board])
+getAllBoard = BoardRepo.getAllBoard

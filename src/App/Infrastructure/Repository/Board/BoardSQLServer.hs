@@ -57,3 +57,18 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
           [] -> return Nothing
           (rowId, t, b) : _ ->
             return $ Just $ Board rowId t b
+  GetAllBoardOp ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      RpcResponse _ _ rows <-
+        rpc
+          conn
+          ( RpcQuery
+              SP_ExecuteSql
+              ( nvarcharVal "" (Just "SELECT id, title, body_markdown FROM testdb.dbo.BOARDS"),
+                nvarcharVal "" (Just "")
+              )
+          ) ::
+          IO (RpcResponse () [(Int, Text, Text)])
+      case rows of
+        [] -> return Nothing
+        rs -> return $ Just $ map (\(rowId, t, b) -> Board rowId t b) rs

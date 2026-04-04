@@ -1,6 +1,6 @@
 module Main where
 
-import App.Core.Config (Config (..))
+import App.Core.Config (Config (..), LogFormat (..), LogLevel (..))
 import App.Infrastructure.DB.Redis (createRedisConn)
 import App.Infrastructure.DB.SQLite (initDB)
 import App.Infrastructure.DB.SqlServer (createMSSQLPool)
@@ -11,7 +11,14 @@ import qualified Database.Redis as Redis
 
 main :: IO ()
 main = do
-  let servantConfig = Config {port = 8081, host = "localhost"}
+  let servantConfig =
+        Config
+          { port = 8081,
+            host = "localhost",
+            logLevel = Debug,
+            logFormat = Json,
+            logFilePath = "access.log"
+          }
   print servantConfig
 
   let sqliteDbName = SqliteDb "BT.db"

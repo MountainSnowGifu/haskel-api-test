@@ -71,6 +71,10 @@ curl -X POST http://localhost:8081/api/board \
   }' 2>&1 ; echo
 
 
+curl -s http://localhost:8081/api/board \
+  -H "Authorization: Bearer 07377746-3803-4676-8966-947984efbb69"
+
+
 
 https://hoogle.haskell.org/
 

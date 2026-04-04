@@ -19,6 +19,7 @@ library
     , App.Infrastructure.DB.SqlServer
     , App.Infrastructure.DB.Redis
     , App.Infrastructure.Logger.CsvLogger
+    , App.Infrastructure.Logger.JsonLogger
     , App.Middleware.TokenAuth
     , App.Domain.Auth.Entity
     , App.Application.Auth.Repository
