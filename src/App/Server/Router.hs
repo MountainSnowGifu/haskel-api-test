@@ -120,6 +120,7 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
           :<|> getBoardHandler publicBoardRunner
           :<|> updateBoardHandler boardRunner
           :<|> uploadAttachmentHandler
+          :<|> serveDirectoryWebApp "static/board/uploads"
       authHandlers =
         loginHandler sqlserverPool redisConn
           :<|> logoutHandler redisConn
@@ -133,12 +134,11 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
               :<|> recordHandlers
               :<|> habitHandlers
               :<|> boardHandlers
-              :<|> serveDirectoryWebApp "static/uploads"
           )
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()
 runServant servantConfig sqliteDb sqlserverPool redisConn = do
-  createDirectoryIfMissing True "static/uploads"
+  createDirectoryIfMissing True "static/board/uploads"
   rooms <- newRoomState
   store <- newMessageStore
   connStore <- newConnStore

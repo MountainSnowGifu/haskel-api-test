@@ -18,3 +18,4 @@ type BoardAPI =
     :<|> "api" :> "board" :> Capture "id" Int :> Get '[JSON] BoardResponse
     :<|> AuthProtect "token-auth" :> "api" :> "board" :> Capture "id" Int :> ReqBody '[JSON] PutBoardRequest :> Put '[JSON] BoardResponse
     :<|> AuthProtect "token-auth" :> "api" :> "board" :> "attachment" :> MultipartForm Tmp (MultipartData Tmp) :> Post '[JSON] AttachmentResponse
+    :<|> "api" :> "board" :> "uploads" :> Raw

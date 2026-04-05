@@ -75,11 +75,12 @@ uploadAttachmentHandler _ multipart = case files multipart of
   [] -> throwError err400 {errBody = "No file provided."}
   (f : _) -> do
     uuid <- liftIO nextRandom
-    let ext      = takeExtension (unpack (fdFileName f))
+    let ext = takeExtension (unpack (fdFileName f))
         filename = toText uuid <> pack ext
-        dest     = "static/uploads/" <> unpack filename
+        dest = "static/board/uploads/" <> unpack filename
     liftIO $ copyFile (fdPayload f) dest
-    return $ AttachmentResponse
-      { attachmentId  = toText uuid
-      , attachmentUrl = "/uploads/" <> filename
-      }
+    return $
+      AttachmentResponse
+        { attachmentId = toText uuid,
+          attachmentUrl = "/board/uploads/" <> filename
+        }
