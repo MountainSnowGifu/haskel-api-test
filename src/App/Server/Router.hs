@@ -86,7 +86,7 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
       mkHabitRunner principal eff = runEff (runHabitRepo sqlserverPool (principalUserId principal) eff)
 
       boardRunner :: AuthPrincipal -> BoardRunner
-      boardRunner principal eff = runEff (runBoardRepo sqlserverPool (principalUserId principal) eff)
+      boardRunner principal eff = runEff (runPublicBoardQuery sqlserverPool (runBoardRepo sqlserverPool (principalUserId principal) eff))
 
       publicBoardRunner :: PublicBoardRunner
       publicBoardRunner eff = runEff (runPublicBoardQuery sqlserverPool eff)

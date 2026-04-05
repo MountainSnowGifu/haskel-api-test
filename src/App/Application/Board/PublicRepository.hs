@@ -8,10 +8,11 @@ module App.Application.Board.PublicRepository
   ( PublicBoardQuery (..),
     getAllPublicBoards,
     getPublicBoard,
+    fetchAttachmentsForBoard,
   )
 where
 
-import App.Domain.Board.Entity (Board)
+import App.Domain.Board.Entity (Board, BoardAttachment)
 import Effectful
 import Effectful.Dispatch.Dynamic (send)
 
@@ -19,6 +20,7 @@ import Effectful.Dispatch.Dynamic (send)
 data PublicBoardQuery :: Effect where
   GetAllPublicBoardsQ :: PublicBoardQuery m [Board]
   GetPublicBoardQ :: Int -> PublicBoardQuery m (Maybe Board)
+  GetAttachmentsForBoardOp :: Int -> PublicBoardQuery m [BoardAttachment]
 
 type instance DispatchOf PublicBoardQuery = Dynamic
 
@@ -27,3 +29,6 @@ getAllPublicBoards = send GetAllPublicBoardsQ
 
 getPublicBoard :: (PublicBoardQuery :> es) => Int -> Eff es (Maybe Board)
 getPublicBoard bid = send (GetPublicBoardQ bid)
+
+fetchAttachmentsForBoard :: (PublicBoardQuery :> es) => Int -> Eff es [BoardAttachment]
+fetchAttachmentsForBoard boardId = send (GetAttachmentsForBoardOp boardId)

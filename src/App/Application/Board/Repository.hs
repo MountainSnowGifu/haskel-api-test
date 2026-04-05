@@ -11,7 +11,6 @@ module App.Application.Board.Repository
     deleteBoard,
     updateBoard,
     saveAttachment,
-    fetchAttachmentsForBoard,
   )
 where
 
@@ -26,7 +25,6 @@ data BoardRepo :: Effect where
   DeleteBoardOp :: Int -> BoardRepo m Bool
   UpdateBoardOp :: UpdateBoardCommand -> BoardRepo m (Maybe Board)
   SaveAttachmentOp :: SaveAttachmentCommand -> BoardRepo m (Maybe BoardAttachment)
-  GetAttachmentsForBoardOp :: Int -> BoardRepo m [BoardAttachment]
 
 type instance DispatchOf BoardRepo = Dynamic
 
@@ -44,6 +42,3 @@ updateBoard cmd = send (UpdateBoardOp cmd)
 
 saveAttachment :: (BoardRepo :> es) => SaveAttachmentCommand -> Eff es (Maybe BoardAttachment)
 saveAttachment cmd = send (SaveAttachmentOp cmd)
-
-fetchAttachmentsForBoard :: (BoardRepo :> es) => Int -> Eff es [BoardAttachment]
-fetchAttachmentsForBoard boardId = send (GetAttachmentsForBoardOp boardId)

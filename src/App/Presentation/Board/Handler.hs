@@ -43,7 +43,8 @@ import Servant.Multipart (MultipartData, Tmp, fdFileName, fdPayload, files)
 import System.Directory (copyFile, getFileSize)
 import System.FilePath (takeExtension)
 
-type BoardRunner = forall a. Eff '[BoardRepo, IOE] a -> IO a
+type BoardRunner = forall a. Eff '[BoardRepo, PublicBoardQuery, IOE] a -> IO a
+
 type PublicBoardRunner = forall a. Eff '[PublicBoardQuery, IOE] a -> IO a
 
 postBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> PostBoardRequest -> Handler CreatedBoardResponse

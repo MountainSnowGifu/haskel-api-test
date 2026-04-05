@@ -151,22 +151,6 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
         case rows of
           [] -> return Nothing
           _ -> return $ Just $ BoardAttachment bid aid url
-  GetAttachmentsForBoardOp bid ->
-    liftIO $ withMSSQLConn pool $ \conn -> do
-      rows <-
-        rpcRows
-          =<< ( rpc
-                  conn
-                  ( RpcQuery
-                      SP_ExecuteSql
-                      ( nvarcharVal "" (Just "SELECT board_id, attachment_id, attachment_url FROM testdb.dbo.BOARD_ATTACHMENTS WHERE board_id = @BoardId"),
-                        nvarcharVal "" (Just "@BoardId int"),
-                        intVal "@BoardId" (Just bid)
-                      )
-                  ) ::
-                  IO (RpcResponse () [(Int, Text, Text)])
-              )
-      return $ map (\(bId, aId, aUrl) -> BoardAttachment bId aId aUrl) rows
 
 runPublicBoardQuery ::
   (IOE :> es) =>
@@ -205,3 +189,19 @@ runPublicBoardQuery pool = interpret $ \_ -> \case
       case rows of
         [] -> return Nothing
         (rowId, t, b, aid) : _ -> return $ Just $ Board rowId t b aid
+  GetAttachmentsForBoardOp bid ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      rows <-
+        rpcRows
+          =<< ( rpc
+                  conn
+                  ( RpcQuery
+                      SP_ExecuteSql
+                      ( nvarcharVal "" (Just "SELECT board_id, attachment_id, attachment_url FROM testdb.dbo.BOARD_ATTACHMENTS WHERE board_id = @BoardId"),
+                        nvarcharVal "" (Just "@BoardId int"),
+                        intVal "@BoardId" (Just bid)
+                      )
+                  ) ::
+                  IO (RpcResponse () [(Int, Text, Text)])
+              )
+      return $ map (\(bId, aId, aUrl) -> BoardAttachment bId aId aUrl) rows

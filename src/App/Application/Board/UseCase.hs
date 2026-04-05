@@ -11,7 +11,7 @@ module App.Application.Board.UseCase
     fetchBoardPublic,
     updateBoard,
     saveAttachment,
-    fetchAttachmentsForBoard,
+    fetchAttachmentsForBoardPublic,
   )
 where
 
@@ -28,7 +28,7 @@ import Effectful (Eff, (:>))
 data BoardValidationError = TitleEmpty | BodyMarkdownEmpty
 
 createBoard ::
-  (BoardRepo :> es) =>
+  (BoardRepo :> es, PublicBoardQuery :> es) =>
   CreateBoardCommand ->
   Eff es (Either BoardValidationError (Maybe BoardWithAttachments))
 createBoard cmd = case validateCreate cmd of
@@ -38,7 +38,7 @@ createBoard cmd = case validateCreate cmd of
     case mBoard of
       Nothing -> return $ Right Nothing
       Just b -> do
-        atts <- BoardRepo.fetchAttachmentsForBoard (boardId b)
+        atts <- PublicBoardQuery.fetchAttachmentsForBoard (boardId b)
         return $ Right $ Just $ createBoardWithAttachments b atts
 
 validateCreate :: CreateBoardCommand -> Either BoardValidationError CreateBoardCommand
@@ -69,5 +69,5 @@ updateBoard = BoardRepo.updateBoard
 saveAttachment :: (BoardRepo :> es) => SaveAttachmentCommand -> Eff es (Maybe BoardAttachment)
 saveAttachment = BoardRepo.saveAttachment
 
-fetchAttachmentsForBoard :: (BoardRepo :> es) => Int -> Eff es [BoardAttachment]
-fetchAttachmentsForBoard = BoardRepo.fetchAttachmentsForBoard
+fetchAttachmentsForBoardPublic :: (PublicBoardQuery :> es) => Int -> Eff es [BoardAttachment]
+fetchAttachmentsForBoardPublic = PublicBoardQuery.fetchAttachmentsForBoard
