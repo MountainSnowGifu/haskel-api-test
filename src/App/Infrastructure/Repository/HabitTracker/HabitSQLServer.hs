@@ -107,12 +107,12 @@ runHabitRepo pool authUserId = interpret $ \_ -> \case
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId authUserId
           deleteSql =
-            "DELETE FROM testdb.dbo.HABITS WHERE id = "
+            "DELETE FROM testdb.dbo.HABITS OUTPUT DELETED.id WHERE id = "
               <> T.pack (show hid)
               <> " AND user_id = "
               <> T.pack (show uid)
-      _ <- sql conn deleteSql :: IO ()
-      return ()
+      rows <- sql conn deleteSql :: IO [Only Int]
+      return (not (null rows))
   CreateHabitLogOp hid (CreateHabitLogCommand _ status) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId authUserId

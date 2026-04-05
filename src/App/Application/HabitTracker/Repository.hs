@@ -23,7 +23,7 @@ data HabitRepo :: Effect where
   -- 生データを返す。ストリーク計算は Application 層の責務。
   GetHabitsOp :: HabitRepo m [(Habit, [HabitLog])]
   CreateHabitOp :: CreateHabitCommand -> HabitRepo m (Maybe Habit)
-  DeleteHabitOp :: Int -> HabitRepo m ()
+  DeleteHabitOp :: Int -> HabitRepo m Bool
   UpdateHabitOp :: Int -> UpdateHabitCommand -> HabitRepo m (Maybe Habit)
   CreateHabitLogOp :: Int -> CreateHabitLogCommand -> HabitRepo m (Maybe ())
 
@@ -35,7 +35,7 @@ getHabitAll = send GetHabitsOp
 createHabit :: (HabitRepo :> es) => CreateHabitCommand -> Eff es (Maybe Habit)
 createHabit op = send (CreateHabitOp op)
 
-deleteHabit :: (HabitRepo :> es) => Int -> Eff es ()
+deleteHabit :: (HabitRepo :> es) => Int -> Eff es Bool
 deleteHabit habitId = send (DeleteHabitOp habitId)
 
 updateHabit :: (HabitRepo :> es) => Int -> UpdateHabitCommand -> Eff es (Maybe Habit)

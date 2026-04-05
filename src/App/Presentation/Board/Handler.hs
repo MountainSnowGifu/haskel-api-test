@@ -23,6 +23,7 @@ import App.Presentation.Board.Response
   ( AttachmentResponse (..),
     BoardResponse (..),
     CreatedBoardResponse (..),
+    toAttachmentResponse,
     toBoardResponse,
     toCreatedBoardResponse,
   )
@@ -53,8 +54,8 @@ getBoardsHandler runPublic = do
 
 deleteBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> Handler NoContent
 deleteBoardHandler mkRun user hid = do
-  liftIO $ mkRun user (deleteBoard (DeleteBoardCommand hid))
-  return NoContent
+  deleted <- liftIO $ mkRun user (deleteBoard (DeleteBoardCommand hid))
+  if deleted then return NoContent else throwError err404
 
 getBoardHandler :: BoardRunner -> Int -> Handler BoardResponse
 getBoardHandler runPublic bid = do
@@ -70,19 +71,17 @@ updateBoardHandler mkRun user bid req = do
     Nothing -> throwError err404
     Just board -> return (toBoardResponse board)
 
-uploadAttachmentHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> MultipartData Tmp -> Handler AttachmentResponse
-uploadAttachmentHandler mkRun user multipart = case files multipart of
+uploadAttachmentHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> MultipartData Tmp -> Handler AttachmentResponse
+uploadAttachmentHandler mkRun user bid multipart = case files multipart of
   [] -> throwError err400 {errBody = "No file provided."}
   (f : _) -> do
     uuid <- liftIO nextRandom
     let ext = takeExtension (unpack (fdFileName f))
         filename = toText uuid <> pack ext
         dest = "static/board/uploads/" <> unpack filename
-        url = "/board/uploads/" <> filename
+        url = "/api/board/uploads/" <> filename
     liftIO $ copyFile (fdPayload f) dest
-    liftIO $ mkRun user (saveAttachment (SaveAttachmentCommand (toText uuid) url))
-    return $
-      AttachmentResponse
-        { attachmentId = toText uuid,
-          attachmentUrl = url
-        }
+    result <- liftIO $ mkRun user (saveAttachment (SaveAttachmentCommand bid (toText uuid) url))
+    case result of
+      Nothing -> throwError err500 {errBody = "Failed to save attachment."}
+      Just attachment -> return (toAttachmentResponse attachment)

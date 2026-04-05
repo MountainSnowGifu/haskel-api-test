@@ -79,7 +79,7 @@ validateCreate cmd
   | T.null (cmdHabitColor cmd) = Left ColorEmpty
   | otherwise = Right cmd
 
-deleteHabit :: (HabitRepo :> es) => DeleteHabitCommand -> Eff es ()
+deleteHabit :: (HabitRepo :> es) => DeleteHabitCommand -> Eff es Bool
 deleteHabit (DeleteHabitCommand hid) = HabitRepo.deleteHabit hid
 
 updateHabit :: (HabitRepo :> es) => UpdateHabitCommand -> Eff es (Maybe Habit)

@@ -70,8 +70,8 @@ postHabitHandler mkRun user body = do
 
 deleteHabitHandler :: (AuthPrincipal -> HabitRunner) -> AuthPrincipal -> Int -> Handler NoContent
 deleteHabitHandler mkRun user hid = do
-  liftIO $ mkRun user (deleteHabit (DeleteHabitCommand hid))
-  return NoContent
+  deleted <- liftIO $ mkRun user (deleteHabit (DeleteHabitCommand hid))
+  if deleted then return NoContent else throwError err404
 
 updateHabitHandler :: (AuthPrincipal -> HabitRunner) -> AuthPrincipal -> Int -> PatchHabitRequest -> Handler HabitResponse
 updateHabitHandler mkRun user hid body = do

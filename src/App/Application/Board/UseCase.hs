@@ -18,7 +18,7 @@ where
 import App.Application.Board.Command (CreateBoardCommand (..), DeleteBoardCommand (..), SaveAttachmentCommand (..), UpdateBoardCommand (..))
 import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.Repository qualified as BoardRepo
-import App.Domain.Board.Entity (Board)
+import App.Domain.Board.Entity (Board, BoardAttachment)
 import Data.Text qualified as T
 import Effectful (Eff, (:>))
 
@@ -56,11 +56,11 @@ fetchBoard = BoardRepo.getBoard
 fetchBoardPublic :: (BoardRepo :> es) => Int -> Eff es (Maybe Board)
 fetchBoardPublic = BoardRepo.getPublicBoard
 
-deleteBoard :: (BoardRepo :> es) => DeleteBoardCommand -> Eff es ()
+deleteBoard :: (BoardRepo :> es) => DeleteBoardCommand -> Eff es Bool
 deleteBoard = BoardRepo.deleteBoard
 
 updateBoard :: (BoardRepo :> es) => UpdateBoardCommand -> Eff es (Maybe Board)
 updateBoard = BoardRepo.updateBoard
 
-saveAttachment :: (BoardRepo :> es) => SaveAttachmentCommand -> Eff es ()
+saveAttachment :: (BoardRepo :> es) => SaveAttachmentCommand -> Eff es (Maybe BoardAttachment)
 saveAttachment = BoardRepo.saveAttachment
