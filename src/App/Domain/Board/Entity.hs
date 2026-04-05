@@ -9,7 +9,8 @@ import GHC.Generics (Generic)
 data Board = Board
   { boardId :: Int,
     boardTitle :: Text,
-    boardBodyMarkdown :: Text
+    boardBodyMarkdown :: Text,
+    boardAuthorId :: Int
   }
   deriving (Show, Eq, Generic)
 

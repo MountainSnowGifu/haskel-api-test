@@ -13,7 +13,7 @@ import App.Infrastructure.Logger.CsvLogger (csvLogger)
 import App.Infrastructure.Logger.JsonLogger (jsonLogger)
 -- import App.Infrastructure.Repository.Task.TaskSQLServer (runTaskRepo)
 
-import App.Infrastructure.Repository.Board.BoardSQLServer (runBoardRepo, runPublicBoardRepo)
+import App.Infrastructure.Repository.Board.BoardSQLServer (runBoardRepo, runPublicBoardQuery)
 import App.Infrastructure.Repository.BudgetTracker.RecordSQLite (runRecordRepo)
 import App.Infrastructure.Repository.Chat.ChatSTM (MessageStore, RoomState, newMessageStore, newRoomState)
 import App.Infrastructure.Repository.HabitTracker.HabitSQLServer (runHabitRepo)
@@ -22,6 +22,7 @@ import App.Middleware.TokenAuth (mkTokenAuthHandler)
 import App.Presentation.Auth.Handler (loginHandler, logoutHandler)
 import App.Presentation.Board.Handler
   ( BoardRunner,
+    PublicBoardRunner,
     deleteBoardHandler,
     getBoardHandler,
     getBoardsHandler,
@@ -87,8 +88,8 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
       boardRunner :: AuthPrincipal -> BoardRunner
       boardRunner principal eff = runEff (runBoardRepo sqlserverPool (principalUserId principal) eff)
 
-      publicBoardRunner :: BoardRunner
-      publicBoardRunner eff = runEff (runPublicBoardRepo sqlserverPool eff)
+      publicBoardRunner :: PublicBoardRunner
+      publicBoardRunner eff = runEff (runPublicBoardQuery sqlserverPool eff)
 
       taskHandlers =
         getTaskHandler mkTaskRunner

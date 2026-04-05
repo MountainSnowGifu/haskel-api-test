@@ -7,11 +7,12 @@
 
 module App.Infrastructure.Repository.Board.BoardSQLServer
   ( runBoardRepo,
-    runPublicBoardRepo,
+    runPublicBoardQuery,
   )
 where
 
 import App.Application.Board.Command (CreateBoardCommand (..), SaveAttachmentCommand (..), UpdateBoardCommand (..))
+import App.Application.Board.PublicRepository (PublicBoardQuery (..))
 import App.Application.Board.Repository (BoardRepo (..))
 import App.Domain.Auth.Entity (UserId (..))
 import App.Domain.Board.Entity (Board (..), BoardAttachment (..))
@@ -55,19 +56,19 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
                     conn
                     ( RpcQuery
                         SP_ExecuteSql
-                        ( nvarcharVal "" (Just "INSERT INTO testdb.dbo.BOARDS (title, body_markdown, author_id, created_at, updated_at) OUTPUT INSERTED.id, INSERTED.title, INSERTED.body_markdown VALUES (@Title, @BodyMarkdown, @AuthorId, GETDATE(), GETDATE())"),
+                        ( nvarcharVal "" (Just "INSERT INTO testdb.dbo.BOARDS (title, body_markdown, author_id, created_at, updated_at) OUTPUT INSERTED.id, INSERTED.title, INSERTED.body_markdown, INSERTED.author_id VALUES (@Title, @BodyMarkdown, @AuthorId, GETDATE(), GETDATE())"),
                           nvarcharVal "" (Just "@Title nvarchar(max), @BodyMarkdown nvarchar(max), @AuthorId int"),
                           nvarcharVal "@Title" (Just title),
                           nvarcharVal "@BodyMarkdown" (Just bodyMarkdown),
                           intVal "@AuthorId" (Just uid)
                         )
                     ) ::
-                    IO (RpcResponse () [(Int, Text, Text)])
+                    IO (RpcResponse () [(Int, Text, Text, Int)])
                 )
         case rows of
           [] -> return Nothing
-          (rowId, t, b) : _ ->
-            return $ Just $ Board rowId t b
+          (rowId, t, b, aid) : _ ->
+            return $ Just $ Board rowId t b aid
   GetAllBoardsOp ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId authUserId
@@ -77,45 +78,14 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
                   conn
                   ( RpcQuery
                       SP_ExecuteSql
-                      ( nvarcharVal "" (Just "SELECT id, title, body_markdown FROM testdb.dbo.BOARDS WHERE author_id = @AuthorId"),
+                      ( nvarcharVal "" (Just "SELECT id, title, body_markdown, author_id FROM testdb.dbo.BOARDS WHERE author_id = @AuthorId"),
                         nvarcharVal "" (Just "@AuthorId int"),
                         intVal "@AuthorId" (Just uid)
                       )
                   ) ::
-                  IO (RpcResponse () [(Int, Text, Text)])
+                  IO (RpcResponse () [(Int, Text, Text, Int)])
               )
-      return $ map (\(rowId, t, b) -> Board rowId t b) rows
-  GetAllPublicBoardsOp ->
-    liftIO $ withMSSQLConn pool $ \conn -> do
-      rows <-
-        rpcRows
-          =<< ( rpc
-                  conn
-                  ( RpcQuery
-                      SP_ExecuteSql
-                      (nvarcharVal "" (Just "SELECT id, title, body_markdown FROM testdb.dbo.BOARDS"))
-                  ) ::
-                  IO (RpcResponse () [(Int, Text, Text)])
-              )
-      return $ map (\(rowId, t, b) -> Board rowId t b) rows
-  GetPublicBoardOp bId ->
-    liftIO $ withMSSQLConn pool $ \conn -> do
-      rows <-
-        rpcRows
-          =<< ( rpc
-                  conn
-                  ( RpcQuery
-                      SP_ExecuteSql
-                      ( nvarcharVal "" (Just "SELECT id, title, body_markdown FROM testdb.dbo.BOARDS WHERE id = @BoardId"),
-                        nvarcharVal "" (Just "@BoardId int"),
-                        intVal "@BoardId" (Just bId)
-                      )
-                  ) ::
-                  IO (RpcResponse () [(Int, Text, Text)])
-              )
-      case rows of
-        [] -> return Nothing
-        (rowId, t, b) : _ -> return $ Just $ Board rowId t b
+      return $ map (\(rowId, t, b, aid) -> Board rowId t b aid) rows
   DeleteBoardOp bId ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId authUserId
@@ -145,7 +115,7 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
                     conn
                     ( RpcQuery
                         SP_ExecuteSql
-                        ( nvarcharVal "" (Just "UPDATE testdb.dbo.BOARDS SET title = @Title, body_markdown = @BodyMarkdown, updated_at = GETDATE() OUTPUT INSERTED.id, INSERTED.title, INSERTED.body_markdown WHERE id = @BoardId AND author_id = @AuthorId"),
+                        ( nvarcharVal "" (Just "UPDATE testdb.dbo.BOARDS SET title = @Title, body_markdown = @BodyMarkdown, updated_at = GETDATE() OUTPUT INSERTED.id, INSERTED.title, INSERTED.body_markdown, INSERTED.author_id WHERE id = @BoardId AND author_id = @AuthorId"),
                           nvarcharVal "" (Just "@Title nvarchar(max), @BodyMarkdown nvarchar(max), @BoardId int, @AuthorId int"),
                           nvarcharVal "@Title" (Just title),
                           nvarcharVal "@BodyMarkdown" (Just bodyMarkdown),
@@ -153,11 +123,11 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
                           intVal "@AuthorId" (Just uid)
                         )
                     ) ::
-                    IO (RpcResponse () [(Int, Text, Text)])
+                    IO (RpcResponse () [(Int, Text, Text, Int)])
                 )
         case rows of
           [] -> return Nothing
-          (rowId, t, b) : _ -> return $ Just $ Board rowId t b
+          (rowId, t, b, aid) : _ -> return $ Just $ Board rowId t b aid
   SaveAttachmentOp (SaveAttachmentCommand bid aid url) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId authUserId
@@ -198,13 +168,13 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
               )
       return $ map (\(bId, aId, aUrl) -> BoardAttachment bId aId aUrl) rows
 
-runPublicBoardRepo ::
+runPublicBoardQuery ::
   (IOE :> es) =>
   MSSQLPool ->
-  Eff (BoardRepo : es) a ->
+  Eff (PublicBoardQuery : es) a ->
   Eff es a
-runPublicBoardRepo pool = interpret $ \_ -> \case
-  GetAllPublicBoardsOp ->
+runPublicBoardQuery pool = interpret $ \_ -> \case
+  GetAllPublicBoardsQ ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
         rpcRows
@@ -212,14 +182,12 @@ runPublicBoardRepo pool = interpret $ \_ -> \case
                   conn
                   ( RpcQuery
                       SP_ExecuteSql
-                      (nvarcharVal "" (Just "SELECT id, title, body_markdown FROM testdb.dbo.BOARDS"))
+                      (nvarcharVal "" (Just "SELECT id, title, body_markdown, author_id FROM testdb.dbo.BOARDS"))
                   ) ::
-                  IO (RpcResponse () [(Int, Text, Text)])
+                  IO (RpcResponse () [(Int, Text, Text, Int)])
               )
-      return $ map (\(rowId, t, b) -> Board rowId t b) rows
-  CreateBoardOp _ -> return Nothing
-  GetAllBoardsOp -> return []
-  GetPublicBoardOp bId ->
+      return $ map (\(rowId, t, b, aid) -> Board rowId t b aid) rows
+  GetPublicBoardQ bId ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
         rpcRows
@@ -227,17 +195,13 @@ runPublicBoardRepo pool = interpret $ \_ -> \case
                   conn
                   ( RpcQuery
                       SP_ExecuteSql
-                      ( nvarcharVal "" (Just "SELECT id, title, body_markdown FROM testdb.dbo.BOARDS WHERE id = @BoardId"),
+                      ( nvarcharVal "" (Just "SELECT id, title, body_markdown, author_id FROM testdb.dbo.BOARDS WHERE id = @BoardId"),
                         nvarcharVal "" (Just "@BoardId int"),
                         intVal "@BoardId" (Just bId)
                       )
                   ) ::
-                  IO (RpcResponse () [(Int, Text, Text)])
+                  IO (RpcResponse () [(Int, Text, Text, Int)])
               )
       case rows of
         [] -> return Nothing
-        (rowId, t, b) : _ -> return $ Just $ Board rowId t b
-  DeleteBoardOp _ -> return False
-  UpdateBoardOp _ -> return Nothing
-  SaveAttachmentOp _ -> return Nothing
-  GetAttachmentsForBoardOp _ -> return []
+        (rowId, t, b, aid) : _ -> return $ Just $ Board rowId t b aid

@@ -75,6 +75,7 @@ library
     , App.Infrastructure.Repository.Board.BoardSQLServer
     , App.Application.Board.Command
     , App.Application.Board.Repository
+    , App.Application.Board.PublicRepository
     , App.Application.Board.UseCase
     , App.Presentation.Board.Request
     , App.Presentation.Board.Response

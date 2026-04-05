@@ -94,7 +94,7 @@ curl -s -X PUT http://localhost:8081/api/board/1002 \
   }' \
    2>&1 ; echo
 
-
+ curl -s http://localhost:8081/api/board | python3 -m json.tool
 
 https://hoogle.haskell.org/
 

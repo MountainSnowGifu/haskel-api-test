@@ -16,6 +16,8 @@ module App.Application.Board.UseCase
 where
 
 import App.Application.Board.Command (CreateBoardCommand (..), DeleteBoardCommand (..), SaveAttachmentCommand (..), UpdateBoardCommand (..))
+import App.Application.Board.PublicRepository (PublicBoardQuery)
+import App.Application.Board.PublicRepository qualified as PublicBoardQuery
 import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.Repository qualified as BoardRepo
 import App.Domain.Board.BoardService (createBoardWithAttachments)
@@ -51,12 +53,12 @@ fetchAllBoards ::
 fetchAllBoards = BoardRepo.getAllBoards
 
 fetchAllBoardsPublic ::
-  (BoardRepo :> es) =>
+  (PublicBoardQuery :> es) =>
   Eff es [Board]
-fetchAllBoardsPublic = BoardRepo.getAllPublicBoards
+fetchAllBoardsPublic = PublicBoardQuery.getAllPublicBoards
 
-fetchBoardPublic :: (BoardRepo :> es) => Int -> Eff es (Maybe Board)
-fetchBoardPublic = BoardRepo.getPublicBoard
+fetchBoardPublic :: (PublicBoardQuery :> es) => Int -> Eff es (Maybe Board)
+fetchBoardPublic = PublicBoardQuery.getPublicBoard
 
 deleteBoard :: (BoardRepo :> es) => DeleteBoardCommand -> Eff es Bool
 deleteBoard = BoardRepo.deleteBoard

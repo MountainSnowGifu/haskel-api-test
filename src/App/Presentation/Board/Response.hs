@@ -37,7 +37,8 @@ toCreatedBoardResponse Board {boardId = bid} =
 data BoardResponse = BoardResponse
   { boardId :: Int,
     title :: Text,
-    bodyMarkdown :: Text
+    bodyMarkdown :: Text,
+    authorId :: Int
   }
   deriving (Show, Eq, Generic)
 
@@ -46,11 +47,12 @@ instance FromJSON BoardResponse
 instance ToJSON BoardResponse
 
 toBoardResponse :: Board -> BoardResponse
-toBoardResponse Board {boardId = bid, boardTitle = t, boardBodyMarkdown = bmd} =
+toBoardResponse Board {boardId = bid, boardTitle = t, boardBodyMarkdown = bmd, boardAuthorId = aid} =
   BoardResponse
     { boardId = bid,
       title = t,
-      bodyMarkdown = bmd
+      bodyMarkdown = bmd,
+      authorId = aid
     }
 
 data AttachmentResponse = AttachmentResponse

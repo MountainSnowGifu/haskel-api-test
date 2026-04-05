@@ -7,6 +7,7 @@
 module App.Presentation.Board.Handler
   ( postBoardHandler,
     BoardRunner,
+    PublicBoardRunner,
     getBoardsHandler,
     deleteBoardHandler,
     getBoardHandler,
@@ -17,6 +18,7 @@ where
 
 import App.Application.Auth.Principal (AuthPrincipal)
 import App.Application.Board.Command (DeleteBoardCommand (..), SaveAttachmentCommand (..))
+import App.Application.Board.PublicRepository (PublicBoardQuery)
 import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.UseCase (createBoard, deleteBoard, fetchAllBoardsPublic, fetchBoardPublic, saveAttachment, updateBoard)
 import App.Domain.Board.Entity (BoardWithAttachments (..))
@@ -42,6 +44,7 @@ import System.Directory (copyFile, getFileSize)
 import System.FilePath (takeExtension)
 
 type BoardRunner = forall a. Eff '[BoardRepo, IOE] a -> IO a
+type PublicBoardRunner = forall a. Eff '[PublicBoardQuery, IOE] a -> IO a
 
 postBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> PostBoardRequest -> Handler CreatedBoardResponse
 postBoardHandler mkRun user req = do
@@ -51,7 +54,7 @@ postBoardHandler mkRun user req = do
     Right Nothing -> throwError err400 {errBody = "Failed to create board."}
     Right (Just bwa) -> return (toCreatedBoardResponse (board bwa))
 
-getBoardsHandler :: BoardRunner -> Handler [BoardResponse]
+getBoardsHandler :: PublicBoardRunner -> Handler [BoardResponse]
 getBoardsHandler runPublic = do
   boards <- liftIO $ runPublic fetchAllBoardsPublic
   return (map toBoardResponse boards)
@@ -61,7 +64,7 @@ deleteBoardHandler mkRun user hid = do
   deleted <- liftIO $ mkRun user (deleteBoard (DeleteBoardCommand hid))
   if deleted then return NoContent else throwError err404
 
-getBoardHandler :: BoardRunner -> Int -> Handler BoardResponse
+getBoardHandler :: PublicBoardRunner -> Int -> Handler BoardResponse
 getBoardHandler runPublic bid = do
   result <- liftIO $ runPublic (fetchBoardPublic bid)
   case result of
