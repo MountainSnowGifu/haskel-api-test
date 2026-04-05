@@ -8,17 +8,18 @@ module App.Application.Board.UseCase
     fetchAllBoards,
     fetchAllBoardsPublic,
     deleteBoard,
-    fetchBoard,
     fetchBoardPublic,
     updateBoard,
     saveAttachment,
+    fetchAttachmentsForBoard,
   )
 where
 
 import App.Application.Board.Command (CreateBoardCommand (..), DeleteBoardCommand (..), SaveAttachmentCommand (..), UpdateBoardCommand (..))
 import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.Repository qualified as BoardRepo
-import App.Domain.Board.Entity (Board, BoardAttachment)
+import App.Domain.Board.BoardService (createBoardWithAttachments)
+import App.Domain.Board.Entity (Board (..), BoardAttachment, BoardWithAttachments (..))
 import Data.Text qualified as T
 import Effectful (Eff, (:>))
 
@@ -27,12 +28,16 @@ data BoardValidationError = TitleEmpty | BodyMarkdownEmpty
 createBoard ::
   (BoardRepo :> es) =>
   CreateBoardCommand ->
-  Eff es (Either BoardValidationError (Maybe Board))
+  Eff es (Either BoardValidationError (Maybe BoardWithAttachments))
 createBoard cmd = case validateCreate cmd of
   Left e -> return (Left e)
   Right cmd' -> do
     mBoard <- BoardRepo.createBoard cmd'
-    return $ Right mBoard
+    case mBoard of
+      Nothing -> return $ Right Nothing
+      Just b -> do
+        atts <- BoardRepo.fetchAttachmentsForBoard (boardId b)
+        return $ Right $ Just $ createBoardWithAttachments b atts
 
 validateCreate :: CreateBoardCommand -> Either BoardValidationError CreateBoardCommand
 validateCreate cmd@(CreateBoardCommand {cmdBoardTitle = title, cmdBoardBodyMarkdown = body})
@@ -50,9 +55,6 @@ fetchAllBoardsPublic ::
   Eff es [Board]
 fetchAllBoardsPublic = BoardRepo.getAllPublicBoards
 
-fetchBoard :: (BoardRepo :> es) => Int -> Eff es (Maybe Board)
-fetchBoard = BoardRepo.getBoard
-
 fetchBoardPublic :: (BoardRepo :> es) => Int -> Eff es (Maybe Board)
 fetchBoardPublic = BoardRepo.getPublicBoard
 
@@ -64,3 +66,6 @@ updateBoard = BoardRepo.updateBoard
 
 saveAttachment :: (BoardRepo :> es) => SaveAttachmentCommand -> Eff es (Maybe BoardAttachment)
 saveAttachment = BoardRepo.saveAttachment
+
+fetchAttachmentsForBoard :: (BoardRepo :> es) => Int -> Eff es [BoardAttachment]
+fetchAttachmentsForBoard = BoardRepo.fetchAttachmentsForBoard

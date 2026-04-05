@@ -18,6 +18,7 @@ import App.Application.Auth.Principal (AuthPrincipal)
 import App.Application.Board.Command (DeleteBoardCommand (..), SaveAttachmentCommand (..))
 import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.UseCase (createBoard, deleteBoard, fetchAllBoardsPublic, fetchBoardPublic, saveAttachment, updateBoard)
+import App.Domain.Board.Entity (BoardWithAttachments (..))
 import App.Presentation.Board.Request (PostBoardRequest, PutBoardRequest, toCreateBoardCommand, toUpdateBoardCommand)
 import App.Presentation.Board.Response
   ( AttachmentResponse (..),
@@ -45,7 +46,7 @@ postBoardHandler mkRun user req = do
   case result of
     Left _ -> throwError err400 {errBody = "Failed to create board."}
     Right Nothing -> throwError err400 {errBody = "Failed to create board."}
-    Right (Just board) -> return (toCreatedBoardResponse board)
+    Right (Just bwa) -> return (toCreatedBoardResponse (board bwa))
 
 getBoardsHandler :: BoardRunner -> Handler [BoardResponse]
 getBoardsHandler runPublic = do
@@ -62,14 +63,14 @@ getBoardHandler runPublic bid = do
   result <- liftIO $ runPublic (fetchBoardPublic bid)
   case result of
     Nothing -> throwError err404
-    Just board -> return (toBoardResponse board)
+    Just b -> return (toBoardResponse b)
 
 updateBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> PutBoardRequest -> Handler BoardResponse
 updateBoardHandler mkRun user bid req = do
   result <- liftIO $ mkRun user (updateBoard (toUpdateBoardCommand bid req))
   case result of
     Nothing -> throwError err404
-    Just board -> return (toBoardResponse board)
+    Just b -> return (toBoardResponse b)
 
 uploadAttachmentHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> MultipartData Tmp -> Handler AttachmentResponse
 uploadAttachmentHandler mkRun user bid multipart = case files multipart of

@@ -9,11 +9,11 @@ module App.Application.Board.Repository
     BoardRepo (..),
     getAllBoards,
     getAllPublicBoards,
-    getBoard,
     getPublicBoard,
     deleteBoard,
     updateBoard,
     saveAttachment,
+    fetchAttachmentsForBoard,
   )
 where
 
@@ -26,19 +26,16 @@ data BoardRepo :: Effect where
   CreateBoardOp :: CreateBoardCommand -> BoardRepo m (Maybe Board)
   GetAllBoardsOp :: BoardRepo m [Board]
   GetAllPublicBoardsOp :: BoardRepo m [Board]
-  GetBoardOp :: Int -> BoardRepo m (Maybe Board)
   GetPublicBoardOp :: Int -> BoardRepo m (Maybe Board)
   DeleteBoardOp :: Int -> BoardRepo m Bool
   UpdateBoardOp :: UpdateBoardCommand -> BoardRepo m (Maybe Board)
   SaveAttachmentOp :: SaveAttachmentCommand -> BoardRepo m (Maybe BoardAttachment)
+  GetAttachmentsForBoardOp :: Int -> BoardRepo m [BoardAttachment]
 
 type instance DispatchOf BoardRepo = Dynamic
 
 createBoard :: (BoardRepo :> es) => CreateBoardCommand -> Eff es (Maybe Board)
 createBoard op = send (CreateBoardOp op)
-
-getBoard :: (BoardRepo :> es) => Int -> Eff es (Maybe Board)
-getBoard boardId = send (GetBoardOp boardId)
 
 getPublicBoard :: (BoardRepo :> es) => Int -> Eff es (Maybe Board)
 getPublicBoard boardId = send (GetPublicBoardOp boardId)
@@ -57,3 +54,6 @@ updateBoard cmd = send (UpdateBoardOp cmd)
 
 saveAttachment :: (BoardRepo :> es) => SaveAttachmentCommand -> Eff es (Maybe BoardAttachment)
 saveAttachment cmd = send (SaveAttachmentOp cmd)
+
+fetchAttachmentsForBoard :: (BoardRepo :> es) => Int -> Eff es [BoardAttachment]
+fetchAttachmentsForBoard boardId = send (GetAttachmentsForBoardOp boardId)

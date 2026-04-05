@@ -87,26 +87,6 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
       return $ map (\(rowId, t, b) -> Board rowId t b) rows
   GetAllPublicBoardsOp ->
     error "runBoardRepo: GetAllPublicBoardsOp is not supported."
-  GetBoardOp bId ->
-    liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId authUserId
-      rows <-
-        rpcRows
-          =<< ( rpc
-                  conn
-                  ( RpcQuery
-                      SP_ExecuteSql
-                      ( nvarcharVal "" (Just "SELECT id, title, body_markdown FROM testdb.dbo.BOARDS WHERE id = @BoardId AND author_id = @AuthorId"),
-                        nvarcharVal "" (Just "@BoardId int, @AuthorId int"),
-                        intVal "@BoardId" (Just bId),
-                        intVal "@AuthorId" (Just uid)
-                      )
-                  ) ::
-                  IO (RpcResponse () [(Int, Text, Text)])
-              )
-      case rows of
-        [] -> return Nothing
-        (rowId, t, b) : _ -> return $ Just $ Board rowId t b
   GetPublicBoardOp _ ->
     error "runBoardRepo: GetPublicBoardOp is not supported."
   DeleteBoardOp bId ->
@@ -174,6 +154,22 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
         case rows of
           [] -> return Nothing
           _ -> return $ Just $ BoardAttachment bid aid url
+  GetAttachmentsForBoardOp bid ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      rows <-
+        rpcRows
+          =<< ( rpc
+                  conn
+                  ( RpcQuery
+                      SP_ExecuteSql
+                      ( nvarcharVal "" (Just "SELECT board_id, attachment_id, attachment_url FROM testdb.dbo.BOARD_ATTACHMENTS WHERE board_id = @BoardId"),
+                        nvarcharVal "" (Just "@BoardId int"),
+                        intVal "@BoardId" (Just bid)
+                      )
+                  ) ::
+                  IO (RpcResponse () [(Int, Text, Text)])
+              )
+      return $ map (\(bId, aId, aUrl) -> BoardAttachment bId aId aUrl) rows
 
 runPublicBoardRepo ::
   (IOE :> es) =>
@@ -198,8 +194,6 @@ runPublicBoardRepo pool = interpret $ \_ -> \case
     error "runPublicBoardRepo: CreateBoardOp is not supported."
   GetAllBoardsOp ->
     error "runPublicBoardRepo: GetAllBoardsOp is not supported."
-  GetBoardOp _ ->
-    error "runPublicBoardRepo: GetBoardOp is not supported."
   GetPublicBoardOp bId ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
@@ -224,3 +218,5 @@ runPublicBoardRepo pool = interpret $ \_ -> \case
     error "runPublicBoardRepo: UpdateBoardOp is not supported."
   SaveAttachmentOp _ ->
     error "runPublicBoardRepo: SaveAttachmentOp is not supported."
+  GetAttachmentsForBoardOp _ ->
+    error "runPublicBoardRepo: GetAttachmentsForBoardOp is not supported."
