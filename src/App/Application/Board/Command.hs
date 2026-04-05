@@ -14,7 +14,8 @@ import GHC.Generics (Generic)
 
 data CreateBoardCommand = CreateBoardCommand
   { cmdBoardTitle :: Text,
-    cmdBoardBodyMarkdown :: Text
+    cmdBoardBodyMarkdown :: Text,
+    cmdBoardCategory :: Text
   }
   deriving (Show, Eq, Generic)
 
@@ -24,7 +25,8 @@ newtype DeleteBoardCommand = DeleteBoardCommand {cmdDeleteBoardId :: Int}
 data UpdateBoardCommand = UpdateBoardCommand
   { cmdBoardId :: Int,
     cmdBoardTitle :: Text,
-    cmdBoardBodyMarkdown :: Text
+    cmdBoardBodyMarkdown :: Text,
+    cmdBoardCategory :: Text
   }
   deriving (Show, Eq, Generic)
 

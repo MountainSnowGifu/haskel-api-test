@@ -16,7 +16,8 @@ import GHC.Generics (Generic)
 
 data PostBoardRequest = PostBoardRequest
   { boardTitle :: Text,
-    boardBodyMarkdown :: Text
+    boardBodyMarkdown :: Text,
+    boardCategory :: Text
   }
   deriving (Show, Eq, Generic)
 
@@ -28,12 +29,14 @@ toCreateBoardCommand :: PostBoardRequest -> CreateBoardCommand
 toCreateBoardCommand PostBoardRequest {..} =
   CreateBoardCommand
     { cmdBoardTitle = boardTitle,
-      cmdBoardBodyMarkdown = boardBodyMarkdown
+      cmdBoardBodyMarkdown = boardBodyMarkdown,
+      cmdBoardCategory = boardCategory
     }
 
 data PutBoardRequest = PutBoardRequest
   { putBoardTitle :: Text,
-    putBoardBodyMarkdown :: Text
+    putBoardBodyMarkdown :: Text,
+    putBoardCategory :: Text
   }
   deriving (Show, Eq, Generic)
 
@@ -46,5 +49,6 @@ toUpdateBoardCommand boardId PutBoardRequest {..} =
   UpdateBoardCommand
     { cmdBoardId = boardId,
       cmdBoardTitle = putBoardTitle,
-      cmdBoardBodyMarkdown = putBoardBodyMarkdown
+      cmdBoardBodyMarkdown = putBoardBodyMarkdown,
+      cmdBoardCategory = putBoardCategory
     }

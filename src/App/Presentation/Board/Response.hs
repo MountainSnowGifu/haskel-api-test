@@ -14,12 +14,14 @@ where
 
 import App.Domain.Board.Entity (Board (..), BoardAttachment (..), BoardWithAttachments (..))
 import Data.Aeson (FromJSON, ToJSON)
-import Data.Text (Text)
+import Data.Text (Text, pack)
+import Data.Time (defaultTimeLocale, formatTime)
 import GHC.Generics (Generic)
 
 data CreatedBoardResponse = CreatedBoardResponse
   { boardId :: Int,
-    createdBoardMessage :: Text
+    createdBoardMessage :: Text,
+    boardCategory :: Text
   }
   deriving (Show, Eq, Generic)
 
@@ -28,10 +30,11 @@ instance FromJSON CreatedBoardResponse
 instance ToJSON CreatedBoardResponse
 
 toCreatedBoardResponse :: Board -> CreatedBoardResponse
-toCreatedBoardResponse Board {boardId = bid} =
+toCreatedBoardResponse Board {boardId = bid, boardCategory = category} =
   CreatedBoardResponse
     { boardId = bid,
-      createdBoardMessage = "Board created successfully."
+      createdBoardMessage = "Board created successfully.",
+      boardCategory = category
     }
 
 data BoardResponse = BoardResponse
@@ -39,6 +42,9 @@ data BoardResponse = BoardResponse
     title :: Text,
     bodyMarkdown :: Text,
     authorId :: Int,
+    boardCategory :: Text,
+    createdAt :: Text,
+    updatedAt :: Text,
     attachments :: [AttachmentResponse]
   }
   deriving (Show, Eq, Generic)
@@ -48,12 +54,15 @@ instance FromJSON BoardResponse
 instance ToJSON BoardResponse
 
 toBoardResponse :: BoardWithAttachments -> BoardResponse
-toBoardResponse BoardWithAttachments {board = Board {boardId = bid, boardTitle = t, boardBodyMarkdown = bm, boardAuthorId = aid}, attachments = atts} =
+toBoardResponse BoardWithAttachments {board = Board {boardId = bid, boardTitle = t, boardBodyMarkdown = bm, boardAuthorId = aid, boardCategory = category, boardCreatedAt = cat, boardUpdatedAt = uat}, attachments = atts} =
   BoardResponse
     { boardId = bid,
       title = t,
       bodyMarkdown = bm,
       authorId = aid,
+      boardCategory = category,
+      createdAt = pack (formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" cat),
+      updatedAt = pack (formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" uat),
       attachments = map toAttachmentResponse atts
     }
 

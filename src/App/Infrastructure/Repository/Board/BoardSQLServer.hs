@@ -19,6 +19,7 @@ import App.Domain.Board.Entity (Board (..), BoardAttachment (..))
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
 import Data.Text (Text)
+import Data.Time (UTCTime)
 import Database.MSSQLServer.Query (RpcQuery (..), RpcResponse (..), StoredProcedure (..), intVal, nvarcharVal, rpc, withTransaction)
 import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
@@ -46,7 +47,7 @@ runBoardRepo ::
   Eff (BoardRepo : es) a ->
   Eff es a
 runBoardRepo pool authUserId = interpret $ \_ -> \case
-  CreateBoardOp (CreateBoardCommand title bodyMarkdown) ->
+  CreateBoardOp (CreateBoardCommand title bodyMarkdown category) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId authUserId
       withTransaction conn $ do
@@ -56,19 +57,20 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
                     conn
                     ( RpcQuery
                         SP_ExecuteSql
-                        ( nvarcharVal "" (Just "INSERT INTO testdb.dbo.BOARDS (title, body_markdown, author_id, created_at, updated_at) OUTPUT INSERTED.id, INSERTED.title, INSERTED.body_markdown, INSERTED.author_id VALUES (@Title, @BodyMarkdown, @AuthorId, GETDATE(), GETDATE())"),
-                          nvarcharVal "" (Just "@Title nvarchar(max), @BodyMarkdown nvarchar(max), @AuthorId int"),
+                        ( nvarcharVal "" (Just "INSERT INTO testdb.dbo.BOARDS (title, body_markdown, category, author_id, created_at, updated_at) OUTPUT INSERTED.id, INSERTED.title, INSERTED.body_markdown, INSERTED.category, INSERTED.author_id, INSERTED.created_at, INSERTED.updated_at VALUES (@Title, @BodyMarkdown, @Category, @AuthorId, GETDATE(), GETDATE())"),
+                          nvarcharVal "" (Just "@Title nvarchar(max), @BodyMarkdown nvarchar(max), @Category nvarchar(max), @AuthorId int"),
                           nvarcharVal "@Title" (Just title),
                           nvarcharVal "@BodyMarkdown" (Just bodyMarkdown),
+                          nvarcharVal "@Category" (Just category),
                           intVal "@AuthorId" (Just uid)
                         )
                     ) ::
-                    IO (RpcResponse () [(Int, Text, Text, Int)])
+                    IO (RpcResponse () [(Int, Text, Text, Text, Int, UTCTime, UTCTime)])
                 )
         case rows of
           [] -> return Nothing
-          (rowId, t, b, aid) : _ ->
-            return $ Just $ Board rowId t b aid
+          (rowId, t, b, c, aid, ca, ua) : _ ->
+            return $ Just $ Board rowId t b aid c ca ua
   DeleteBoardOp bId ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId authUserId
@@ -88,7 +90,7 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
                     IO (RpcResponse () [(Int, Text)])
                 )
         return (not (null rows))
-  UpdateBoardOp (UpdateBoardCommand bId title bodyMarkdown) ->
+  UpdateBoardOp (UpdateBoardCommand bId title bodyMarkdown category) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId authUserId
       withTransaction conn $ do
@@ -98,19 +100,21 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
                     conn
                     ( RpcQuery
                         SP_ExecuteSql
-                        ( nvarcharVal "" (Just "UPDATE testdb.dbo.BOARDS SET title = @Title, body_markdown = @BodyMarkdown, updated_at = GETDATE() OUTPUT INSERTED.id, INSERTED.title, INSERTED.body_markdown, INSERTED.author_id WHERE id = @BoardId AND author_id = @AuthorId"),
-                          nvarcharVal "" (Just "@Title nvarchar(max), @BodyMarkdown nvarchar(max), @BoardId int, @AuthorId int"),
+                        ( nvarcharVal "" (Just "UPDATE testdb.dbo.BOARDS SET title = @Title, body_markdown = @BodyMarkdown, category = @Category, updated_at = GETDATE() OUTPUT INSERTED.id, INSERTED.title, INSERTED.body_markdown, INSERTED.category, INSERTED.author_id, INSERTED.created_at, INSERTED.updated_at WHERE id = @BoardId AND author_id = @AuthorId"),
+                          nvarcharVal "" (Just "@Title nvarchar(max), @BodyMarkdown nvarchar(max), @Category nvarchar(max), @BoardId int, @AuthorId int"),
                           nvarcharVal "@Title" (Just title),
                           nvarcharVal "@BodyMarkdown" (Just bodyMarkdown),
+                          nvarcharVal "@Category" (Just category),
                           intVal "@BoardId" (Just bId),
                           intVal "@AuthorId" (Just uid)
                         )
                     ) ::
-                    IO (RpcResponse () [(Int, Text, Text, Int)])
+                    IO (RpcResponse () [(Int, Text, Text, Text, Int, UTCTime, UTCTime)])
                 )
         case rows of
           [] -> return Nothing
-          (rowId, t, b, aid) : _ -> return $ Just $ Board rowId t b aid
+          (rowId, t, b, c, aid, ca, ua) : _ ->
+            return $ Just $ Board rowId t b aid c ca ua
   SaveAttachmentOp (SaveAttachmentCommand bid aid url) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId authUserId
@@ -149,11 +153,11 @@ runPublicBoardQuery pool = interpret $ \_ -> \case
                   conn
                   ( RpcQuery
                       SP_ExecuteSql
-                      (nvarcharVal "" (Just "SELECT id, title, body_markdown, author_id FROM testdb.dbo.BOARDS"))
+                      (nvarcharVal "" (Just "SELECT id, title, body_markdown, category, author_id, created_at, updated_at FROM testdb.dbo.BOARDS"))
                   ) ::
-                  IO (RpcResponse () [(Int, Text, Text, Int)])
+                  IO (RpcResponse () [(Int, Text, Text, Text, Int, UTCTime, UTCTime)])
               )
-      return $ Just $ map (\(rowId, t, b, aid) -> Board rowId t b aid) rows
+      return $ Just $ map (\(rowId, t, b, c, aid, ca, ua) -> Board rowId t b aid c ca ua) rows
   GetPublicBoardQ bId ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
@@ -162,16 +166,16 @@ runPublicBoardQuery pool = interpret $ \_ -> \case
                   conn
                   ( RpcQuery
                       SP_ExecuteSql
-                      ( nvarcharVal "" (Just "SELECT id, title, body_markdown, author_id FROM testdb.dbo.BOARDS WHERE id = @BoardId"),
+                      ( nvarcharVal "" (Just "SELECT id, title, body_markdown, category, author_id, created_at, updated_at FROM testdb.dbo.BOARDS WHERE id = @BoardId"),
                         nvarcharVal "" (Just "@BoardId int"),
                         intVal "@BoardId" (Just bId)
                       )
                   ) ::
-                  IO (RpcResponse () [(Int, Text, Text, Int)])
+                  IO (RpcResponse () [(Int, Text, Text, Text, Int, UTCTime, UTCTime)])
               )
       case rows of
         [] -> return Nothing
-        (rowId, t, b, aid) : _ -> return $ Just $ Board rowId t b aid
+        (rowId, t, b, c, aid, ca, ua) : _ -> return $ Just $ Board rowId t b aid c ca ua
   GetAttachmentsForBoardOp bid ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
