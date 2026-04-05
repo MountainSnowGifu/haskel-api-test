@@ -11,7 +11,7 @@ module App.Infrastructure.Repository.Board.BoardSQLServer
   )
 where
 
-import App.Application.Board.Command (CreateBoardCommand (..), UpdateBoardCommand (..))
+import App.Application.Board.Command (CreateBoardCommand (..), SaveAttachmentCommand (..), UpdateBoardCommand (..))
 import App.Application.Board.Repository (BoardRepo (..))
 import App.Domain.Auth.Entity (UserId (..))
 import App.Domain.Board.Entity (Board (..))
@@ -133,6 +133,24 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
         case rows of
           [] -> return Nothing
           (rowId, t, b) : _ -> return $ Just $ Board rowId t b
+  SaveAttachmentOp (SaveAttachmentCommand aid url) ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      let uid = unUserId authUserId
+      withTransaction conn $ do
+        _ <-
+          rpc
+            conn
+            ( RpcQuery
+                SP_ExecuteSql
+                ( nvarcharVal "" (Just "INSERT INTO testdb.dbo.BOARD_ATTACHMENTS (attachment_id, attachment_url, author_id, created_at) OUTPUT INSERTED.attachment_id, INSERTED.author_id VALUES (@AttachmentId, @AttachmentUrl, @AuthorId, GETDATE())"),
+                  nvarcharVal "" (Just "@AttachmentId nvarchar(36), @AttachmentUrl nvarchar(max), @AuthorId int"),
+                  nvarcharVal "@AttachmentId" (Just aid),
+                  nvarcharVal "@AttachmentUrl" (Just url),
+                  intVal "@AuthorId" (Just uid)
+                )
+            ) ::
+            IO (RpcResponse () [(Text, Int)])
+        return ()
 
 runPublicBoardRepo ::
   (IOE :> es) =>
@@ -177,3 +195,5 @@ runPublicBoardRepo pool = interpret $ \_ -> \case
     error "runPublicBoardRepo: DeleteBoardOp is not supported."
   UpdateBoardOp _ ->
     error "runPublicBoardRepo: UpdateBoardOp is not supported."
+  SaveAttachmentOp _ ->
+    error "runPublicBoardRepo: SaveAttachmentOp is not supported."

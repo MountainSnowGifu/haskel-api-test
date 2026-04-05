@@ -11,10 +11,11 @@ module App.Application.Board.UseCase
     fetchBoard,
     fetchBoardPublic,
     updateBoard,
+    saveAttachment,
   )
 where
 
-import App.Application.Board.Command (CreateBoardCommand (..), DeleteBoardCommand (..), UpdateBoardCommand (..))
+import App.Application.Board.Command (CreateBoardCommand (..), DeleteBoardCommand (..), SaveAttachmentCommand (..), UpdateBoardCommand (..))
 import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.Repository qualified as BoardRepo
 import App.Domain.Board.Entity (Board)
@@ -60,3 +61,6 @@ deleteBoard = BoardRepo.deleteBoard
 
 updateBoard :: (BoardRepo :> es) => UpdateBoardCommand -> Eff es (Maybe Board)
 updateBoard = BoardRepo.updateBoard
+
+saveAttachment :: (BoardRepo :> es) => SaveAttachmentCommand -> Eff es ()
+saveAttachment = BoardRepo.saveAttachment

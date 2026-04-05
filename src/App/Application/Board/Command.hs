@@ -5,6 +5,7 @@ module App.Application.Board.Command
   ( CreateBoardCommand (..),
     DeleteBoardCommand (..),
     UpdateBoardCommand (..),
+    SaveAttachmentCommand (..),
   )
 where
 
@@ -24,5 +25,11 @@ data UpdateBoardCommand = UpdateBoardCommand
   { cmdBoardId :: Int,
     cmdBoardTitle :: Text,
     cmdBoardBodyMarkdown :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+data SaveAttachmentCommand = SaveAttachmentCommand
+  { cmdAttachmentId :: Text,
+    cmdAttachmentUrl :: Text
   }
   deriving (Show, Eq, Generic)

@@ -119,7 +119,7 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
           :<|> deleteBoardHandler boardRunner
           :<|> getBoardHandler publicBoardRunner
           :<|> updateBoardHandler boardRunner
-          :<|> uploadAttachmentHandler
+          :<|> uploadAttachmentHandler boardRunner
           :<|> serveDirectoryWebApp "static/board/uploads"
       authHandlers =
         loginHandler sqlserverPool redisConn
