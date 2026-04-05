@@ -86,9 +86,36 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
               )
       return $ map (\(rowId, t, b) -> Board rowId t b) rows
   GetAllPublicBoardsOp ->
-    error "runBoardRepo: GetAllPublicBoardsOp is not supported."
-  GetPublicBoardOp _ ->
-    error "runBoardRepo: GetPublicBoardOp is not supported."
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      rows <-
+        rpcRows
+          =<< ( rpc
+                  conn
+                  ( RpcQuery
+                      SP_ExecuteSql
+                      (nvarcharVal "" (Just "SELECT id, title, body_markdown FROM testdb.dbo.BOARDS"))
+                  ) ::
+                  IO (RpcResponse () [(Int, Text, Text)])
+              )
+      return $ map (\(rowId, t, b) -> Board rowId t b) rows
+  GetPublicBoardOp bId ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      rows <-
+        rpcRows
+          =<< ( rpc
+                  conn
+                  ( RpcQuery
+                      SP_ExecuteSql
+                      ( nvarcharVal "" (Just "SELECT id, title, body_markdown FROM testdb.dbo.BOARDS WHERE id = @BoardId"),
+                        nvarcharVal "" (Just "@BoardId int"),
+                        intVal "@BoardId" (Just bId)
+                      )
+                  ) ::
+                  IO (RpcResponse () [(Int, Text, Text)])
+              )
+      case rows of
+        [] -> return Nothing
+        (rowId, t, b) : _ -> return $ Just $ Board rowId t b
   DeleteBoardOp bId ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId authUserId
@@ -190,10 +217,8 @@ runPublicBoardRepo pool = interpret $ \_ -> \case
                   IO (RpcResponse () [(Int, Text, Text)])
               )
       return $ map (\(rowId, t, b) -> Board rowId t b) rows
-  CreateBoardOp _ ->
-    error "runPublicBoardRepo: CreateBoardOp is not supported."
-  GetAllBoardsOp ->
-    error "runPublicBoardRepo: GetAllBoardsOp is not supported."
+  CreateBoardOp _ -> return Nothing
+  GetAllBoardsOp -> return []
   GetPublicBoardOp bId ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
@@ -212,11 +237,7 @@ runPublicBoardRepo pool = interpret $ \_ -> \case
       case rows of
         [] -> return Nothing
         (rowId, t, b) : _ -> return $ Just $ Board rowId t b
-  DeleteBoardOp _ ->
-    error "runPublicBoardRepo: DeleteBoardOp is not supported."
-  UpdateBoardOp _ ->
-    error "runPublicBoardRepo: UpdateBoardOp is not supported."
-  SaveAttachmentOp _ ->
-    error "runPublicBoardRepo: SaveAttachmentOp is not supported."
-  GetAttachmentsForBoardOp _ ->
-    error "runPublicBoardRepo: GetAttachmentsForBoardOp is not supported."
+  DeleteBoardOp _ -> return False
+  UpdateBoardOp _ -> return Nothing
+  SaveAttachmentOp _ -> return Nothing
+  GetAttachmentsForBoardOp _ -> return []
