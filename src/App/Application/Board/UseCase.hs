@@ -5,7 +5,6 @@
 
 module App.Application.Board.UseCase
   ( createBoard,
-    fetchAllBoards,
     fetchAllBoardsPublic,
     deleteBoard,
     fetchBoardPublic,
@@ -22,10 +21,35 @@ import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.Repository qualified as BoardRepo
 import App.Domain.Board.BoardService (createBoardWithAttachments)
 import App.Domain.Board.Entity (Board (..), BoardAttachment, BoardWithAttachments (..))
+import Data.Maybe (fromMaybe)
 import Data.Text qualified as T
 import Effectful (Eff, (:>))
 
 data BoardValidationError = TitleEmpty | BodyMarkdownEmpty
+
+fetchAllBoardsPublic ::
+  (PublicBoardQuery :> es) =>
+  Eff es [BoardWithAttachments]
+fetchAllBoardsPublic = do
+  mBoards <- PublicBoardQuery.getAllPublicBoards
+  mapM
+    ( \b -> do
+        mAtts <- PublicBoardQuery.fetchAttachmentsForBoard (boardId b)
+        return $ createBoardWithAttachments b (fromMaybe [] mAtts)
+    )
+    (fromMaybe [] mBoards)
+
+fetchBoardPublic :: (PublicBoardQuery :> es) => Int -> Eff es (Maybe BoardWithAttachments)
+fetchBoardPublic bid = do
+  mBoard <- PublicBoardQuery.getPublicBoard bid
+  case mBoard of
+    Nothing -> return Nothing
+    Just b -> do
+      mAtts <- PublicBoardQuery.fetchAttachmentsForBoard (boardId b)
+      return $ Just $ createBoardWithAttachments b (fromMaybe [] mAtts)
+
+fetchAttachmentsForBoardPublic :: (PublicBoardQuery :> es) => Int -> Eff es (Maybe [BoardAttachment])
+fetchAttachmentsForBoardPublic = PublicBoardQuery.fetchAttachmentsForBoard
 
 createBoard ::
   (BoardRepo :> es, PublicBoardQuery :> es) =>
@@ -38,8 +62,8 @@ createBoard cmd = case validateCreate cmd of
     case mBoard of
       Nothing -> return $ Right Nothing
       Just b -> do
-        atts <- PublicBoardQuery.fetchAttachmentsForBoard (boardId b)
-        return $ Right $ Just $ createBoardWithAttachments b atts
+        mAtts <- PublicBoardQuery.fetchAttachmentsForBoard (boardId b)
+        return $ Right $ Just $ createBoardWithAttachments b (fromMaybe [] mAtts)
 
 validateCreate :: CreateBoardCommand -> Either BoardValidationError CreateBoardCommand
 validateCreate cmd@(CreateBoardCommand {cmdBoardTitle = title, cmdBoardBodyMarkdown = body})
@@ -47,27 +71,17 @@ validateCreate cmd@(CreateBoardCommand {cmdBoardTitle = title, cmdBoardBodyMarkd
   | T.null body = Left BodyMarkdownEmpty
   | otherwise = Right cmd
 
-fetchAllBoards ::
-  (BoardRepo :> es) =>
-  Eff es [Board]
-fetchAllBoards = BoardRepo.getAllBoards
-
-fetchAllBoardsPublic ::
-  (PublicBoardQuery :> es) =>
-  Eff es [Board]
-fetchAllBoardsPublic = PublicBoardQuery.getAllPublicBoards
-
-fetchBoardPublic :: (PublicBoardQuery :> es) => Int -> Eff es (Maybe Board)
-fetchBoardPublic = PublicBoardQuery.getPublicBoard
-
 deleteBoard :: (BoardRepo :> es) => DeleteBoardCommand -> Eff es Bool
 deleteBoard = BoardRepo.deleteBoard
 
-updateBoard :: (BoardRepo :> es) => UpdateBoardCommand -> Eff es (Maybe Board)
-updateBoard = BoardRepo.updateBoard
+updateBoard :: (BoardRepo :> es, PublicBoardQuery :> es) => UpdateBoardCommand -> Eff es (Maybe BoardWithAttachments)
+updateBoard cmd = do
+  mBoard <- BoardRepo.updateBoard cmd
+  case mBoard of
+    Nothing -> return Nothing
+    Just b -> do
+      mAtts <- PublicBoardQuery.fetchAttachmentsForBoard (boardId b)
+      return $ Just $ createBoardWithAttachments b (fromMaybe [] mAtts)
 
 saveAttachment :: (BoardRepo :> es) => SaveAttachmentCommand -> Eff es (Maybe BoardAttachment)
 saveAttachment = BoardRepo.saveAttachment
-
-fetchAttachmentsForBoardPublic :: (PublicBoardQuery :> es) => Int -> Eff es [BoardAttachment]
-fetchAttachmentsForBoardPublic = PublicBoardQuery.fetchAttachmentsForBoard

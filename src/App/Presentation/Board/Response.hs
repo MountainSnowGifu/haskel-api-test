@@ -12,7 +12,7 @@ module App.Presentation.Board.Response
   )
 where
 
-import App.Domain.Board.Entity (Board (..), BoardAttachment (..))
+import App.Domain.Board.Entity (Board (..), BoardAttachment (..), BoardWithAttachments (..))
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
 import GHC.Generics (Generic)
@@ -38,7 +38,8 @@ data BoardResponse = BoardResponse
   { boardId :: Int,
     title :: Text,
     bodyMarkdown :: Text,
-    authorId :: Int
+    authorId :: Int,
+    attachments :: [AttachmentResponse]
   }
   deriving (Show, Eq, Generic)
 
@@ -46,13 +47,14 @@ instance FromJSON BoardResponse
 
 instance ToJSON BoardResponse
 
-toBoardResponse :: Board -> BoardResponse
-toBoardResponse Board {boardId = bid, boardTitle = t, boardBodyMarkdown = bmd, boardAuthorId = aid} =
+toBoardResponse :: BoardWithAttachments -> BoardResponse
+toBoardResponse BoardWithAttachments {board = Board {boardId = bid, boardTitle = t, boardBodyMarkdown = bm, boardAuthorId = aid}, attachments = atts} =
   BoardResponse
     { boardId = bid,
       title = t,
-      bodyMarkdown = bmd,
-      authorId = aid
+      bodyMarkdown = bm,
+      authorId = aid,
+      attachments = map toAttachmentResponse atts
     }
 
 data AttachmentResponse = AttachmentResponse
@@ -61,6 +63,8 @@ data AttachmentResponse = AttachmentResponse
     attachmentUrl :: Text
   }
   deriving (Show, Eq, Generic)
+
+instance FromJSON AttachmentResponse
 
 instance ToJSON AttachmentResponse
 

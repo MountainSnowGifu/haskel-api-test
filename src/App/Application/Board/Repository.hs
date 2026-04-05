@@ -7,7 +7,6 @@
 module App.Application.Board.Repository
   ( createBoard,
     BoardRepo (..),
-    getAllBoards,
     deleteBoard,
     updateBoard,
     saveAttachment,
@@ -21,7 +20,6 @@ import Effectful.Dispatch.Dynamic (send)
 
 data BoardRepo :: Effect where
   CreateBoardOp :: CreateBoardCommand -> BoardRepo m (Maybe Board)
-  GetAllBoardsOp :: BoardRepo m [Board]
   DeleteBoardOp :: Int -> BoardRepo m Bool
   UpdateBoardOp :: UpdateBoardCommand -> BoardRepo m (Maybe Board)
   SaveAttachmentOp :: SaveAttachmentCommand -> BoardRepo m (Maybe BoardAttachment)
@@ -30,9 +28,6 @@ type instance DispatchOf BoardRepo = Dynamic
 
 createBoard :: (BoardRepo :> es) => CreateBoardCommand -> Eff es (Maybe Board)
 createBoard op = send (CreateBoardOp op)
-
-getAllBoards :: (BoardRepo :> es) => Eff es [Board]
-getAllBoards = send GetAllBoardsOp
 
 deleteBoard :: (BoardRepo :> es) => DeleteBoardCommand -> Eff es Bool
 deleteBoard (DeleteBoardCommand bid) = send (DeleteBoardOp bid)

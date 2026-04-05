@@ -47,6 +47,18 @@ type BoardRunner = forall a. Eff '[BoardRepo, PublicBoardQuery, IOE] a -> IO a
 
 type PublicBoardRunner = forall a. Eff '[PublicBoardQuery, IOE] a -> IO a
 
+getBoardHandler :: PublicBoardRunner -> Int -> Handler BoardResponse
+getBoardHandler runPublic bid = do
+  result <- liftIO $ runPublic (fetchBoardPublic bid)
+  case result of
+    Nothing -> throwError err404
+    Just b -> return (toBoardResponse b)
+
+getBoardsHandler :: PublicBoardRunner -> Handler [BoardResponse]
+getBoardsHandler runPublic = do
+  boards <- liftIO $ runPublic fetchAllBoardsPublic
+  return (map toBoardResponse boards)
+
 postBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> PostBoardRequest -> Handler CreatedBoardResponse
 postBoardHandler mkRun user req = do
   result <- liftIO $ mkRun user (createBoard (toCreateBoardCommand req))
@@ -55,22 +67,10 @@ postBoardHandler mkRun user req = do
     Right Nothing -> throwError err400 {errBody = "Failed to create board."}
     Right (Just bwa) -> return (toCreatedBoardResponse (board bwa))
 
-getBoardsHandler :: PublicBoardRunner -> Handler [BoardResponse]
-getBoardsHandler runPublic = do
-  boards <- liftIO $ runPublic fetchAllBoardsPublic
-  return (map toBoardResponse boards)
-
 deleteBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> Handler NoContent
 deleteBoardHandler mkRun user hid = do
   deleted <- liftIO $ mkRun user (deleteBoard (DeleteBoardCommand hid))
   if deleted then return NoContent else throwError err404
-
-getBoardHandler :: PublicBoardRunner -> Int -> Handler BoardResponse
-getBoardHandler runPublic bid = do
-  result <- liftIO $ runPublic (fetchBoardPublic bid)
-  case result of
-    Nothing -> throwError err404
-    Just b -> return (toBoardResponse b)
 
 updateBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> PutBoardRequest -> Handler BoardResponse
 updateBoardHandler mkRun user bid req = do
