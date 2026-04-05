@@ -121,7 +121,7 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
                     conn
                     ( RpcQuery
                         SP_ExecuteSql
-                        ( nvarcharVal "" (Just "INSERT INTO testdb.dbo.BOARD_ATTACHMENTS (board_id, attachment_id, attachment_url, author_id, created_at) OUTPUT INSERTED.attachment_id, INSERTED.attachment_url VALUES (@BoardId, @AttachmentId, @AttachmentUrl, @AuthorId, GETDATE())"),
+                        ( nvarcharVal "" (Just "INSERT INTO testdb.dbo.BOARD_ATTACHMENTS (board_id, attachment_id, attachment_url, author_id, created_at) OUTPUT CAST(INSERTED.attachment_id AS nvarchar(36)), INSERTED.attachment_url VALUES (@BoardId, @AttachmentId, @AttachmentUrl, @AuthorId, GETDATE())"),
                           nvarcharVal "" (Just "@BoardId int, @AttachmentId nvarchar(36), @AttachmentUrl nvarchar(max), @AuthorId int"),
                           intVal "@BoardId" (Just bid),
                           nvarcharVal "@AttachmentId" (Just aid),
@@ -180,7 +180,7 @@ runPublicBoardQuery pool = interpret $ \_ -> \case
                   conn
                   ( RpcQuery
                       SP_ExecuteSql
-                      ( nvarcharVal "" (Just "SELECT board_id, attachment_id, attachment_url FROM testdb.dbo.BOARD_ATTACHMENTS WHERE board_id = @BoardId"),
+                      ( nvarcharVal "" (Just "SELECT board_id, CAST(attachment_id AS nvarchar(36)), attachment_url FROM testdb.dbo.BOARD_ATTACHMENTS WHERE board_id = @BoardId"),
                         nvarcharVal "" (Just "@BoardId int"),
                         intVal "@BoardId" (Just bid)
                       )
