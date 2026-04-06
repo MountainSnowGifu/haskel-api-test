@@ -139,9 +139,17 @@ test-suite spec
 
   other-modules:
       App.Domain.BudgetTracker.EntitySpec
+    , App.Presentation.Task.APISpec
 
   build-depends:
       base
     , hspec
+    , hspec-wai
+    , aeson
     , text
+    , bytestring
+    , http-types
+    , servant-server
+    , wai
+    , effectful-core
     , test
