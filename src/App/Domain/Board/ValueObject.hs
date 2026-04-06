@@ -8,9 +8,11 @@ module App.Domain.Board.ValueObject
     BoardUpdatedAt (..),
     AttachmentId (..),
     AttachmentUrl (..),
+    userIdToAuthorId,
   )
 where
 
+import App.Domain.Auth.Entity (UserId (..))
 import Data.Text (Text)
 import Data.Time (UTCTime)
 
@@ -40,3 +42,9 @@ newtype AttachmentId = AttachmentId Text
 
 newtype AttachmentUrl = AttachmentUrl Text
   deriving (Show, Eq, Ord)
+
+-- | Auth BC の UserId を Board BC の BoardAuthorId へ変換する。
+-- BC 境界をまたぐ参照は ID のみで行うという DDD の原則に従い、
+-- 変換の意図をドメイン層で明示する。
+userIdToAuthorId :: UserId -> BoardAuthorId
+userIdToAuthorId (UserId i) = BoardAuthorId i

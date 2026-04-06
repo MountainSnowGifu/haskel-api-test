@@ -19,7 +19,7 @@ import App.Application.Board.Command
   )
 import App.Application.Board.PublicRepository (PublicBoardQuery (..))
 import App.Application.Board.Repository (BoardRepo (..))
-import App.Domain.Auth.Entity (UserId (..))
+import App.Domain.Auth.Entity (UserId)
 import App.Domain.Board.Entity (Board (..), BoardAttachment (..))
 import App.Domain.Board.ValueObject
   ( AttachmentId (..),
@@ -31,6 +31,7 @@ import App.Domain.Board.ValueObject
     BoardId (..),
     BoardTitle (..),
     BoardUpdatedAt (..),
+    userIdToAuthorId,
   )
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
@@ -73,7 +74,7 @@ runBoardRepo ::
 runBoardRepo pool authUserId = interpret $ \_ -> \case
   CreateBoardOp (CreateBoardCommand title bodyMarkdown category) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId authUserId
+      let BoardAuthorId uid = userIdToAuthorId authUserId
       withTransaction conn $ do
         rows <-
           rpcRows
@@ -97,7 +98,7 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
             return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
   DeleteBoardOp (DeleteBoardCommand {cmdDeleteBoardId = bId}) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId authUserId
+      let BoardAuthorId uid = userIdToAuthorId authUserId
       withTransaction conn $ do
         rows <-
           rpcRows
@@ -116,7 +117,7 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
         return (not (null rows))
   UpdateBoardOp (UpdateBoardCommand bId title bodyMarkdown category) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId authUserId
+      let BoardAuthorId uid = userIdToAuthorId authUserId
       withTransaction conn $ do
         rows <-
           rpcRows
@@ -141,7 +142,7 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
             return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
   SaveAttachmentOp (SaveAttachmentCommand bid aid url) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
-      let uid = unUserId authUserId
+      let BoardAuthorId uid = userIdToAuthorId authUserId
       withTransaction conn $ do
         rows <-
           rpcRows
