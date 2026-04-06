@@ -71,6 +71,7 @@ library
     , App.Presentation.HabitTracker.API
     , App.Presentation.HabitTracker.Handler
     , App.Domain.Board.Entity
+    , App.Domain.Board.ValueObject
     , App.Domain.Board.BoardService
     , App.Infrastructure.Repository.Board.BoardSQLServer
     , App.Application.Board.Command

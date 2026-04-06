@@ -13,14 +13,19 @@ module App.Application.Board.Repository
   )
 where
 
-import App.Application.Board.Command (CreateBoardCommand (..), DeleteBoardCommand (..), SaveAttachmentCommand (..), UpdateBoardCommand (..))
+import App.Application.Board.Command
+  ( CreateBoardCommand (..),
+    DeleteBoardCommand (..),
+    SaveAttachmentCommand (..),
+    UpdateBoardCommand (..),
+  )
 import App.Domain.Board.Entity (Board, BoardAttachment)
 import Effectful
 import Effectful.Dispatch.Dynamic (send)
 
 data BoardRepo :: Effect where
   CreateBoardOp :: CreateBoardCommand -> BoardRepo m (Maybe Board)
-  DeleteBoardOp :: Int -> BoardRepo m Bool
+  DeleteBoardOp :: DeleteBoardCommand -> BoardRepo m Bool
   UpdateBoardOp :: UpdateBoardCommand -> BoardRepo m (Maybe Board)
   SaveAttachmentOp :: SaveAttachmentCommand -> BoardRepo m (Maybe BoardAttachment)
 
@@ -30,7 +35,7 @@ createBoard :: (BoardRepo :> es) => CreateBoardCommand -> Eff es (Maybe Board)
 createBoard op = send (CreateBoardOp op)
 
 deleteBoard :: (BoardRepo :> es) => DeleteBoardCommand -> Eff es Bool
-deleteBoard (DeleteBoardCommand bid) = send (DeleteBoardOp bid)
+deleteBoard cmd = send (DeleteBoardOp cmd)
 
 updateBoard :: (BoardRepo :> es) => UpdateBoardCommand -> Eff es (Maybe Board)
 updateBoard cmd = send (UpdateBoardOp cmd)

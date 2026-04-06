@@ -20,9 +20,22 @@ import App.Application.Auth.Principal (AuthPrincipal)
 import App.Application.Board.Command (DeleteBoardCommand (..), SaveAttachmentCommand (..))
 import App.Application.Board.PublicRepository (PublicBoardQuery)
 import App.Application.Board.Repository (BoardRepo)
-import App.Application.Board.UseCase (createBoard, deleteBoard, fetchAllBoardsPublic, fetchBoardPublic, saveAttachment, updateBoard)
+import App.Application.Board.UseCase
+  ( createBoard,
+    deleteBoard,
+    fetchAllBoardsPublic,
+    fetchBoardPublic,
+    saveAttachment,
+    updateBoard,
+  )
 import App.Domain.Board.Entity (BoardWithAttachments (..))
-import App.Presentation.Board.Request (PostBoardRequest, PutBoardRequest, toCreateBoardCommand, toUpdateBoardCommand)
+import App.Domain.Board.ValueObject (BoardId (..))
+import App.Presentation.Board.Request
+  ( PostBoardRequest,
+    PutBoardRequest,
+    toCreateBoardCommand,
+    toUpdateBoardCommand,
+  )
 import App.Presentation.Board.Response
   ( AttachmentResponse (..),
     BoardResponse (..),
@@ -49,7 +62,7 @@ type PublicBoardRunner = forall a. Eff '[PublicBoardQuery, IOE] a -> IO a
 
 getBoardHandler :: PublicBoardRunner -> Int -> Handler BoardResponse
 getBoardHandler runPublic bid = do
-  result <- liftIO $ runPublic (fetchBoardPublic bid)
+  result <- liftIO $ runPublic (fetchBoardPublic (BoardId bid))
   case result of
     Nothing -> throwError err404
     Just b -> return (toBoardResponse b)

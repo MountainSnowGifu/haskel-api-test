@@ -13,6 +13,17 @@ module App.Presentation.Board.Response
 where
 
 import App.Domain.Board.Entity (Board (..), BoardAttachment (..), BoardWithAttachments (..))
+import App.Domain.Board.ValueObject
+  ( AttachmentId (..),
+    AttachmentUrl (..),
+    BoardAuthorId (..),
+    BoardBodyMarkdown (..),
+    BoardCategory (..),
+    BoardCreatedAt (..),
+    BoardId (..),
+    BoardTitle (..),
+    BoardUpdatedAt (..),
+  )
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text, pack)
 import Data.Time (defaultTimeLocale, formatTime)
@@ -30,7 +41,7 @@ instance FromJSON CreatedBoardResponse
 instance ToJSON CreatedBoardResponse
 
 toCreatedBoardResponse :: Board -> CreatedBoardResponse
-toCreatedBoardResponse Board {boardId = bid, boardCategory = category} =
+toCreatedBoardResponse Board {boardId = BoardId bid, boardCategory = BoardCategory category} =
   CreatedBoardResponse
     { boardId = bid,
       createdBoardMessage = "Board created successfully.",
@@ -54,7 +65,7 @@ instance FromJSON BoardResponse
 instance ToJSON BoardResponse
 
 toBoardResponse :: BoardWithAttachments -> BoardResponse
-toBoardResponse BoardWithAttachments {board = Board {boardId = bid, boardTitle = t, boardBodyMarkdown = bm, boardAuthorId = aid, boardCategory = category, boardCreatedAt = cat, boardUpdatedAt = uat}, attachments = atts} =
+toBoardResponse BoardWithAttachments {board = Board {boardId = BoardId bid, boardTitle = BoardTitle t, boardBodyMarkdown = BoardBodyMarkdown bm, boardAuthorId = BoardAuthorId aid, boardCategory = BoardCategory category, boardCreatedAt = BoardCreatedAt cat, boardUpdatedAt = BoardUpdatedAt uat}, attachments = atts} =
   BoardResponse
     { boardId = bid,
       title = t,
@@ -78,7 +89,7 @@ instance FromJSON AttachmentResponse
 instance ToJSON AttachmentResponse
 
 toAttachmentResponse :: BoardAttachment -> AttachmentResponse
-toAttachmentResponse BoardAttachment {boardId = bid, attachmentId = aid, attachmentUrl = url} =
+toAttachmentResponse BoardAttachment {boardId = BoardId bid, attachmentId = AttachmentId aid, attachmentUrl = AttachmentUrl url} =
   AttachmentResponse
     { boardId = bid,
       attachmentId = aid,

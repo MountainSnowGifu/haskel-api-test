@@ -14,13 +14,19 @@ module App.Application.Board.UseCase
   )
 where
 
-import App.Application.Board.Command (CreateBoardCommand (..), DeleteBoardCommand (..), SaveAttachmentCommand (..), UpdateBoardCommand (..))
+import App.Application.Board.Command
+  ( CreateBoardCommand (..),
+    DeleteBoardCommand (..),
+    SaveAttachmentCommand (..),
+    UpdateBoardCommand (..),
+  )
 import App.Application.Board.PublicRepository (PublicBoardQuery)
 import App.Application.Board.PublicRepository qualified as PublicBoardQuery
 import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.Repository qualified as BoardRepo
 import App.Domain.Board.BoardService (createBoardWithAttachments)
 import App.Domain.Board.Entity (Board (..), BoardAttachment, BoardWithAttachments (..))
+import App.Domain.Board.ValueObject (BoardId)
 import Data.Maybe (fromMaybe)
 import Data.Text qualified as T
 import Effectful (Eff, (:>))
@@ -39,7 +45,7 @@ fetchAllBoardsPublic = do
     )
     (fromMaybe [] mBoards)
 
-fetchBoardPublic :: (PublicBoardQuery :> es) => Int -> Eff es (Maybe BoardWithAttachments)
+fetchBoardPublic :: (PublicBoardQuery :> es) => BoardId -> Eff es (Maybe BoardWithAttachments)
 fetchBoardPublic bid = do
   mBoard <- PublicBoardQuery.getPublicBoard bid
   case mBoard of
@@ -48,7 +54,7 @@ fetchBoardPublic bid = do
       mAtts <- PublicBoardQuery.fetchAttachmentsForBoard (boardId b)
       return $ Just $ createBoardWithAttachments b (fromMaybe [] mAtts)
 
-fetchAttachmentsForBoardPublic :: (PublicBoardQuery :> es) => Int -> Eff es (Maybe [BoardAttachment])
+fetchAttachmentsForBoardPublic :: (PublicBoardQuery :> es) => BoardId -> Eff es (Maybe [BoardAttachment])
 fetchAttachmentsForBoardPublic = PublicBoardQuery.fetchAttachmentsForBoard
 
 createBoard ::

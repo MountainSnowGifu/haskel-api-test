@@ -11,16 +11,40 @@ module App.Infrastructure.Repository.Board.BoardSQLServer
   )
 where
 
-import App.Application.Board.Command (CreateBoardCommand (..), SaveAttachmentCommand (..), UpdateBoardCommand (..))
+import App.Application.Board.Command
+  ( CreateBoardCommand (..),
+    DeleteBoardCommand (..),
+    SaveAttachmentCommand (..),
+    UpdateBoardCommand (..),
+  )
 import App.Application.Board.PublicRepository (PublicBoardQuery (..))
 import App.Application.Board.Repository (BoardRepo (..))
 import App.Domain.Auth.Entity (UserId (..))
 import App.Domain.Board.Entity (Board (..), BoardAttachment (..))
+import App.Domain.Board.ValueObject
+  ( AttachmentId (..),
+    AttachmentUrl (..),
+    BoardAuthorId (..),
+    BoardBodyMarkdown (..),
+    BoardCategory (..),
+    BoardCreatedAt (..),
+    BoardId (..),
+    BoardTitle (..),
+    BoardUpdatedAt (..),
+  )
 import App.Infrastructure.DB.SqlServer (withMSSQLConn)
 import App.Infrastructure.DB.Types (MSSQLPool)
 import Data.Text (Text)
 import Data.Time (UTCTime)
-import Database.MSSQLServer.Query (RpcQuery (..), RpcResponse (..), StoredProcedure (..), intVal, nvarcharVal, rpc, withTransaction)
+import Database.MSSQLServer.Query
+  ( RpcQuery (..),
+    RpcResponse (..),
+    StoredProcedure (..),
+    intVal,
+    nvarcharVal,
+    rpc,
+    withTransaction,
+  )
 import Effectful
 import Effectful.Dispatch.Dynamic (interpret)
 
@@ -38,7 +62,7 @@ rpcRows (RpcResponseError info) = ioError (userError $ "SQL Server error: " ++ s
 --     IOE :> es              -- IO を実行できるエフェクトが必要
 --     => MSSQLPool           -- コネクションプール
 --     -> UserId              -- 認証済みユーザーID
---     -> Eff (BoardRepo : es) a   -- BoardRepo を含むスタック
+--     -> Eff (BoardRepo : es) a   -- BoardRepo を含むスタAttachmentUrlック
 --     -> Eff es a                -- BoardRepo を除いたスタック
 runBoardRepo ::
   (IOE :> es) =>
@@ -70,8 +94,8 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
         case rows of
           [] -> return Nothing
           (rowId, t, b, c, aid, ca, ua) : _ ->
-            return $ Just $ Board rowId t b aid c ca ua
-  DeleteBoardOp bId ->
+            return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
+  DeleteBoardOp (DeleteBoardCommand {cmdDeleteBoardId = bId}) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId authUserId
       withTransaction conn $ do
@@ -114,7 +138,7 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
         case rows of
           [] -> return Nothing
           (rowId, t, b, c, aid, ca, ua) : _ ->
-            return $ Just $ Board rowId t b aid c ca ua
+            return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
   SaveAttachmentOp (SaveAttachmentCommand bid aid url) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let uid = unUserId authUserId
@@ -137,7 +161,7 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
                 )
         case rows of
           [] -> return Nothing
-          _ -> return $ Just $ BoardAttachment bid aid url
+          _ -> return $ Just $ BoardAttachment (BoardId bid) (AttachmentId aid) (AttachmentUrl url)
 
 runPublicBoardQuery ::
   (IOE :> es) =>
@@ -157,8 +181,8 @@ runPublicBoardQuery pool = interpret $ \_ -> \case
                   ) ::
                   IO (RpcResponse () [(Int, Text, Text, Text, Int, UTCTime, UTCTime)])
               )
-      return $ Just $ map (\(rowId, t, b, c, aid, ca, ua) -> Board rowId t b aid c ca ua) rows
-  GetPublicBoardQ bId ->
+      return $ Just $ map (\(rowId, t, b, c, aid, ca, ua) -> Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)) rows
+  GetPublicBoardQ (BoardId bId) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
         rpcRows
@@ -175,8 +199,8 @@ runPublicBoardQuery pool = interpret $ \_ -> \case
               )
       case rows of
         [] -> return Nothing
-        (rowId, t, b, c, aid, ca, ua) : _ -> return $ Just $ Board rowId t b aid c ca ua
-  GetAttachmentsForBoardOp bid ->
+        (rowId, t, b, c, aid, ca, ua) : _ -> return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
+  GetAttachmentsForBoardOp (BoardId bid) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
         rpcRows
@@ -191,4 +215,4 @@ runPublicBoardQuery pool = interpret $ \_ -> \case
                   ) ::
                   IO (RpcResponse () [(Int, Text, Text)])
               )
-      return $ Just $ map (\(bId, aId, aUrl) -> BoardAttachment bId aId aUrl) rows
+      return $ Just $ map (\(bId, aId, aUrl) -> BoardAttachment (BoardId bId) (AttachmentId aId) (AttachmentUrl aUrl)) rows

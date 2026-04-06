@@ -3,25 +3,34 @@
 
 module App.Domain.Board.Entity (Board (..), BoardAttachment (..), BoardWithAttachments (..)) where
 
-import Data.Text (Text)
-import Data.Time (UTCTime)
+import App.Domain.Board.ValueObject
+  ( AttachmentId,
+    AttachmentUrl,
+    BoardAuthorId,
+    BoardBodyMarkdown,
+    BoardCategory,
+    BoardCreatedAt,
+    BoardId,
+    BoardTitle,
+    BoardUpdatedAt,
+  )
 import GHC.Generics (Generic)
 
 data Board = Board
-  { boardId :: Int,
-    boardTitle :: Text,
-    boardBodyMarkdown :: Text,
-    boardAuthorId :: Int,
-    boardCategory :: Text,
-    boardCreatedAt :: UTCTime,
-    boardUpdatedAt :: UTCTime
+  { boardId :: BoardId,
+    boardTitle :: BoardTitle,
+    boardBodyMarkdown :: BoardBodyMarkdown,
+    boardAuthorId :: BoardAuthorId,
+    boardCategory :: BoardCategory,
+    boardCreatedAt :: BoardCreatedAt,
+    boardUpdatedAt :: BoardUpdatedAt
   }
   deriving (Show, Eq, Generic)
 
 data BoardAttachment = BoardAttachment
-  { boardId :: Int,
-    attachmentId :: Text,
-    attachmentUrl :: Text
+  { boardId :: BoardId,
+    attachmentId :: AttachmentId,
+    attachmentUrl :: AttachmentUrl
   }
   deriving (Show, Eq, Generic)
 
