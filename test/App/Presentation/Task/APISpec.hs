@@ -29,7 +29,7 @@ import Effectful (Eff, IOE, runEff)
 import qualified Effectful as Eff
 import Effectful.Dispatch.Dynamic (interpret)
 import Network.HTTP.Types (methodDelete, methodPatch, methodPost, methodPut)
-import Network.Wai (Application, Request)
+import Network.Wai (Request)
 import Servant
 import Servant.Server.Experimental.Auth (AuthHandler, mkAuthHandler)
 import Test.Hspec

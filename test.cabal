@@ -140,6 +140,7 @@ test-suite spec
   other-modules:
       App.Domain.BudgetTracker.EntitySpec
     , App.Presentation.Task.APISpec
+    , App.Presentation.Board.APISpec
 
   build-depends:
       base
@@ -152,4 +153,5 @@ test-suite spec
     , servant-server
     , wai
     , effectful-core
+    , time
     , test
