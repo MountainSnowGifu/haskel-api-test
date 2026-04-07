@@ -36,6 +36,7 @@ import App.Presentation.Board.API (BoardAPI)
 import App.Presentation.Board.Handler
   ( BoardRunner,
     PublicBoardRunner,
+    deleteAttachmentHandler,
     deleteBoardHandler,
     getBoardHandler,
     getBoardsHandler,
@@ -45,6 +46,7 @@ import App.Presentation.Board.Handler
   )
 import App.Server.API ()
 import Data.Aeson (Value, decode, encode, object, (.=))
+import Data.ByteString (ByteString)
 import Data.IORef
 import Data.List (find)
 import Data.Text (Text)
@@ -221,6 +223,7 @@ testApp boardRef attRef =
           :<|> getBoardHandler runPublic
           :<|> updateBoardHandler mkRun
           :<|> uploadAttachmentHandler mkRun
+          :<|> deleteAttachmentHandler mkRun
           :<|> serveDirectoryWebApp "static/board/uploads"
    in serveWithContext
         (Proxy :: Proxy BoardAPI)
@@ -243,10 +246,24 @@ sampleBoard =
       boardUpdatedAt = BoardUpdatedAt fixedTime
     }
 
+-- 添付ファイルのテスト用 UUID（固定値）
+-- ByteString: テストのリクエストパス結合に使う
+-- Text リテラルとして sampleAttachment 内で直接使用する
+sampleAttachmentUUID :: ByteString
+sampleAttachmentUUID = "550e8400-e29b-41d4-a716-446655440000"
+
+sampleAttachment :: BoardAttachment
+sampleAttachment =
+  BoardAttachment
+    { boardId = BoardId 1,
+      attachmentId = AttachmentId "550e8400-e29b-41d4-a716-446655440000",
+      attachmentUrl = AttachmentUrl "/api/board/uploads/550e8400-e29b-41d4-a716-446655440000.jpg"
+    }
+
 withFreshApp :: SpecWith ((), Application) -> Spec
 withFreshApp = around $ \test -> do
   boardRef <- newIORef [sampleBoard]
-  attRef <- newIORef []
+  attRef <- newIORef [sampleAttachment]
   test ((), testApp boardRef attRef)
 
 -- ─────────────────────────────────────────────
@@ -340,3 +357,16 @@ spec = withFreshApp $ do
 
     it "存在しない id で 404 を返す" $
       request methodDelete "/api/board/999" [] "" `shouldRespondWith` 404
+
+  describe "DELETE /api/board/:boardId/:attachmentId" $ do
+    it "存在する添付ファイルで 200 を返す" $
+      request methodDelete ("/api/board/1/attachment/" <> sampleAttachmentUUID) [] ""
+        `shouldRespondWith` 200
+
+    it "存在しない attachmentId で 404 を返す" $
+      request methodDelete "/api/board/1/attachment/00000000-0000-0000-0000-000000000000" [] ""
+        `shouldRespondWith` 404
+
+    it "board_id が違う場合 404 を返す" $
+      request methodDelete ("/api/board/999/attachment/" <> sampleAttachmentUUID) [] ""
+        `shouldRespondWith` 404
