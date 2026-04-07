@@ -11,11 +11,13 @@ module App.Application.Board.UseCase
     updateBoard,
     saveAttachment,
     fetchAttachmentsForBoardPublic,
+    deleteAttachment,
   )
 where
 
 import App.Application.Board.Command
   ( CreateBoardCommand (..),
+    DeleteAttachmentCommand (..),
     DeleteBoardCommand (..),
     SaveAttachmentCommand (..),
     UpdateBoardCommand (..),
@@ -91,3 +93,6 @@ updateBoard cmd = do
 
 saveAttachment :: (BoardRepo :> es) => SaveAttachmentCommand -> Eff es (Maybe BoardAttachment)
 saveAttachment = BoardRepo.saveAttachment
+
+deleteAttachment :: (BoardRepo :> es) => DeleteAttachmentCommand -> Eff es Bool
+deleteAttachment = BoardRepo.deleteAttachment

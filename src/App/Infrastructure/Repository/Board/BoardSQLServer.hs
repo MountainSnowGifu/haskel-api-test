@@ -13,6 +13,7 @@ where
 
 import App.Application.Board.Command
   ( CreateBoardCommand (..),
+    DeleteAttachmentCommand (..),
     DeleteBoardCommand (..),
     SaveAttachmentCommand (..),
     UpdateBoardCommand (..),
@@ -163,6 +164,26 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
         case rows of
           [] -> return Nothing
           _ -> return $ Just $ BoardAttachment (BoardId bid) (AttachmentId aid) (AttachmentUrl url)
+  DeleteAttachmentOp (DeleteAttachmentCommand bid aid) ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      let BoardAuthorId uid = userIdToAuthorId authUserId
+      withTransaction conn $ do
+        rows <-
+          rpcRows
+            =<< ( rpc
+                    conn
+                    ( RpcQuery
+                        SP_ExecuteSql
+                        ( nvarcharVal "" (Just "DELETE FROM testdb.dbo.BOARD_ATTACHMENTS OUTPUT DELETED.board_id, CAST(DELETED.attachment_id AS nvarchar(36)) WHERE board_id = @BoardId AND attachment_id = @AttachmentId AND author_id = @AuthorId"),
+                          nvarcharVal "" (Just "@BoardId int, @AttachmentId nvarchar(36), @AuthorId int"),
+                          intVal "@BoardId" (Just bid),
+                          nvarcharVal "@AttachmentId" (Just aid),
+                          intVal "@AuthorId" (Just uid)
+                        )
+                    ) ::
+                    IO (RpcResponse () [(Int, Text)])
+                )
+        return (not (null rows))
 
 runPublicBoardQuery ::
   (IOE :> es) =>

@@ -23,6 +23,7 @@ import App.Presentation.Auth.Handler (loginHandler, logoutHandler)
 import App.Presentation.Board.Handler
   ( BoardRunner,
     PublicBoardRunner,
+    deleteAttachmentHandler,
     deleteBoardHandler,
     getBoardHandler,
     getBoardsHandler,
@@ -121,6 +122,7 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
           :<|> getBoardHandler publicBoardRunner
           :<|> updateBoardHandler boardRunner
           :<|> uploadAttachmentHandler boardRunner
+          :<|> deleteAttachmentHandler boardRunner
           :<|> serveDirectoryWebApp "static/board/uploads"
       authHandlers =
         loginHandler sqlserverPool redisConn

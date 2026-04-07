@@ -13,15 +13,17 @@ module App.Presentation.Board.Handler
     getBoardHandler,
     updateBoardHandler,
     uploadAttachmentHandler,
+    deleteAttachmentHandler,
   )
 where
 
 import App.Application.Auth.Principal (AuthPrincipal)
-import App.Application.Board.Command (DeleteBoardCommand (..), SaveAttachmentCommand (..))
+import App.Application.Board.Command (DeleteAttachmentCommand (..), DeleteBoardCommand (..), SaveAttachmentCommand (..))
 import App.Application.Board.PublicRepository (PublicBoardQuery)
 import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.UseCase
   ( createBoard,
+    deleteAttachment,
     deleteBoard,
     fetchAllBoardsPublic,
     fetchBoardPublic,
@@ -83,6 +85,11 @@ postBoardHandler mkRun user req = do
 deleteBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> Handler NoContent
 deleteBoardHandler mkRun user hid = do
   deleted <- liftIO $ mkRun user (deleteBoard (DeleteBoardCommand hid))
+  if deleted then return NoContent else throwError err404
+
+deleteAttachmentHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> String -> Handler NoContent
+deleteAttachmentHandler mkRun user bid aid = do
+  deleted <- liftIO $ mkRun user (deleteAttachment (DeleteAttachmentCommand bid (pack aid)))
   if deleted then return NoContent else throwError err404
 
 updateBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> PutBoardRequest -> Handler BoardResponse

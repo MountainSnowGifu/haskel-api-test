@@ -12,6 +12,7 @@ module App.Presentation.Board.APISpec (spec) where
 import App.Application.Auth.Principal (AuthPrincipal (..))
 import App.Application.Board.Command
   ( CreateBoardCommand (..),
+    DeleteAttachmentCommand (..),
     DeleteBoardCommand (..),
     SaveAttachmentCommand (..),
     UpdateBoardCommand (..),
@@ -159,6 +160,13 @@ runFakeBoardRepo boardRef attRef = interpret $ \_ -> \case
             }
     liftIO $ modifyIORef attRef (++ [att])
     return (Just att)
+  DeleteAttachmentOp (DeleteAttachmentCommand bid aid) -> do
+    atts <- liftIO $ readIORef attRef
+    case filter (\(BoardAttachment abid aaid _) -> abid == BoardId bid && aaid == AttachmentId aid) atts of
+      [] -> return False
+      _ -> do
+        liftIO $ modifyIORef attRef (filter (\(BoardAttachment abid aaid _) -> not (abid == BoardId bid && aaid == AttachmentId aid)))
+        return True
 
 -- ─────────────────────────────────────────────
 -- fake: 公開クエリのインタープリタ
