@@ -4,7 +4,8 @@
 module App.Domain.Board.Entity (Board (..), BoardAttachment (..), BoardWithAttachments (..)) where
 
 import App.Domain.Board.ValueObject
-  ( AttachmentId,
+  ( AttachmentFileName,
+    AttachmentId,
     AttachmentUrl,
     BoardAuthorId,
     BoardBodyMarkdown,
@@ -30,7 +31,8 @@ data Board = Board
 data BoardAttachment = BoardAttachment
   { boardId :: BoardId,
     attachmentId :: AttachmentId,
-    attachmentUrl :: AttachmentUrl
+    attachmentUrl :: AttachmentUrl,
+    attachmentFileName :: AttachmentFileName
   }
   deriving (Show, Eq, Generic)
 

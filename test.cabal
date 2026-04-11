@@ -81,6 +81,7 @@ library
     , App.Presentation.Board.Request
     , App.Presentation.Board.Response
     , App.Presentation.Board.API
+    , App.Infrastructure.File.FileStore
     , App.Presentation.Board.Handler
 
   build-depends:

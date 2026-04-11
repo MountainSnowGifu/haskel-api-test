@@ -9,10 +9,11 @@ where
 import App.Application.Auth.Principal (AuthPrincipal (..))
 import App.Core.Config (Config (..), LogFormat (..))
 import App.Infrastructure.DB.Types (MSSQLPool, SqliteDb)
-import App.Infrastructure.Logger.CsvLogger (csvLogger)
-import App.Infrastructure.Logger.JsonLogger (jsonLogger)
 -- import App.Infrastructure.Repository.Task.TaskSQLServer (runTaskRepo)
 
+import App.Infrastructure.File.FileStore (boardUploadDir)
+import App.Infrastructure.Logger.CsvLogger (csvLogger)
+import App.Infrastructure.Logger.JsonLogger (jsonLogger)
 import App.Infrastructure.Repository.Board.BoardSQLServer (runBoardRepo, runPublicBoardQuery)
 import App.Infrastructure.Repository.BudgetTracker.RecordSQLite (runRecordRepo)
 import App.Infrastructure.Repository.Chat.ChatSTM (MessageStore, RoomState, newMessageStore, newRoomState)
@@ -123,7 +124,7 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
           :<|> updateBoardHandler boardRunner
           :<|> uploadAttachmentHandler boardRunner
           :<|> deleteAttachmentHandler boardRunner
-          :<|> serveDirectoryWebApp "static/board/uploads"
+          :<|> serveDirectoryWebApp boardUploadDir
       authHandlers =
         loginHandler sqlserverPool redisConn
           :<|> logoutHandler redisConn
@@ -141,7 +142,7 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
 
 runServant :: Config -> SqliteDb -> MSSQLPool -> Connection -> IO ()
 runServant servantConfig sqliteDb sqlserverPool redisConn = do
-  createDirectoryIfMissing True "static/board/uploads"
+  createDirectoryIfMissing True boardUploadDir
   rooms <- newRoomState
   store <- newMessageStore
   connStore <- newConnStore

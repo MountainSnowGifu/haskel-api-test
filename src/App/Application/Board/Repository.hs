@@ -30,7 +30,7 @@ data BoardRepo :: Effect where
   DeleteBoardOp :: DeleteBoardCommand -> BoardRepo m Bool
   UpdateBoardOp :: UpdateBoardCommand -> BoardRepo m (Maybe Board)
   SaveAttachmentOp :: SaveAttachmentCommand -> BoardRepo m (Maybe BoardAttachment)
-  DeleteAttachmentOp :: DeleteAttachmentCommand -> BoardRepo m Bool
+  DeleteAttachmentOp :: DeleteAttachmentCommand -> BoardRepo m (Maybe BoardAttachment)
 
 type instance DispatchOf BoardRepo = Dynamic
 
@@ -46,5 +46,5 @@ updateBoard cmd = send (UpdateBoardOp cmd)
 saveAttachment :: (BoardRepo :> es) => SaveAttachmentCommand -> Eff es (Maybe BoardAttachment)
 saveAttachment cmd = send (SaveAttachmentOp cmd)
 
-deleteAttachment :: (BoardRepo :> es) => DeleteAttachmentCommand -> Eff es Bool
+deleteAttachment :: (BoardRepo :> es) => DeleteAttachmentCommand -> Eff es (Maybe BoardAttachment)
 deleteAttachment cmd = send (DeleteAttachmentOp cmd)

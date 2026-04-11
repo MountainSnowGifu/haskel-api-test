@@ -34,7 +34,8 @@ data UpdateBoardCommand = UpdateBoardCommand
 data SaveAttachmentCommand = SaveAttachmentCommand
   { cmdBoardId :: Int,
     cmdAttachmentId :: Text,
-    cmdAttachmentUrl :: Text
+    cmdAttachmentUrl :: Text,
+    cmdAttachmentFileName :: Text
   }
   deriving (Show, Eq, Generic)
 

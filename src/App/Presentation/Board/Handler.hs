@@ -30,8 +30,9 @@ import App.Application.Board.UseCase
     saveAttachment,
     updateBoard,
   )
-import App.Domain.Board.Entity (BoardWithAttachments (..))
-import App.Domain.Board.ValueObject (BoardId (..))
+import App.Domain.Board.Entity (BoardAttachment (..), BoardWithAttachments (..))
+import App.Domain.Board.ValueObject (AttachmentFileName (..), BoardId (..))
+import App.Infrastructure.File.FileStore (boardUploadDir, deleteFileIfExists, uploadUrlPrefix)
 import App.Presentation.Board.Request
   ( PostBoardRequest,
     PutBoardRequest,
@@ -55,7 +56,7 @@ import Data.UUID.V4 (nextRandom)
 import Effectful (Eff, IOE)
 import Servant
 import Servant.Multipart (MultipartData, Tmp, fdFileName, fdPayload, files)
-import System.Directory (copyFile, getFileSize)
+import System.Directory (copyFile, createDirectoryIfMissing, getFileSize)
 import System.FilePath (takeExtension)
 
 type BoardRunner = forall a. Eff '[BoardRepo, PublicBoardQuery, IOE] a -> IO a
@@ -89,8 +90,13 @@ deleteBoardHandler mkRun user hid = do
 
 deleteAttachmentHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> String -> Handler NoContent
 deleteAttachmentHandler mkRun user bid aid = do
-  deleted <- liftIO $ mkRun user (deleteAttachment (DeleteAttachmentCommand bid (pack aid)))
-  if deleted then return NoContent else throwError err404
+  result <- liftIO $ mkRun user (deleteAttachment (DeleteAttachmentCommand bid (pack aid)))
+  case result of
+    Nothing -> throwError err404
+    Just attachment -> do
+      let AttachmentFileName fname = attachmentFileName attachment
+      _ <- liftIO $ deleteFileIfExists (boardUploadDir ++ "/" ++ show bid ++ "/" ++ unpack fname)
+      return NoContent
 
 updateBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> PutBoardRequest -> Handler BoardResponse
 updateBoardHandler mkRun user bid req = do
@@ -103,6 +109,7 @@ uploadAttachmentHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> In
 uploadAttachmentHandler mkRun user bid multipart = case files multipart of
   [] -> throwError err400 {errBody = "No file provided."}
   (f : _) -> do
+    liftIO $ print (fdFileName f) -- デバッグ用: アップロードされたファイル名をログに出力
     let ext = map toLower $ takeExtension (unpack (fdFileName f))
     -- 拡張子検証
     if ext `notElem` allowedExtensions
@@ -113,12 +120,14 @@ uploadAttachmentHandler mkRun user bid multipart = case files multipart of
         if fileSize > maxFileSize
           then throwError err400 {errBody = "File too large. Max 10MB."}
           else do
+            let bidStr = show bid
+            _ <- liftIO $ createDirectoryIfMissing True (boardUploadDir ++ "/" ++ bidStr)
             uuid <- liftIO nextRandom
             let filename = toText uuid <> pack ext
-                dest = "static/board/uploads/" <> unpack filename
-                url = "/api/board/uploads/" <> filename
+                dest = boardUploadDir ++ "/" ++ bidStr ++ "/" ++ unpack filename
+                url = uploadUrlPrefix <> pack bidStr <> "/" <> filename
             -- DB保存を先に行い、孤児ファイルを防ぐ
-            result <- liftIO $ mkRun user (saveAttachment (SaveAttachmentCommand bid (toText uuid) url))
+            result <- liftIO $ mkRun user (saveAttachment (SaveAttachmentCommand bid (toText uuid) url filename))
             case result of
               Nothing -> throwError err500 {errBody = "Failed to save attachment."}
               Just attachment -> do

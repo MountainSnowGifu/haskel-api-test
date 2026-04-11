@@ -8,6 +8,7 @@ module App.Domain.Board.ValueObject
     BoardUpdatedAt (..),
     AttachmentId (..),
     AttachmentUrl (..),
+    AttachmentFileName (..),
     userIdToAuthorId,
   )
 where
@@ -41,6 +42,9 @@ newtype AttachmentId = AttachmentId Text
   deriving (Show, Eq, Ord)
 
 newtype AttachmentUrl = AttachmentUrl Text
+  deriving (Show, Eq, Ord)
+
+newtype AttachmentFileName = AttachmentFileName Text
   deriving (Show, Eq, Ord)
 
 -- | Auth BC の UserId を Board BC の BoardAuthorId へ変換する。

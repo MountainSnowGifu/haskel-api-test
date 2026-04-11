@@ -23,7 +23,8 @@ import App.Application.Board.Repository (BoardRepo (..))
 import App.Domain.Auth.Entity (UserId)
 import App.Domain.Board.Entity (Board (..), BoardAttachment (..))
 import App.Domain.Board.ValueObject
-  ( AttachmentId (..),
+  ( AttachmentFileName (..),
+    AttachmentId (..),
     AttachmentUrl (..),
     BoardAuthorId (..),
     BoardBodyMarkdown (..),
@@ -141,7 +142,7 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
           [] -> return Nothing
           (rowId, t, b, c, aid, ca, ua) : _ ->
             return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
-  SaveAttachmentOp (SaveAttachmentCommand bid aid url) ->
+  SaveAttachmentOp (SaveAttachmentCommand bid aid url filename) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let BoardAuthorId uid = userIdToAuthorId authUserId
       withTransaction conn $ do
@@ -151,19 +152,20 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
                     conn
                     ( RpcQuery
                         SP_ExecuteSql
-                        ( nvarcharVal "" (Just "INSERT INTO testdb.dbo.BOARD_ATTACHMENTS (board_id, attachment_id, attachment_url, author_id, created_at) OUTPUT CAST(INSERTED.attachment_id AS nvarchar(36)), INSERTED.attachment_url VALUES (@BoardId, @AttachmentId, @AttachmentUrl, @AuthorId, GETDATE())"),
-                          nvarcharVal "" (Just "@BoardId int, @AttachmentId nvarchar(36), @AttachmentUrl nvarchar(max), @AuthorId int"),
+                        ( nvarcharVal "" (Just "INSERT INTO testdb.dbo.BOARD_ATTACHMENTS (board_id, attachment_id, attachment_url, attachment_filename, author_id, created_at) OUTPUT CAST(INSERTED.attachment_id AS nvarchar(36)), INSERTED.attachment_url, INSERTED.attachment_filename VALUES (@BoardId, @AttachmentId, @AttachmentUrl, @AttachmentFileName, @AuthorId, GETDATE())"),
+                          nvarcharVal "" (Just "@BoardId int, @AttachmentId nvarchar(36), @AttachmentUrl nvarchar(max), @AttachmentFileName nvarchar(max), @AuthorId int"),
                           intVal "@BoardId" (Just bid),
                           nvarcharVal "@AttachmentId" (Just aid),
                           nvarcharVal "@AttachmentUrl" (Just url),
+                          nvarcharVal "@AttachmentFileName" (Just filename),
                           intVal "@AuthorId" (Just uid)
                         )
                     ) ::
-                    IO (RpcResponse () [(Text, Text)])
+                    IO (RpcResponse () [(Text, Text, Text)])
                 )
         case rows of
           [] -> return Nothing
-          _ -> return $ Just $ BoardAttachment (BoardId bid) (AttachmentId aid) (AttachmentUrl url)
+          _ -> return $ Just $ BoardAttachment (BoardId bid) (AttachmentId aid) (AttachmentUrl url) (AttachmentFileName filename)
   DeleteAttachmentOp (DeleteAttachmentCommand bid aid) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let BoardAuthorId uid = userIdToAuthorId authUserId
@@ -174,16 +176,19 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
                     conn
                     ( RpcQuery
                         SP_ExecuteSql
-                        ( nvarcharVal "" (Just "DELETE FROM testdb.dbo.BOARD_ATTACHMENTS OUTPUT DELETED.board_id, CAST(DELETED.attachment_id AS nvarchar(36)) WHERE board_id = @BoardId AND attachment_id = @AttachmentId AND author_id = @AuthorId"),
+                        ( nvarcharVal "" (Just "DELETE FROM testdb.dbo.BOARD_ATTACHMENTS OUTPUT DELETED.board_id, CAST(DELETED.attachment_id AS nvarchar(36)), DELETED.attachment_url, DELETED.attachment_filename WHERE board_id = @BoardId AND attachment_id = @AttachmentId AND author_id = @AuthorId"),
                           nvarcharVal "" (Just "@BoardId int, @AttachmentId nvarchar(36), @AuthorId int"),
                           intVal "@BoardId" (Just bid),
                           nvarcharVal "@AttachmentId" (Just aid),
                           intVal "@AuthorId" (Just uid)
                         )
                     ) ::
-                    IO (RpcResponse () [(Int, Text)])
+                    IO (RpcResponse () [(Int, Text, Text, Text)])
                 )
-        return (not (null rows))
+        case rows of
+          [] -> return Nothing
+          (deletedBid, deletedAid, deletedUrl, deletedFileName) : _ ->
+            return $ Just $ BoardAttachment (BoardId deletedBid) (AttachmentId deletedAid) (AttachmentUrl deletedUrl) (AttachmentFileName deletedFileName)
 
 runPublicBoardQuery ::
   (IOE :> es) =>
@@ -230,11 +235,11 @@ runPublicBoardQuery pool = interpret $ \_ -> \case
                   conn
                   ( RpcQuery
                       SP_ExecuteSql
-                      ( nvarcharVal "" (Just "SELECT board_id, CAST(attachment_id AS nvarchar(36)), attachment_url FROM testdb.dbo.BOARD_ATTACHMENTS WHERE board_id = @BoardId"),
+                      ( nvarcharVal "" (Just "SELECT board_id, CAST(attachment_id AS nvarchar(36)), attachment_url, attachment_filename FROM testdb.dbo.BOARD_ATTACHMENTS WHERE board_id = @BoardId"),
                         nvarcharVal "" (Just "@BoardId int"),
                         intVal "@BoardId" (Just bid)
                       )
                   ) ::
-                  IO (RpcResponse () [(Int, Text, Text)])
+                  IO (RpcResponse () [(Int, Text, Text, Text)])
               )
-      return $ Just $ map (\(bId, aId, aUrl) -> BoardAttachment (BoardId bId) (AttachmentId aId) (AttachmentUrl aUrl)) rows
+      return $ Just $ map (\(bId, aId, aUrl, aFileName) -> BoardAttachment (BoardId bId) (AttachmentId aId) (AttachmentUrl aUrl) (AttachmentFileName aFileName)) rows

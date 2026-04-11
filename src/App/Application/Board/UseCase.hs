@@ -94,5 +94,5 @@ updateBoard cmd = do
 saveAttachment :: (BoardRepo :> es) => SaveAttachmentCommand -> Eff es (Maybe BoardAttachment)
 saveAttachment = BoardRepo.saveAttachment
 
-deleteAttachment :: (BoardRepo :> es) => DeleteAttachmentCommand -> Eff es Bool
+deleteAttachment :: (BoardRepo :> es) => DeleteAttachmentCommand -> Eff es (Maybe BoardAttachment)
 deleteAttachment = BoardRepo.deleteAttachment
