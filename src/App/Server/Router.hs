@@ -26,6 +26,7 @@ import App.Presentation.Board.Handler
     PublicBoardRunner,
     deleteAttachmentHandler,
     deleteBoardHandler,
+    getBoardCategoriesHandler,
     getBoardHandler,
     getBoardsHandler,
     postBoardHandler,
@@ -124,7 +125,9 @@ app sqliteDb sqlserverPool redisConn rooms store connStore =
           :<|> updateBoardHandler boardRunner
           :<|> uploadAttachmentHandler boardRunner
           :<|> deleteAttachmentHandler boardRunner
+          :<|> getBoardCategoriesHandler boardRunner
           :<|> serveDirectoryWebApp boardUploadDir
+
       authHandlers =
         loginHandler sqlserverPool redisConn
           :<|> logoutHandler redisConn

@@ -7,13 +7,15 @@ module App.Domain.Board.ValueObject
     BoardBodyMarkdownError (..),
     mkBoardBodyMarkdown,
     BoardAuthorId (..),
-    BoardCategory (..),
+    BoardCategoryText (..),
     BoardCreatedAt (..),
     BoardUpdatedAt (..),
     AttachmentId (..),
     AttachmentUrl (..),
     AttachmentFileName (..),
     userIdToAuthorId,
+    BoardCategoryId (..),
+    BoardCategoryName (..),
   )
 where
 
@@ -33,7 +35,7 @@ data BoardTitleError = BoardTitleEmpty
 
 mkBoardTitle :: Text -> Either BoardTitleError BoardTitle
 mkBoardTitle t
-  | T.null t  = Left BoardTitleEmpty
+  | T.null t = Left BoardTitleEmpty
   | otherwise = Right (BoardTitle t)
 
 newtype BoardBodyMarkdown = BoardBodyMarkdown Text
@@ -44,13 +46,13 @@ data BoardBodyMarkdownError = BoardBodyMarkdownEmpty
 
 mkBoardBodyMarkdown :: Text -> Either BoardBodyMarkdownError BoardBodyMarkdown
 mkBoardBodyMarkdown b
-  | T.null b  = Left BoardBodyMarkdownEmpty
+  | T.null b = Left BoardBodyMarkdownEmpty
   | otherwise = Right (BoardBodyMarkdown b)
 
 newtype BoardAuthorId = BoardAuthorId Int
   deriving (Show, Eq, Ord)
 
-newtype BoardCategory = BoardCategory Text
+newtype BoardCategoryText = BoardCategoryText Text
   deriving (Show, Eq, Ord)
 
 newtype BoardCreatedAt = BoardCreatedAt UTCTime
@@ -66,6 +68,12 @@ newtype AttachmentUrl = AttachmentUrl Text
   deriving (Show, Eq, Ord)
 
 newtype AttachmentFileName = AttachmentFileName Text
+  deriving (Show, Eq, Ord)
+
+newtype BoardCategoryId = BoardCategoryId Int
+  deriving (Show, Eq, Ord)
+
+newtype BoardCategoryName = BoardCategoryName Text
   deriving (Show, Eq, Ord)
 
 -- | Auth BC の UserId を Board BC の BoardAuthorId へ変換する。

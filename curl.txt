@@ -96,6 +96,10 @@ curl -s -X PUT http://localhost:8081/api/board/1002 \
 
  curl -s http://localhost:8081/api/board | python3 -m json.tool
 
+
+ curl -s http://localhost:8081/api/board/categories \
+  -H "Authorization: Bearer 08357680-c12e-4454-8891-2f98c9188706"
+
 https://hoogle.haskell.org/
 
 SERVANT

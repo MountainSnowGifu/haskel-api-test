@@ -7,7 +7,7 @@ module App.Presentation.Board.API
 where
 
 import App.Presentation.Board.Request (PostBoardRequest, PutBoardRequest)
-import App.Presentation.Board.Response (AttachmentResponse, BoardResponse, CreatedBoardResponse)
+import App.Presentation.Board.Response (AttachmentResponse, BoardCategoryResponse, BoardResponse, CreatedBoardResponse)
 import Servant
 import Servant.Multipart (MultipartData, MultipartForm, Tmp)
 
@@ -19,4 +19,5 @@ type BoardAPI =
     :<|> AuthProtect "token-auth" :> "api" :> "board" :> Capture "id" Int :> ReqBody '[JSON] PutBoardRequest :> Put '[JSON] BoardResponse
     :<|> AuthProtect "token-auth" :> "api" :> "board" :> Capture "id" Int :> "attachment" :> MultipartForm Tmp (MultipartData Tmp) :> Post '[JSON] AttachmentResponse
     :<|> AuthProtect "token-auth" :> "api" :> "board" :> Capture "id" Int :> "attachment" :> Capture "attachmentid" String :> Delete '[JSON] NoContent
+    :<|> AuthProtect "token-auth" :> "api" :> "board" :> "categories" :> Get '[JSON] [BoardCategoryResponse]
     :<|> "api" :> "board" :> "uploads" :> Raw

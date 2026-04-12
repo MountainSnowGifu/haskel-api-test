@@ -9,16 +9,20 @@ module App.Presentation.Board.Response
     toBoardResponse,
     AttachmentResponse (..),
     toAttachmentResponse,
+    toBoardCategoryResponse,
+    BoardCategoryResponse,
   )
 where
 
-import App.Domain.Board.Entity (Board (..), BoardAttachment (..), BoardWithAttachments (..))
+import App.Domain.Board.Entity (Board (..), BoardAttachment (..), BoardCategory (..), BoardWithAttachments (..))
 import App.Domain.Board.ValueObject
   ( AttachmentId (..),
     AttachmentUrl (..),
     BoardAuthorId (..),
     BoardBodyMarkdown (..),
-    BoardCategory (..),
+    BoardCategoryId (..),
+    BoardCategoryName (..),
+    BoardCategoryText (..),
     BoardCreatedAt (..),
     BoardId (..),
     BoardTitle (..),
@@ -41,7 +45,7 @@ instance FromJSON CreatedBoardResponse
 instance ToJSON CreatedBoardResponse
 
 toCreatedBoardResponse :: Board -> CreatedBoardResponse
-toCreatedBoardResponse Board {boardId = BoardId bid, boardCategory = BoardCategory category} =
+toCreatedBoardResponse Board {boardId = BoardId bid, boardCategory = BoardCategoryText category} =
   CreatedBoardResponse
     { boardId = bid,
       createdBoardMessage = "Board created successfully.",
@@ -65,7 +69,7 @@ instance FromJSON BoardResponse
 instance ToJSON BoardResponse
 
 toBoardResponse :: BoardWithAttachments -> BoardResponse
-toBoardResponse BoardWithAttachments {board = Board {boardId = BoardId bid, boardTitle = BoardTitle t, boardBodyMarkdown = BoardBodyMarkdown bm, boardAuthorId = BoardAuthorId aid, boardCategory = BoardCategory category, boardCreatedAt = BoardCreatedAt cat, boardUpdatedAt = BoardUpdatedAt uat}, attachments = atts} =
+toBoardResponse BoardWithAttachments {board = Board {boardId = BoardId bid, boardTitle = BoardTitle t, boardBodyMarkdown = BoardBodyMarkdown bm, boardAuthorId = BoardAuthorId aid, boardCategory = BoardCategoryText category, boardCreatedAt = BoardCreatedAt cat, boardUpdatedAt = BoardUpdatedAt uat}, attachments = atts} =
   BoardResponse
     { boardId = bid,
       title = t,
@@ -94,4 +98,21 @@ toAttachmentResponse BoardAttachment {boardId = BoardId bid, attachmentId = Atta
     { boardId = bid,
       attachmentId = aid,
       attachmentUrl = url
+    }
+
+data BoardCategoryResponse = BoardCategoryResponse
+  { boardCategoryId :: Int,
+    boardCategoryName :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+instance FromJSON BoardCategoryResponse
+
+instance ToJSON BoardCategoryResponse
+
+toBoardCategoryResponse :: BoardCategory -> BoardCategoryResponse
+toBoardCategoryResponse BoardCategory {boardCategoryId = BoardCategoryId cid, boardCategoryName = BoardCategoryName cname} =
+  BoardCategoryResponse
+    { boardCategoryId = cid,
+      boardCategoryName = cname
     }

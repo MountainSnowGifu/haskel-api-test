@@ -14,13 +14,14 @@ module App.Presentation.Board.Handler
     updateBoardHandler,
     uploadAttachmentHandler,
     deleteAttachmentHandler,
+    getBoardCategoriesHandler,
   )
 where
 
 import App.Application.Auth.Principal (AuthPrincipal)
 import App.Application.Board.Command (DeleteAttachmentCommand (..), DeleteBoardCommand (..), SaveAttachmentCommand (..))
 import App.Application.Board.PublicRepository (PublicBoardQuery)
-import App.Application.Board.Repository (BoardRepo)
+import App.Application.Board.Repository (BoardRepo, getBoardCategories)
 import App.Application.Board.UseCase
   ( BoardValidationError (..),
     createBoard,
@@ -42,9 +43,11 @@ import App.Presentation.Board.Request
   )
 import App.Presentation.Board.Response
   ( AttachmentResponse (..),
+    BoardCategoryResponse,
     BoardResponse (..),
     CreatedBoardResponse (..),
     toAttachmentResponse,
+    toBoardCategoryResponse,
     toBoardResponse,
     toCreatedBoardResponse,
   )
@@ -121,3 +124,8 @@ uploadAttachmentHandler mkRun user bid multipart = case files multipart of
             case copyResult of
               Left (_ :: SomeException) -> throwError err500 {errBody = "Failed to save file."}
               Right _ -> return (toAttachmentResponse attachment)
+
+getBoardCategoriesHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Handler [BoardCategoryResponse]
+getBoardCategoriesHandler mkRun user = do
+  categories <- liftIO $ mkRun user getBoardCategories
+  return (map toBoardCategoryResponse categories)

@@ -8,7 +8,7 @@ module App.Application.Board.PublicRepository
   ( PublicBoardQuery (..),
     getAllPublicBoards,
     getPublicBoard,
-    fetchAttachmentsForBoard,
+    getAttachmentsForBoard,
   )
 where
 
@@ -31,5 +31,5 @@ getAllPublicBoards = send GetAllPublicBoardsQ
 getPublicBoard :: (PublicBoardQuery :> es) => BoardId -> Eff es (Maybe Board)
 getPublicBoard boardId = send (GetPublicBoardQ boardId)
 
-fetchAttachmentsForBoard :: (PublicBoardQuery :> es) => BoardId -> Eff es (Maybe [BoardAttachment])
-fetchAttachmentsForBoard boardId = send (GetAttachmentsForBoardQ boardId)
+getAttachmentsForBoard :: (PublicBoardQuery :> es) => BoardId -> Eff es (Maybe [BoardAttachment])
+getAttachmentsForBoard boardId = send (GetAttachmentsForBoardQ boardId)

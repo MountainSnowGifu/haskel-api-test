@@ -21,14 +21,16 @@ import App.Application.Board.Command
 import App.Application.Board.PublicRepository (PublicBoardQuery (..))
 import App.Application.Board.Repository (BoardRepo (..))
 import App.Domain.Auth.Entity (UserId)
-import App.Domain.Board.Entity (Board (..), BoardAttachment (..))
+import App.Domain.Board.Entity (Board (..), BoardAttachment (..), BoardCategory (..))
 import App.Domain.Board.ValueObject
   ( AttachmentFileName (..),
     AttachmentId (..),
     AttachmentUrl (..),
     BoardAuthorId (..),
     BoardBodyMarkdown (..),
-    BoardCategory (..),
+    BoardCategoryId (..),
+    BoardCategoryName (..),
+    BoardCategoryText (..),
     BoardCreatedAt (..),
     BoardId (..),
     BoardTitle (..),
@@ -97,7 +99,7 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
         case rows of
           [] -> return Nothing
           (rowId, t, b, c, aid, ca, ua) : _ ->
-            return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
+            return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategoryText c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
   DeleteBoardOp (DeleteBoardCommand {cmdDeleteBoardId = bId}) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let BoardAuthorId uid = userIdToAuthorId authUserId
@@ -141,7 +143,7 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
         case rows of
           [] -> return Nothing
           (rowId, t, b, c, aid, ca, ua) : _ ->
-            return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
+            return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategoryText c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
   SaveAttachmentOp (SaveAttachmentCommand bid aid url filename) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       let BoardAuthorId uid = userIdToAuthorId authUserId
@@ -189,6 +191,19 @@ runBoardRepo pool authUserId = interpret $ \_ -> \case
           [] -> return Nothing
           (deletedBid, deletedAid, deletedUrl, deletedFileName) : _ ->
             return $ Just $ BoardAttachment (BoardId deletedBid) (AttachmentId deletedAid) (AttachmentUrl deletedUrl) (AttachmentFileName deletedFileName)
+  FetchBoardCategoriesOp ->
+    liftIO $ withMSSQLConn pool $ \conn -> do
+      rows <-
+        rpcRows
+          =<< ( rpc
+                  conn
+                  ( RpcQuery
+                      SP_ExecuteSql
+                      (nvarcharVal "" (Just "SELECT category_id, category_name FROM testdb.dbo.BOARD_CATEGORIES"))
+                  ) ::
+                  IO (RpcResponse () [(Int, Text)])
+              )
+      return $ map (\(cid, cname) -> BoardCategory (BoardCategoryId cid) (BoardCategoryName cname)) rows
 
 runPublicBoardQuery ::
   (IOE :> es) =>
@@ -208,7 +223,7 @@ runPublicBoardQuery pool = interpret $ \_ -> \case
                   ) ::
                   IO (RpcResponse () [(Int, Text, Text, Text, Int, UTCTime, UTCTime)])
               )
-      return $ map (\(rowId, t, b, c, aid, ca, ua) -> Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)) rows
+      return $ map (\(rowId, t, b, c, aid, ca, ua) -> Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategoryText c) (BoardCreatedAt ca) (BoardUpdatedAt ua)) rows
   GetPublicBoardQ (BoardId bId) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
@@ -226,7 +241,7 @@ runPublicBoardQuery pool = interpret $ \_ -> \case
               )
       case rows of
         [] -> return Nothing
-        (rowId, t, b, c, aid, ca, ua) : _ -> return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
+        (rowId, t, b, c, aid, ca, ua) : _ -> return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategoryText c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
   GetAttachmentsForBoardQ (BoardId bid) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-

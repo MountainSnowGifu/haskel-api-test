@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module App.Domain.Board.Entity (Board (..), BoardAttachment (..), BoardWithAttachments (..)) where
+module App.Domain.Board.Entity (Board (..), BoardAttachment (..), BoardWithAttachments (..), BoardCategory (..)) where
 
 import App.Domain.Board.ValueObject
   ( AttachmentFileName,
@@ -9,7 +9,9 @@ import App.Domain.Board.ValueObject
     AttachmentUrl,
     BoardAuthorId,
     BoardBodyMarkdown,
-    BoardCategory,
+    BoardCategoryId,
+    BoardCategoryName,
+    BoardCategoryText,
     BoardCreatedAt,
     BoardId,
     BoardTitle,
@@ -22,7 +24,7 @@ data Board = Board
     boardTitle :: BoardTitle,
     boardBodyMarkdown :: BoardBodyMarkdown,
     boardAuthorId :: BoardAuthorId,
-    boardCategory :: BoardCategory,
+    boardCategory :: BoardCategoryText,
     boardCreatedAt :: BoardCreatedAt,
     boardUpdatedAt :: BoardUpdatedAt
   }
@@ -39,5 +41,11 @@ data BoardAttachment = BoardAttachment
 data BoardWithAttachments = BoardWithAttachments
   { board :: Board,
     attachments :: [BoardAttachment]
+  }
+  deriving (Show, Eq, Generic)
+
+data BoardCategory = BoardCategory
+  { boardCategoryId :: BoardCategoryId,
+    boardCategoryName :: BoardCategoryName
   }
   deriving (Show, Eq, Generic)
