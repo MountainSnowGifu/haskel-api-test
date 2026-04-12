@@ -19,17 +19,17 @@ import Effectful.Dispatch.Dynamic (send)
 
 -- | 公開掲示板の読み取り専用クエリ
 data PublicBoardQuery :: Effect where
-  GetAllPublicBoardsQ :: PublicBoardQuery m (Maybe [Board])
+  GetAllPublicBoardsQ :: PublicBoardQuery m [Board]
   GetPublicBoardQ :: BoardId -> PublicBoardQuery m (Maybe Board)
-  GetAttachmentsForBoardOp :: BoardId -> PublicBoardQuery m (Maybe [BoardAttachment])
+  GetAttachmentsForBoardQ :: BoardId -> PublicBoardQuery m (Maybe [BoardAttachment])
 
 type instance DispatchOf PublicBoardQuery = Dynamic
 
-getAllPublicBoards :: (PublicBoardQuery :> es) => Eff es (Maybe [Board])
+getAllPublicBoards :: (PublicBoardQuery :> es) => Eff es [Board]
 getAllPublicBoards = send GetAllPublicBoardsQ
 
 getPublicBoard :: (PublicBoardQuery :> es) => BoardId -> Eff es (Maybe Board)
 getPublicBoard boardId = send (GetPublicBoardQ boardId)
 
 fetchAttachmentsForBoard :: (PublicBoardQuery :> es) => BoardId -> Eff es (Maybe [BoardAttachment])
-fetchAttachmentsForBoard boardId = send (GetAttachmentsForBoardOp boardId)
+fetchAttachmentsForBoard boardId = send (GetAttachmentsForBoardQ boardId)

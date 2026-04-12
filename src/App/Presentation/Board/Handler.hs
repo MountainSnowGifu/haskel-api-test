@@ -22,7 +22,8 @@ import App.Application.Board.Command (DeleteAttachmentCommand (..), DeleteBoardC
 import App.Application.Board.PublicRepository (PublicBoardQuery)
 import App.Application.Board.Repository (BoardRepo)
 import App.Application.Board.UseCase
-  ( createBoard,
+  ( BoardValidationError (..),
+    createBoard,
     deleteAttachment,
     deleteBoard,
     fetchAllBoardsPublic,
@@ -32,7 +33,7 @@ import App.Application.Board.UseCase
   )
 import App.Domain.Board.Entity (BoardAttachment (..), BoardWithAttachments (..))
 import App.Domain.Board.ValueObject (AttachmentFileName (..), BoardId (..))
-import App.Infrastructure.File.FileStore (boardUploadDir, deleteFileIfExists, uploadUrlPrefix)
+import App.Infrastructure.File.FileStore (UploadError (..), UploadPlan (..), commitUpload, deleteUploadedFile, prepareUpload)
 import App.Presentation.Board.Request
   ( PostBoardRequest,
     PutBoardRequest,
@@ -49,15 +50,10 @@ import App.Presentation.Board.Response
   )
 import Control.Exception (SomeException, try)
 import Control.Monad.IO.Class (liftIO)
-import Data.Char (toLower)
 import Data.Text (pack, unpack)
-import Data.UUID (toText)
-import Data.UUID.V4 (nextRandom)
 import Effectful (Eff, IOE)
 import Servant
 import Servant.Multipart (MultipartData, Tmp, fdFileName, fdPayload, files)
-import System.Directory (copyFile, createDirectoryIfMissing, getFileSize)
-import System.FilePath (takeExtension)
 
 type BoardRunner = forall a. Eff '[BoardRepo, PublicBoardQuery, IOE] a -> IO a
 
@@ -79,7 +75,8 @@ postBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> PostBoard
 postBoardHandler mkRun user req = do
   result <- liftIO $ mkRun user (createBoard (toCreateBoardCommand req))
   case result of
-    Left _ -> throwError err400 {errBody = "Failed to create board."}
+    Left TitleEmpty -> throwError err422 {errBody = "Title cannot be empty."}
+    Left BodyMarkdownEmpty -> throwError err422 {errBody = "Body cannot be empty."}
     Right Nothing -> throwError err400 {errBody = "Failed to create board."}
     Right (Just bwa) -> return (toCreatedBoardResponse (board bwa))
 
@@ -95,7 +92,7 @@ deleteAttachmentHandler mkRun user bid aid = do
     Nothing -> throwError err404
     Just attachment -> do
       let AttachmentFileName fname = attachmentFileName attachment
-      _ <- liftIO $ deleteFileIfExists (boardUploadDir ++ "/" ++ show bid ++ "/" ++ unpack fname)
+      liftIO $ deleteUploadedFile bid fname
       return NoContent
 
 updateBoardHandler :: (AuthPrincipal -> BoardRunner) -> AuthPrincipal -> Int -> PutBoardRequest -> Handler BoardResponse
@@ -110,34 +107,17 @@ uploadAttachmentHandler mkRun user bid multipart = case files multipart of
   [] -> throwError err400 {errBody = "No file provided."}
   (f : _) -> do
     liftIO $ print (fdFileName f) -- デバッグ用: アップロードされたファイル名をログに出力
-    let ext = map toLower $ takeExtension (unpack (fdFileName f))
-    -- 拡張子検証
-    if ext `notElem` allowedExtensions
-      then throwError err400 {errBody = "File type not allowed."}
-      else do
-        -- サイズ検証 (10MB上限)
-        fileSize <- liftIO $ getFileSize (fdPayload f)
-        if fileSize > maxFileSize
-          then throwError err400 {errBody = "File too large. Max 10MB."}
-          else do
-            let bidStr = show bid
-            _ <- liftIO $ createDirectoryIfMissing True (boardUploadDir ++ "/" ++ bidStr)
-            uuid <- liftIO nextRandom
-            let filename = toText uuid <> pack ext
-                dest = boardUploadDir ++ "/" ++ bidStr ++ "/" ++ unpack filename
-                url = uploadUrlPrefix <> pack bidStr <> "/" <> filename
-            -- DB保存を先に行い、孤児ファイルを防ぐ
-            result <- liftIO $ mkRun user (saveAttachment (SaveAttachmentCommand bid (toText uuid) url filename))
-            case result of
-              Nothing -> throwError err500 {errBody = "Failed to save attachment."}
-              Just attachment -> do
-                copyResult <- liftIO $ try $ copyFile (fdPayload f) dest
-                case copyResult of
-                  Left (_ :: SomeException) -> throwError err500 {errBody = "Failed to save file."}
-                  Right _ -> return (toAttachmentResponse attachment)
-
-allowedExtensions :: [String]
-allowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf"]
-
-maxFileSize :: Integer
-maxFileSize = 10 * 1024 * 1024
+    planResult <- liftIO $ prepareUpload (fdPayload f) bid (unpack (fdFileName f))
+    case planResult of
+      Left FileTypeNotAllowed -> throwError err400 {errBody = "File type not allowed."}
+      Left FileTooLarge -> throwError err400 {errBody = "File too large. Max 10MB."}
+      Right plan -> do
+        -- DB保存を先に行い、孤児ファイルを防ぐ
+        dbResult <- liftIO $ mkRun user (saveAttachment (SaveAttachmentCommand bid (planFileId plan) (planUrl plan) (planFileName plan)))
+        case dbResult of
+          Nothing -> throwError err500 {errBody = "Failed to save attachment."}
+          Just attachment -> do
+            copyResult <- liftIO $ try $ commitUpload (fdPayload f) plan
+            case copyResult of
+              Left (_ :: SomeException) -> throwError err500 {errBody = "Failed to save file."}
+              Right _ -> return (toAttachmentResponse attachment)

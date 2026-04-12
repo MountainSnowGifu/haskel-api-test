@@ -12,6 +12,7 @@ module App.Application.Board.UseCase
     saveAttachment,
     fetchAttachmentsForBoardPublic,
     deleteAttachment,
+    BoardValidationError (..),
   )
 where
 
@@ -39,13 +40,13 @@ fetchAllBoardsPublic ::
   (PublicBoardQuery :> es) =>
   Eff es [BoardWithAttachments]
 fetchAllBoardsPublic = do
-  mBoards <- PublicBoardQuery.getAllPublicBoards
+  boards <- PublicBoardQuery.getAllPublicBoards
   mapM
     ( \b -> do
         mAtts <- PublicBoardQuery.fetchAttachmentsForBoard (boardId b)
         return $ createBoardWithAttachments b (fromMaybe [] mAtts)
     )
-    (fromMaybe [] mBoards)
+    boards
 
 fetchBoardPublic :: (PublicBoardQuery :> es) => BoardId -> Eff es (Maybe BoardWithAttachments)
 fetchBoardPublic bid = do

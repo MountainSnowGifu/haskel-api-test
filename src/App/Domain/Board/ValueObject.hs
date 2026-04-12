@@ -1,7 +1,11 @@
 module App.Domain.Board.ValueObject
   ( BoardId (..),
     BoardTitle (..),
+    BoardTitleError (..),
+    mkBoardTitle,
     BoardBodyMarkdown (..),
+    BoardBodyMarkdownError (..),
+    mkBoardBodyMarkdown,
     BoardAuthorId (..),
     BoardCategory (..),
     BoardCreatedAt (..),
@@ -15,6 +19,7 @@ where
 
 import App.Domain.Auth.Entity (UserId (..))
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Time (UTCTime)
 
 newtype BoardId = BoardId Int
@@ -23,8 +28,24 @@ newtype BoardId = BoardId Int
 newtype BoardTitle = BoardTitle Text
   deriving (Show, Eq, Ord)
 
+data BoardTitleError = BoardTitleEmpty
+  deriving (Show, Eq)
+
+mkBoardTitle :: Text -> Either BoardTitleError BoardTitle
+mkBoardTitle t
+  | T.null t  = Left BoardTitleEmpty
+  | otherwise = Right (BoardTitle t)
+
 newtype BoardBodyMarkdown = BoardBodyMarkdown Text
   deriving (Show, Eq, Ord)
+
+data BoardBodyMarkdownError = BoardBodyMarkdownEmpty
+  deriving (Show, Eq)
+
+mkBoardBodyMarkdown :: Text -> Either BoardBodyMarkdownError BoardBodyMarkdown
+mkBoardBodyMarkdown b
+  | T.null b  = Left BoardBodyMarkdownEmpty
+  | otherwise = Right (BoardBodyMarkdown b)
 
 newtype BoardAuthorId = BoardAuthorId Int
   deriving (Show, Eq, Ord)

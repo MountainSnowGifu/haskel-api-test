@@ -35,7 +35,7 @@ data BoardRepo :: Effect where
 type instance DispatchOf BoardRepo = Dynamic
 
 createBoard :: (BoardRepo :> es) => CreateBoardCommand -> Eff es (Maybe Board)
-createBoard op = send (CreateBoardOp op)
+createBoard cmd = send (CreateBoardOp cmd)
 
 deleteBoard :: (BoardRepo :> es) => DeleteBoardCommand -> Eff es Bool
 deleteBoard cmd = send (DeleteBoardOp cmd)

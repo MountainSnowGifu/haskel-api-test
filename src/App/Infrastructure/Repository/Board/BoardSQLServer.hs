@@ -208,7 +208,7 @@ runPublicBoardQuery pool = interpret $ \_ -> \case
                   ) ::
                   IO (RpcResponse () [(Int, Text, Text, Text, Int, UTCTime, UTCTime)])
               )
-      return $ Just $ map (\(rowId, t, b, c, aid, ca, ua) -> Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)) rows
+      return $ map (\(rowId, t, b, c, aid, ca, ua) -> Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)) rows
   GetPublicBoardQ (BoardId bId) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
@@ -227,7 +227,7 @@ runPublicBoardQuery pool = interpret $ \_ -> \case
       case rows of
         [] -> return Nothing
         (rowId, t, b, c, aid, ca, ua) : _ -> return $ Just $ Board (BoardId rowId) (BoardTitle t) (BoardBodyMarkdown b) (BoardAuthorId aid) (BoardCategory c) (BoardCreatedAt ca) (BoardUpdatedAt ua)
-  GetAttachmentsForBoardOp (BoardId bid) ->
+  GetAttachmentsForBoardQ (BoardId bid) ->
     liftIO $ withMSSQLConn pool $ \conn -> do
       rows <-
         rpcRows
